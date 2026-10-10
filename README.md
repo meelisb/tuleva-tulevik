@@ -4,6 +4,7 @@ Tiimi „Tulevane Mina“ töö Tuleva häkatonil (9.–11.10.2026). Küsimus, m
 
 - [Tööleht ja pitch'i taust](tulevane_mina_tooleht_ja_pitch_2026-10-10.md)
 - [Tuleva reporting engine: mis andmed seal on ja mis meile kasulik](reporting_engine_andmed_2026-10-10.md)
+- [Vaibtöö: ehita oma idee AI-agendiga](https://seppo.ai/tulevahack/) (Indrek Seppo juhend häkatoni osalejatele: prototüüp Claude Code'i või Codexiga)
 
 ## Prototüübid
 

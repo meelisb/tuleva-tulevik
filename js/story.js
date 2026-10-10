@@ -85,7 +85,7 @@
 
     // III sammas: kas on, mis vanuses avati, sissemakse. Avamise aasta määrab maksureeglid (enne 2021 või hiljem).
     // have: sammas on olemas (liitumise aeg enne/pärast 2021); future: avan hiljem; no: ei ava.
-    const p3Kind = num('p3') > 0 ? 'have' : 'no'; // kasvu valikud on peidus: III sammas on, kui summa > 0
+    const p3Kind = num('p3') > 0 || num('p3Monthly') > 0 ? 'have' : 'no'; // III sammas on, kui summa või sissemakse > 0
     const p3Has = p3Kind !== 'no';
     const joinedBefore = $('p3Joined').value === 'before';
     const p3OpenAge = p3Kind === 'have'
@@ -357,7 +357,6 @@
 
     // 18–55: III sammas
     $('p3HasMore').classList.toggle('d-none', !input.p3Has);
-    $('p3JoinedWrap').classList.toggle('d-none', input.p3Kind !== 'have');
     $('p3OpenWrap').classList.toggle('d-none', input.p3Kind !== 'future');
     const oe = $('p3OpenAge');
     if (input.p3Kind === 'future' && document.activeElement !== oe && oe.value !== String(input.p3OpenAge)) oe.value = String(input.p3OpenAge);
@@ -693,9 +692,10 @@
   });
 
   // ---------- Sündmused ----------
-  ['fund18Fund', 'fundNew', 'fundCur'].forEach((id) => {
+  ['fund18Fund', 'fundNew'].forEach((id) => {
     $(id).innerHTML = Object.entries(FUNDS).map(([k, f]) => '<option value="' + k + '">' + f.name + ' (' + pct(f.r) + ' a)</option>').join('');
   });
+  $('fundCur').innerHTML = Object.entries(FUNDS).map(([k, f]) => '<option value="' + k + '">' + pct(f.r) + ' aastas</option>').join('');
   $('fund18Fund').value = 'index';
   $('fundCur').value = 'mix';
   $('fundNew').value = 'index';

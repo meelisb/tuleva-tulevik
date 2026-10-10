@@ -472,10 +472,31 @@
     const left = row ? row.moneyLeft : 0;
     const box = $('legacy');
     if (left < 1000 || r.coversNeedUntil !== null && r.coversNeedUntil <= median) {
+      // Väljavõetud raha seisab hoiusel (0% pärast inflatsiooni). Soovita see kasvama jätta või uuesti investeerida.
+      const tips = [];
+      const rPct = pct(input.realReturn);
+      if (input.method === 'lump') tips.push(['ii',
+        '<strong>Ära võta II sammast korraga välja.</strong> Väljavõetud raha seisab hoiusel ja inflatsioon sööb selle väärtust (0% aastas). Fondis kasvab see edasi (' + rPct + ' aastas). ' +
+        'Kui oled raha juba välja võtnud, pane see uuesti kasvama (nt indeksfondi), ära hoia seda arvel ega padja all.',
+        '🌱 Jätka II samba kasvatamist']);
+      if (input.p3Has && input.p3Plan !== 'keep') tips.push(['iii',
+        '<strong>Jäta III sammas kasvama.</strong> ' + (input.p3Use === 'spend'
+          ? 'Kui kulutad III samba raha ' + input.p3Age + '-aastaselt ära, pole seda pensionil.'
+          : 'Hoiusel seisev raha ei kasva (0% aastas), fondis kasvab (' + rPct + ').') +
+        ' Kui oled selle juba välja võtnud, investeeri see uuesti, ära hoia seda arvel ega padja all.',
+        '🌱 Jäta III sammas kasvama']);
       box.innerHTML = '<div class="legacy-card"><h3 class="h5">Raha üle ei jää. Mida saaks muuta?</h3>' +
-        '<p class="text-secondary">Proovi mõnda neist ja vaata, kuidas tulemus muutub.</p><div class="d-flex flex-wrap gap-2">' +
+        (tips.length ? '<ul class="tips">' + tips.map((x) => '<li><span>' + x[1] + '</span> <button type="button" class="btn btn-primary btn-sm mt-1" data-tip="' + x[0] + '">' + x[2] + '</button></li>').join('') + '</ul>' : '') +
+        '<p class="text-secondary mb-2">' + (tips.length ? 'Või proovi' : 'Proovi') + ' mõnda neist ja vaata, kuidas tulemus muutub.</p><div class="d-flex flex-wrap gap-2">' +
         '<button type="button" class="btn btn-outline-primary btn-sm" data-goto="6">🏛️ Lükka riiklik pension edasi</button>' +
         '<button type="button" class="btn btn-outline-primary btn-sm" data-goto="8">🛒 Vali teine kulupakett</button></div></div>';
+      box.querySelectorAll('[data-tip]').forEach((btn) => btn.addEventListener('click', () => {
+        const check = (n, v) => { const el = document.querySelector('input[name="' + n + '"][value="' + v + '"]'); if (el) el.checked = true; };
+        if (btn.dataset.tip === 'ii') { check('payout', 'grow'); check('payoutPa', 'grow'); }
+        else check('p3plan', 'keep');
+        update();
+        $('answer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }));
       return;
     }
     const opts = [

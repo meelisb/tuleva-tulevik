@@ -554,6 +554,26 @@
     }).join('');
   }
 
+  // Vii otsus ellu: mida ja millal teha, valikute järgi (kasvatamise korral pole avaldust vaja).
+  function renderActions(input) {
+    const pa = P.retirementYears(input), by = input.birthYear;
+    const W = 'https://pension.tuleva.ee/withdrawals', SKA = 'https://iseteenindus.sotsiaalkindlustusamet.ee/';
+    const link = (url, txt) => ' <a href="' + url + '" target="_blank" rel="noopener">' + txt + '</a>';
+    const items = [];
+    if (input.p3Has && input.p3Plan !== 'keep') items.push(['🔓', '<strong>III sammas ' + input.p3Age + '-aastaselt (' + (by + input.p3Age) + '):</strong> esita väljamakse avaldus ja vali ' +
+      (input.p3Plan === 'lump' ? 'ühekordne väljamakse.' : 'regulaarne väljamakse elada jäänud aastate peale (täiendav fondipension).') + link(W, 'Väljamakse avaldus (Tuleva)')]);
+    else if (input.p3Has) items.push(['🌱', '<strong>III sammas:</strong> midagi pole vaja teha, raha kasvab edasi.']);
+    const m = input.method;
+    if (m === 'grow') items.push(['🌱', '<strong>II sammas:</strong> midagi pole vaja teha. Raha kasvab fondis edasi ja sissemaksed jätkuvad. Kui hakkad raha vajama, saad võtta osa välja (10%) või alustada fondipensioni.' + link('https://pension.tuleva.ee/', 'Vaata oma Tuleva kontot')]);
+    else items.push([m === 'lump' ? '💰' : '🗓️', '<strong>II sammas pensionieas (' + (by + pa) + '):</strong> esita väljamakse avaldus ja vali ' +
+      (m === 'lump' ? 'ühekordne väljamakse (10% tulumaks).' : 'fondipension (maksuvaba). Fondipensioni periood peab olema vähemalt soovituslik.') +
+      ' Väljamaksete alustamisel lõpevad II samba sissemaksed.' + link(W, 'Väljamakse avaldus (Tuleva)')]);
+    items.push(['🏛️', input.deferral
+      ? '<strong>Riiklik pension:</strong> ära esita avaldust ' + pa + '-aastaselt. Esita see ' + (pa + input.deferral) + '-aastaselt (' + (by + pa + input.deferral) + '), siis on pension eluks ajaks ' + eur(input.p1Monthly * (1 + P.DEFERRAL_INCREASE[input.deferral])) + ' kuus.' + link(SKA, 'Sotsiaalkindlustusamet')
+      : '<strong>Riiklik pension ' + pa + '-aastaselt (' + (by + pa) + '):</strong> esita avaldus Sotsiaalkindlustusametile. Pension ei hakka tulema iseenesest.' + link(SKA, 'Riikliku pensioni avaldus')]);
+    $('actions').innerHTML = items.map((x) => '<li><span aria-hidden="true">' + x[0] + '</span><span class="flex-grow-1">' + x[1] + '</span></li>').join('');
+  }
+
   function renderCompare(defs, results, activeId) {
     const rows = [
       ['Kulud kaetud kuni', (r) => (r.coversNeedUntil === null ? 101 : r.coversNeedUntil), (v) => (v > 100 ? '100+' : v + ' a'), 'max'],
@@ -616,6 +636,7 @@
     renderChart(mine, input);
     renderLegacy(mine, input);
     renderMap(input, scenario);
+    renderActions(input);
     renderRecap(input, scenario);
     renderCompare(defs, results, scenario.id);
   }

@@ -15,7 +15,7 @@ python3 -m http.server 8000
 
 Seejärel ava http://localhost:8000. Build-sammu ei ole. Kõik arvutused tehakse brauseris.
 
-Avalik versioon: https://meelisb.github.io/tuleva-tulevik/
+Avalik versioon: https://meelisb.github.io/tuleva-tulevik/ (haru `main`). Iga teine haru avaldub aadressil `https://meelisb.github.io/tuleva-tulevik/<haru-nimi>/`, näiteks [kadi-branch](https://meelisb.github.io/tuleva-tulevik/kadi-branch/). Kõik eelvaated: [harud.html](https://meelisb.github.io/tuleva-tulevik/harud.html). Avaldamise töövoog: `.github/workflows/pages.yml`.
 
 Nupp „Täida Tuleva konto andmetega (näidis)“ näitab väljamõeldud liikme andmetel, mida Tuleva saaks sisselogitud kasutajale eeltäita ja millisest API-st iga väärtus tuleb. Kulud on vaikimisi täidetud Statistikaameti andmetega.
 

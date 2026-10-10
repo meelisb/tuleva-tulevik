@@ -19,6 +19,7 @@
     index: { name: 'Madala tasuga indeksfond', r: 0.04, note: 'Laialt hajutatud aktsiad, väike tasu.' },
   };
   const CHILD_R = { none: 0, parent: 0, account: 0.04 };
+  const CARE_HOME = 1500; // hooldekodu koha hind kuus, eeldus
   const PRICE = { tank: 80, mince: 10, trip: 900, cafe: 12 }; // 50 l kütust, 1 kg veisehakkliha, nädal Lõuna-Euroopas (lend + majutus), kohvikulõuna
 
   // Kulupaketid: Statistikaameti põhikulud + lisad. kind: joy = elamused, future = tulevik ja turvalisus.
@@ -27,9 +28,11 @@
       extras: [] },
     { id: 'optimal', name: 'Optimaalne', emoji: '✈️', tagline: 'Saan veidi reisida ja ennast vahel hellitada.',
       extras: [['Reisid', 'travel', 150, 'joy'], ['Parem toidulaud', 'food', 50, 'joy'], ['Kino, teater, hobid', 'fun', 60, 'joy'], ['Auto ja liikumine', 'move', 40, 'joy']] },
-    { id: 'comfy', name: 'Mugav', emoji: '🛋️', tagline: 'Elan hästi, investeerin edasi ja lapsed ei pea mu hoolduse eest maksma.',
+    { id: 'comfy', name: 'Mugav', emoji: '🛋️', tagline: 'Elan hästi ja investeerin edasi.',
       extras: [['Reisid', 'travel', 300, 'joy'], ['Toit ja restoranid', 'food', 100, 'joy'], ['Auto ja liikumine', 'move', 120, 'joy'], ['Hobid ja trenn', 'fun', 100, 'joy'],
-        ['Investeerin, kingin lastelastele', 'invest', 150, 'future'], ['Hooldekodu reserv', 'care', 250, 'future']] },
+        ['Investeerin, kingin lastelastele', 'invest', 150, 'future']],
+      // „Või“: sama summa katab hiljem hooldekodu koha (eeldus: u 1500 € kuus).
+      alt: (total) => 'Kui vajad hooldust: sama raha (' + eur(total) + ' kuus) katab hooldekodu koha (u ' + eur(CARE_HOME) + ' kuus) ja lapsed ei pea juurde maksma.' },
   ];
 
   // Etappide vanusevahemikud (pensioniiga lisandub arvutuses).
@@ -220,11 +223,11 @@
     const cafes = (cat('Kohvikud ja reisimajutus') + extra(pkg, 'food') * 0.5) / PRICE.cafe;
     const facts = [
       ['🥩', mince < 1.5 ? 'veisehakkliha pühadeks, argipäeval kana ja kartul' : one(mince) + ' kg veisehakkliha kuus'],
-      ['⛽', one(tanks) + (tanks < 1 ? ' paaki kütust kuus, pigem bussikaart' : ' paaki kütust kuus')],
+      ['⛽', (() => { const h = Math.max(0.5, Math.round(tanks * 2) / 2); // poole paagi täpsusega
+        return one(h) + (h === 1 ? ' paak' : ' paaki') + ' kütust kuus' + (h < 1 ? ', pigem bussikaart' : ''); })()],
       ['☕', Math.max(1, Math.round(cafes)) + (Math.round(cafes) <= 1 ? ' kohvikulõuna' : ' kohvikulõunat') + ' kuus'],
       ['✈️', trips < 0.5 ? 'reisid pigem maale sugulaste juurde' : Math.round(trips) + (Math.round(trips) === 1 ? ' reis' : ' reisi') + ' aastas soojale maale'],
     ];
-    if (extra(pkg, 'care')) facts.push(['🏡', 'hooldekodu koht kaetud, lapsed ei pea juurde maksma']);
     if (extra(pkg, 'invest')) facts.push(['🌱', eur(extra(pkg, 'invest')) + ' kuus investeerimiseks või lastelastele']);
     return facts;
   }
@@ -245,9 +248,10 @@
         (isEdited(p) ? '<small class="pkg-edited">Sinu muudetud summa: <strong>' + eur(customTotal(p, input.household)) + '</strong></small>' : '') +
         '<span class="pkg-bar" aria-hidden="true"><span class="seg base" style="width:' + w(base) + '"></span><span class="seg joy" style="width:' + w(joy) + '"></span><span class="seg future" style="width:' + w(fut) + '"></span></span>' +
         '<ul class="pkg-facts">' + funFacts(p, input.household).map((f) => '<li><span aria-hidden="true">' + f[0] + '</span> ' + f[1] + '</li>').join('') + '</ul>' +
+        (p.alt ? '<span class="pkg-or" aria-hidden="true"><span>või</span></span><span class="pkg-alt"><span aria-hidden="true">🏡</span> <span><span class="visually-hidden">Või: </span>' + p.alt(total) + '</span></span>' : '') +
         '</span></label>';
     }).join('') +
-      '<p class="pkg-legend small-muted mb-0"><span class="dot base"></span>põhikulud (Statistikaamet) <span class="dot joy"></span>elamused <span class="dot future"></span>tulevik ja hooldus</p>';
+      '<p class="pkg-legend small-muted mb-0"><span class="dot base"></span>põhikulud (Statistikaamet) <span class="dot joy"></span>elamused <span class="dot future"></span>tulevik ja investeerimine</p>';
     $('packages').querySelectorAll('input').forEach((el) => el.addEventListener('change', update));
   }
 

@@ -90,3 +90,6 @@ fieldset:disabled .choice { cursor: not-allowed; }
 .section-title { color: var(--navy); padding-bottom: 0.25rem; border-bottom: 1px solid var(--gray-border-2); margin-bottom: 0.75rem; }
 .chapter legend.form-label { font-size: 1rem; float: none; }
 .map-choice { margin-top: 0.25rem; font-size: 0.875rem; color: var(--blue); }
+.pkg-or { display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0 0.25rem; color: var(--text-tertiary); font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.pkg-or::before, .pkg-or::after { content: ''; flex: 1; border-top: 1px solid var(--gray-border-2); }
+.pkg-alt { display: flex; gap: 0.4rem; font-size: 0.875rem; }

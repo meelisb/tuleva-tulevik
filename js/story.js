@@ -59,6 +59,21 @@
     for (let a = 0; a < 18; a++) child18 = child18 * (1 + rc) + childMonthly * 12;
     const childNow = radio('childKept') === '1' ? child18 * Math.pow(1 + rc, Math.max(0, currentAge - 18)) : 0;
 
+    // Fondivahetus: minevikus vahetus on juba tänases summas. Tulevikus vahetus: seni kasvab raha vanas fondis.
+    // pension.js kasutab ühte tootlust, seega teisendame vahetuseni kasvu samaväärseks tänaseks summaks (mudel on lineaarne).
+    const switching = radio('fundChange') === 'switch';
+    const pa = P.retirementYears({ birthYear: birthYear, pensionAgeYears: parseInt($('pensionAgeYears').value, 10) });
+    const switchAge = Math.min(pa - 1, Math.max(18, parseInt($('switchAge').value, 10) || currentAge));
+    const pot0 = num('p2') + num('p3') + childNow;
+    let switchAdj = 0;
+    if (switching && switchAge > currentAge) {
+      const c = P.yearlyContribution({ grossMonthly: num('grossMonthly'), p2Rate: parseFloat($('p2Rate').value), p3Monthly: num('p3Monthly') });
+      const ro = FUNDS[fund18].r, rn = FUNDS[fundNow].r, n = switchAge - currentAge;
+      let fOld = pot0, cNew = 0;
+      for (let i = 0; i < n; i++) { fOld = fOld * (1 + ro) + c; cNew = cNew * (1 + rn) + c; }
+      switchAdj = (fOld - cNew) / Math.pow(1 + rn, n) - pot0;
+    }
+
     const pkg = PACKAGES.find((p) => p.id === radio('pkg')) || PACKAGES[0];
     const household = $('household').value;
     const pkgTotal = packageTotal(pkg, household);
@@ -71,7 +86,8 @@
       p1Monthly: num('p1Monthly'),
       p2: num('p2'),
       p3Base: num('p3'),
-      p3: num('p3') + childNow,
+      p3: num('p3') + childNow + switchAdj,
+      p3Pre: num('p3') + childNow,
       p3Before2021: $('p3Before2021').value === '1',
       pensionAgeYears: parseInt($('pensionAgeYears').value, 10),
       grossMonthly: num('grossMonthly'),
@@ -79,6 +95,7 @@
       p3Monthly: num('p3Monthly'),
       fund18: fund18,
       fundNow: fundNow,
+      switching: switching, switchAge: switchAge, switchAdj: switchAdj,
       realReturn: FUNDS[fundNow].r,
       child: child, childMonthly: childMonthly, child18: child18, childNow: childNow,
       payout: radio('payout'),
@@ -100,9 +117,10 @@
   }
 
   // Samba vara pensionieas (sama kasvureegel mis simulate'is).
-  function potAtPension(input, r) {
+  // fromToday: „mis oleks, kui alates tänasest selles fondis“ (fondivahetuse korrektsioonita).
+  function potAtPension(input, r, fromToday) {
     const pa = P.retirementYears(input);
-    let fund = input.p2 + input.p3;
+    let fund = input.p2 + (fromToday ? input.p3Pre : input.p3);
     const c = P.yearlyContribution(input);
     for (let a = input.currentAge; a < pa; a++) fund = fund * (1 + r) + c;
     return fund;
@@ -237,9 +255,16 @@
     $('sameFundTxt').textContent = 'Jätkad fondiga: ' + FUNDS[input.fund18].name.toLowerCase() + '.';
     $('fundNewMore').classList.toggle('d-none', radio('fundChange') !== 'switch');
     const pot = potAtPension(input, input.realReturn);
-    const potIndex = potAtPension(input, FUNDS.index.r);
+    const potIndex = potAtPension(input, FUNDS.index.r, true);
+    const sw = $('switchAge');
+    sw.max = pa - 1;
+    if (!sw.value) sw.value = String(Math.min(pa - 1, Math.max(18, input.currentAge)));
+    $('switchYear').textContent = 'aastal ' + (input.birthYear + input.switchAge);
+    $('switchNote').textContent = input.switchAge <= input.currentAge
+      ? 'Vahetasid ' + input.switchAge + '-aastaselt. Varasem tootlus on juba sinu tänases sambasummas, edasi arvestame uue fondiga.'
+      : 'Vahetad ' + input.switchAge + '-aastaselt. Seni (' + (input.switchAge - input.currentAge) + ' a) kasvab raha praeguses fondis (' + pct(FUNDS[input.fund18].r) + '), pärast seda uues fondis (' + pct(FUNDS[input.fundNow].r) + ').';
     $('workNote').innerHTML = 'Pensionieaks (' + pa + ') kasvab sinu sammaste vara umbes <strong>' + eur(pot) + '</strong>.' +
-      (input.fundNow !== 'index' ? ' Madala tasuga indeksfondiga oleks see umbes <strong>' + eur(potIndex) + '</strong> (' + eur(potIndex - pot) + ' rohkem).' : '');
+      (potIndex - pot > 1 ? ' Kui oleksid alates tänasest madala tasuga indeksfondis, oleks see umbes <strong>' + eur(potIndex) + '</strong> (' + eur(potIndex - pot) + ' rohkem).' : '');
 
     // 55
     const p3Age = input.p3Before2021 ? 55 : 60;
@@ -353,7 +378,7 @@
       [0, '🙂', 'Sündinud ' + input.birthYear + ', II sammas ' + eur(input.p2) + ', III sammas ' + eur(input.p3Base)],
       [1, '👶', childTxt],
       [2, '🎓', (radio('fund18') === 'self' ? 'Valisin ise: ' : 'Loosiga: ') + FUNDS[input.fund18].name.toLowerCase()],
-      [3, '💼', (input.fundNow === input.fund18 && radio('fundChange') !== 'switch' ? 'Fond jäi samaks' : 'Vahetasin fondi: ' + FUNDS[input.fundNow].name.toLowerCase()) + ', II sammas ' + pct(input.p2Rate) + ', III sambasse ' + eur(input.p3Monthly) + ' kuus'],
+      [3, '💼', (input.fundNow === input.fund18 && radio('fundChange') !== 'switch' ? 'Fond jäi samaks' : (input.switchAge > input.currentAge ? 'Vahetan ' : 'Vahetasin ') + input.switchAge + '-aastaselt fondi: ' + FUNDS[input.fundNow].name.toLowerCase()) + ', II sammas ' + pct(input.p2Rate) + ', III sambasse ' + eur(input.p3Monthly) + ' kuus'],
       [5, '🧳', input.payout === 'lump' ? 'Võtan samba raha korraga välja' : 'Võtan samba raha välja fondipensionina'],
       [6, '🏛️', input.payout === 'lump' || !input.deferral ? 'Riiklik pension ' + pa + '-aastaselt' : 'Riiklik pension ' + (pa + input.deferral) + '-aastaselt (' + input.deferral + ' a hiljem)'],
       [7, '🌳', scenario.id + '. ' + scenario.name],

@@ -163,8 +163,18 @@
         </div>
       </fieldset>
       <div id="fundNewMore" class="mb-3 d-none">
-        <label class="form-label" for="fundNew">Uus fond</label>
-        <select class="form-select w-auto fund-select" id="fundNew"></select>
+        <div class="row g-3">
+          <div class="col-12 col-md-7">
+            <label class="form-label" for="fundNew">Uus fond</label>
+            <select class="form-select fund-select" id="fundNew"></select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label" for="switchAge">Vahetan / vahetasin, vanus</label>
+            <input class="form-control" id="switchAge" type="number" min="18" max="64" step="1">
+            <div class="form-text" id="switchYear"></div>
+          </div>
+        </div>
+        <div class="small-muted mt-2" id="switchNote" aria-live="polite"></div>
       </div>
       <div class="row g-3">
         <div class="col-6 col-md-4">

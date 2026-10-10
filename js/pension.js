@@ -98,8 +98,9 @@
     const contrib = yearlyContribution(input);
     for (let a = currentAge; a < pa; a++) fund = fund * (1 + r) + contrib;
 
-    let deposit = 0;
-    if (scenario.id === 'A') { deposit = fund * (1 - TAX_SHORT); fund = 0; }
+    // Hoius pensioni alguses: varem sambast välja võetud ja kõrvale pandud raha (valikuline, vaikimisi 0).
+    let deposit = input.extraDeposit || 0;
+    if (scenario.id === 'A') { deposit += fund * (1 - TAX_SHORT); fund = 0; }
     // Ühe lepingu fondipension: periood määratakse lepingu sõlmimisel.
     const contractStart = scenario.id === 'B' ? pa : scenario.id === 'C' ? p1Start : null;
     const contractTerm = contractStart !== null ? fundPensionTerm(table, input.sex, contractStart) : 0;

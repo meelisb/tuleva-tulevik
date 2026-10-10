@@ -70,4 +70,11 @@ for (const s of P.SCENARIOS) {
   console.log(s.id, 'katab', r.coversNeedUntil, 'raha lõpeb', r.moneyEndAge, '90a', r.spendAt90.toFixed(0),
     'jätkusuutlik', P.sustainableNeed(base, table, s.id === 'C' ? Cx : s), 'horisont', r.horizonAge, 'E', r.expectedLifetime.toFixed(0));
 }
+// Varem kõrvale pandud hoius (extraDeposit) lisandub pensioni alguse rahale ja vaikimisi on see 0.
+for (const s of [A, B, Cx, D]) {
+  const r0 = P.simulate(base, table, s), r1 = P.simulate({ ...base, extraDeposit: 10000 }, table, s);
+  assert.ok(Math.abs(r1.rows[0].moneyLeft - r0.rows[0].moneyLeft - 10000) < 0.01);
+  assert.ok(r1.expectedLifetime >= r0.expectedLifetime);
+}
+
 console.log('OK');

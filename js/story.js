@@ -64,7 +64,34 @@
     const switching = radio('fundChange') === 'switch';
     const pa = P.retirementYears({ birthYear: birthYear, pensionAgeYears: parseInt($('pensionAgeYears').value, 10) });
     const switchAge = Math.min(pa - 1, Math.max(18, parseInt($('switchAge').value, 10) || currentAge));
-    const pot0 = num('p2') + num('p3') + childNow;
+    const p3Before2021 = $('p3Before2021').value === '1';
+    const sex = $('sex').value;
+    const rateAt = (a) => (switching && a >= switchAge ? FUNDS[fundNow].r : FUNDS[fund18].r);
+
+    // III sammas 55-aastaselt (või kohe, kui oled juba vanem). Soodusmaks alates 55 (liitunud enne 2021) või 60.
+    // Enne soodusiga 22% tulumaks. Fondipension: maksuvaba alates soodusest, uus leping igal aastal (elada jäänud aastad).
+    const p3Open = p3Before2021 ? 55 : 60;
+    const p3Age = Math.max(55, currentAge);
+    const p3Plan = p3Age < pa ? (radio('p3plan') || 'keep') : 'keep';
+    const p3Use = radio('p3use') || 'spend';
+    const p3Base = num('p3');
+    let p3Gross = 0, p3Net = 0, p3Rem = 0, p3Tax = 0;
+    if (p3Plan !== 'keep') {
+      let b = p3Base;
+      for (let a = currentAge; a < p3Age; a++) b *= 1 + rateAt(a);
+      if (p3Plan === 'lump') {
+        p3Tax = p3Age >= p3Open ? 0.10 : 0.22;
+        p3Gross = b; p3Net = b * (1 - p3Tax);
+      } else {
+        for (let a = p3Age; a < pa; a++) {
+          const pay = b / P.fundPensionTerm(T, sex, a);
+          b -= pay; p3Gross += pay; p3Net += pay * (a >= p3Open ? 1 : 0.78);
+          b *= 1 + rateAt(a);
+        }
+        p3Rem = b; // pensionieas läheb ülejääk ühisesse samba rahasse
+      }
+    }
+    const pot0 = num('p2') + (p3Plan === 'keep' ? p3Base : 0) + childNow;
     let switchAdj = 0;
     if (switching && switchAge > currentAge) {
       const c = P.yearlyContribution({ grossMonthly: num('grossMonthly'), p2Rate: parseFloat($('p2Rate').value), p3Monthly: num('p3Monthly') });
@@ -74,6 +101,9 @@
       switchAdj = (fOld - cNew) / Math.pow(1 + rn, n) - pot0;
     }
 
+    // III samba ülejääk pensionieas → samaväärne tänane summa (simulate kasvatab kõike lõpptootlusega).
+    const p3RemNow = p3Rem / Math.pow(1 + FUNDS[fundNow].r, Math.max(0, pa - currentAge));
+
     const pkg = PACKAGES.find((p) => p.id === radio('pkg')) || PACKAGES[0];
     const household = $('household').value;
     const pkgTotal = packageTotal(pkg, household);
@@ -81,14 +111,17 @@
     return {
       birthYear: birthYear,
       currentAge: currentAge,
-      sex: $('sex').value,
+      sex: sex,
       household: household,
       p1Monthly: num('p1Monthly'),
       p2: num('p2'),
       p3Base: num('p3'),
-      p3: num('p3') + childNow + switchAdj,
-      p3Pre: num('p3') + childNow,
-      p3Before2021: $('p3Before2021').value === '1',
+      p3: (p3Plan === 'keep' ? p3Base : 0) + childNow + switchAdj + p3RemNow,
+      p3Pre: (p3Plan === 'keep' ? p3Base : 0) + childNow + p3RemNow,
+      p3Before2021: p3Before2021,
+      p3Open: p3Open, p3Age: p3Age, p3Plan: p3Plan, p3Use: p3Use,
+      p3Gross: p3Gross, p3Net: p3Net, p3Tax: p3Tax, p3Rem: p3Rem,
+      extraDeposit: p3Plan !== 'keep' && p3Use === 'save' ? p3Net : 0,
       pensionAgeYears: parseInt($('pensionAgeYears').value, 10),
       grossMonthly: num('grossMonthly'),
       p2Rate: parseFloat($('p2Rate').value),
@@ -266,13 +299,27 @@
     $('workNote').innerHTML = 'Pensionieaks (' + pa + ') kasvab sinu sammaste vara umbes <strong>' + eur(pot) + '</strong>.' +
       (potIndex - pot > 1 ? ' Kui oleksid alates tänasest madala tasuga indeksfondis, oleks see umbes <strong>' + eur(potIndex) + '</strong> (' + eur(potIndex - pot) + ' rohkem).' : '');
 
-    // 55
-    const p3Age = input.p3Before2021 ? 55 : 60;
-    $('p3Info').innerHTML = '<p>' + (input.p3Before2021
-      ? 'Liitusid III sambaga enne 2021, seega saad selle raha kätte soodsama maksuga alates <strong>55-aastaselt (' + (input.birthYear + 55) + ')</strong>.'
-      : 'Liitusid III sambaga 2021 või hiljem, seega avaneb soodusmaks alates <strong>60-aastaselt (' + (input.birthYear + 60) + ')</strong>.') + '</p>' +
-      '<ul class="mb-0"><li>Ühekordne või lühike väljamakse: 10% tulumaks</li><li>Regulaarne pikk väljamakse: 0% tulumaks</li><li>Tingimus: oled kogunud vähemalt 5 aastat</li></ul>' +
-      (p3Age === 60 ? '<p class="small-muted mt-2 mb-0">Sinu puhul juhtub see koos II sambaga 60-aastaselt.</p>' : '');
+    // 55: III samba väljavõtt
+    const soon = input.p3Age >= input.p3Open; // kas väljavõtu ajal kehtib soodusmaks
+    $('p3Info').innerHTML = '<p class="mb-2">' + (input.p3Before2021
+      ? 'Liitusid III sambaga enne 2021, seega kehtib soodusmaks alates <strong>55-aastaselt (' + (input.birthYear + 55) + ')</strong>.'
+      : 'Liitusid III sambaga 2021 või hiljem, seega kehtib soodusmaks alles <strong>60-aastaselt (' + (input.birthYear + 60) + ')</strong>. Enne seda läheb väljavõetud rahast 22% tulumaksuks.') + '</p>' +
+      '<ul class="mb-0 small"><li>Korraga: ' + (input.p3Before2021 ? '10%' : '22% (alates 60: 10%)') + ' tulumaks</li><li>Jupiti fondipensionina: ' + (input.p3Before2021 ? '0%' : '22% (alates 60: 0%)') + ' tulumaks</li><li>Tingimus: oled kogunud vähemalt 5 aastat</li></ul>';
+    $('p3LumpTxt').textContent = 'Kogu III sammas ühe korraga, ' + (soon ? '10%' : '22%') + ' tulumaksuks.';
+    $('p3FundTxt').textContent = 'Igakuine väljamakse elada jäänud aastate peale, ' + (soon ? 'maksuvaba' : '22% tulumaksuks enne 60. eluaastat, siis maksuvaba') + '. Ülejäänu kasvab edasi.';
+    const p3Locked = input.p3Age >= P.retirementYears(input);
+    $('p3Locked').textContent = p3Locked ? 'Oled juba pensionieas, seega kasutad III sammast koos II sambaga pensionieas.' : '';
+    $('p3Locked').classList.toggle('d-none', !p3Locked);
+    $('p3PlanSet').disabled = p3Locked;
+    $('p3UseSet').classList.toggle('d-none', input.p3Plan === 'keep');
+    const yrs = P.retirementYears(input) - input.p3Age;
+    $('p3Note').innerHTML = input.p3Plan === 'keep'
+      ? 'III sammas jääb kasvama ja seda kasutad pensionieas.'
+      : input.p3Plan === 'lump'
+        ? input.p3Age + '-aastaselt saad kätte <strong>' + eur(input.p3Net) + '</strong> (maksuks läheb ' + eur(input.p3Gross - input.p3Net) + '). ' +
+          (input.p3Use === 'save' ? 'See ootab hoiusel pensioni algust.' : 'Kasutad selle kohe, pensioniks seda ei jää.')
+        : input.p3Age + '–' + (P.retirementYears(input) - 1) + '-aastaselt saad keskmiselt <strong>' + eur(input.p3Net / Math.max(1, yrs * 12)) + ' kuus</strong> (kokku ' + eur(input.p3Net) + ', maksuks ' + eur(input.p3Gross - input.p3Net) + '). ' +
+          'Pensionieaks jääb III sambasse ' + eur(input.p3Rem) + '. ' + (input.p3Use === 'save' ? 'Väljamaksed paned hoiusele pensioniks.' : 'Väljamaksed kasutad kohe.');
 
     // Pensioniiga: edasilükkamine
     const lump = input.payout === 'lump';
@@ -302,8 +349,9 @@
     const items = [
       ['🏦', eur(potAtPension(input, input.realReturn)), 'sammastes ' + pa + '-aastaselt'],
       ['🏛️', eur(p1) + ' /kuus', 'riiklik pension'],
+    ].concat(input.extraDeposit > 0 ? [['🐷', eur(input.extraDeposit), 'III sambast hoiusel']] : []).concat([
       ['🛒', visited.has(8) ? eur(input.needMonthly) + ' /kuus' : 'valimata', 'kulud' + (visited.has(8) ? ' (' + input.pkg.name + (input.edited ? ', muudetud' : '') + ')' : '')],
-    ];
+    ]);
     $('potBar').innerHTML = items.map((x) => '<div class="pot-item"><span class="pot-emoji" aria-hidden="true">' + x[0] + '</span><span><strong>' + x[1] + '</strong><small>' + x[2] + '</small></span></div>').join('');
   }
 
@@ -379,6 +427,7 @@
       [1, '👶', childTxt],
       [2, '🎓', (radio('fund18') === 'self' ? 'Valisin ise: ' : 'Loosiga: ') + FUNDS[input.fund18].name.toLowerCase()],
       [3, '💼', (input.fundNow === input.fund18 && radio('fundChange') !== 'switch' ? 'Fond jäi samaks' : (input.switchAge > input.currentAge ? 'Vahetan ' : 'Vahetasin ') + input.switchAge + '-aastaselt fondi: ' + FUNDS[input.fundNow].name.toLowerCase()) + ', II sammas ' + pct(input.p2Rate) + ', III sambasse ' + eur(input.p3Monthly) + ' kuus'],
+      [4, '🔓', input.p3Plan === 'keep' ? 'III sammas jääb kasvama' : (input.p3Plan === 'lump' ? 'Võtan III samba ' + input.p3Age + '-aastaselt korraga välja: ' + eur(input.p3Net) : 'Võtan III samba ' + input.p3Age + '-aastaselt jupiti välja: ' + eur(input.p3Net)) + (input.p3Plan === 'keep' ? '' : input.p3Use === 'save' ? ', hoiusele' : ', kasutan kohe')],
       [5, '🧳', input.payout === 'lump' ? 'Võtan samba raha korraga välja' : 'Võtan samba raha välja fondipensionina'],
       [6, '🏛️', input.payout === 'lump' || !input.deferral ? 'Riiklik pension ' + pa + '-aastaselt' : 'Riiklik pension ' + (pa + input.deferral) + '-aastaselt (' + input.deferral + ' a hiljem)'],
       [7, '🌳', scenario.id + '. ' + scenario.name],

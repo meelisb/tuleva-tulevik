@@ -198,11 +198,28 @@
         <div class="chapter-art" aria-hidden="true">🔓</div>
         <div>
           <p class="chapter-kicker" id="k4"></p>
-          <h2 id="h4" tabindex="-1">III sammas avaneb soodusmaksuga</h2>
+          <h2 id="h4" tabindex="-1">55-aastaselt: kas võtad III sambast raha välja?</h2>
         </div>
       </div>
-      <div id="p3Info"></div>
-      <div class="story-note mt-3">Selles loos jätad III samba raha kasvama ja hakkad seda kasutama pensionieas koos II sambaga. Nii on raha kõige kauem tööl.</div>
+      <div id="p3Info" class="mb-3"></div>
+      <div id="p3Locked" class="note mb-3 d-none"></div>
+      <fieldset id="p3PlanSet" class="mb-3">
+        <legend class="form-label">Mida III samba rahaga teed?</legend>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="p3plan" value="keep" checked>
+            <span class="choice-body"><span class="choice-emoji" aria-hidden="true">🌱</span><strong>Jätan kasvama</strong><small>Kasutad seda pensionieas koos II sambaga. Raha on kõige kauem tööl.</small></span></label>
+          <label class="choice"><input type="radio" name="p3plan" value="lump">
+            <span class="choice-body"><span class="choice-emoji" aria-hidden="true">💰</span><strong>Võtan korraga välja</strong><small id="p3LumpTxt"></small></span></label>
+          <label class="choice"><input type="radio" name="p3plan" value="fund">
+            <span class="choice-body"><span class="choice-emoji" aria-hidden="true">🗓️</span><strong>Võtan jupiti, fondipensionina</strong><small id="p3FundTxt"></small></span></label>
+        </div>
+      </fieldset>
+      <fieldset id="p3UseSet" class="mb-3 d-none">
+        <legend class="form-label">Mida väljavõetud rahaga teed?</legend>
+        <div class="form-check"><input class="form-check-input" type="radio" name="p3use" id="p3use1" value="spend" checked><label class="form-check-label" for="p3use1">Kasutan kohe (remont, reis, laenu tagasimakse)</label></div>
+        <div class="form-check"><input class="form-check-input" type="radio" name="p3use" id="p3use2" value="save"><label class="form-check-label" for="p3use2">Panen hoiusele pensioniks (0% pärast inflatsiooni)</label></div>
+      </fieldset>
+      <div class="story-note" id="p3Note" aria-live="polite"></div>
     </section>
 
     <!-- 5. 60 -->

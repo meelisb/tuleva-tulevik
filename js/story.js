@@ -299,6 +299,11 @@
     $('workNote').innerHTML = 'Pensionieaks (' + pa + ') kasvab sinu sammaste vara umbes <strong>' + eur(pot) + '</strong>.' +
       (potIndex - pot > 1 ? ' Kui oleksid alates tänasest madala tasuga indeksfondis, oleks see umbes <strong>' + eur(potIndex) + '</strong> (' + eur(potIndex - pot) + ' rohkem).' : '');
 
+    // Kulud: leibkond
+    $('hhNote').innerHTML = input.household === 'paar'
+      ? '<span class="hh-emoji" aria-hidden="true">👫</span><span><strong>Elad pensionil paaris.</strong> Summad on sinu osa paari kuludest (ühe inimese kohta). Ühine kodu ja arved teevad elu inimese kohta odavamaks kui üksi. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="0">Muuda</button></span>'
+      : '<span class="hh-emoji" aria-hidden="true">🧍</span><span><strong>Elad pensionil üksi.</strong> Summad on üksi elava pensionäri kulud: kodu ja arved maksad ainult sina. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="0">Muuda</button></span>';
+
     // 55: III samba väljavõtt
     const soon = input.p3Age >= input.p3Open; // kas väljavõtu ajal kehtib soodusmaks
     $('p3Info').innerHTML = '<p class="mb-2">' + (input.p3Before2021

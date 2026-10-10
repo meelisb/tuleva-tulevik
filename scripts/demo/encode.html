@@ -1,0 +1,40 @@
+<!doctype html>
+<meta charset="utf-8">
+<canvas id="c" width="1600" height="900"></canvas>
+<script>
+window.encode = async function () {
+  const idx = await (await fetch('frames/index.json')).json();
+  const n = idx.t.length;
+  const name = (i) => 'frames/' + String(i).padStart(5, '0') + '.jpg';
+  const cache = new Map();
+  const load = (i) => {
+    if (i >= n || cache.has(i)) return;
+    cache.set(i, new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = name(i); }));
+  };
+  for (let i = 0; i < 40; i++) load(i);
+  const cv = document.getElementById('c'), g = cv.getContext('2d');
+  g.drawImage(await cache.get(0), 0, 0, 1600, 900);
+  const stream = cv.captureStream(0);
+  const track = stream.getVideoTracks()[0];
+  const rec = new MediaRecorder(stream, { mimeType: new URLSearchParams(location.search).get('mime') || 'video/webm;codecs=vp9', videoBitsPerSecond: 4000000 });
+  const chunks = [];
+  rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+  const done = new Promise((r) => { rec.onstop = r; });
+  rec.start();
+  const FPS = 30, t0 = performance.now();
+  const sleepUntil = (ms) => new Promise((r) => setTimeout(r, Math.max(0, ms - (performance.now() - t0))));
+  let i = 0, cur = await cache.get(0);
+  for (let k = 0; k * 1000 / FPS <= idx.end * 1000; k++) {
+    const tms = k * 1000 / FPS;
+    while (i + 1 < n && idx.t[i + 1] * 1000 <= tms) { i++; load(i); load(i + 40); cur = await cache.get(i); cache.delete(i - 1); }
+    await sleepUntil(tms);
+    g.drawImage(cur, 0, 0, 1600, 900);
+    track.requestFrame();
+  }
+  rec.stop(); await done;
+  const blob = new Blob(chunks, { type: rec.mimeType });
+  const buf = new Uint8Array(await blob.arrayBuffer());
+  let s = ''; for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+  return btoa(s);
+};
+</script>

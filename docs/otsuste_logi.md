@@ -2,6 +2,13 @@
 
 Kuupäevadega otsused, kontrollid ja parandatud vead. Uuemad üleval. Lisa siia iga sisuline otsus, et see ei jääks ainult vestlusesse.
 
+## 10.10.2026 (õhtu): pitch
+
+- Pühapäeval (11.10 kell 11.30, Tuleva nõukogu, 3 min + 2 min küsimusi) esitleme **ainult Elukaart**.
+- Slaidid tehti häkatoni juhendi järgi (6 slaidi + varuslaidid): nimi, probleem (keeruline süsteem → kõik korraga välja → elu jätkub pärast raha lõppu; 12 inimest 13-st), demo video, miks Tuleva (neutraalne info, kindel sissetulek, andmed kontol), ärimudel (raha jääb fondi), järgmine samm (test 5 liikmega).
+- Ärimudeli arvutus: pensionieas korraga u 1 M€ aastas (reporting-engine 01/2023–03/2026); kui pool jääb fondipensioniks, on 10 aasta pärast fondis u 4 M€ rohkem; tasu u 0,3% juures u 12 000 € aastas. Tasumäär vajab kontrolli.
+- Demo video: `scripts/demo/` (vt CLAUDE.md).
+
 ## 10.10.2026
 
 ### Tasuvusmudel

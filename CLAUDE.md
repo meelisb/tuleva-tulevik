@@ -46,6 +46,18 @@ Kulutasemete piirang: IV/V kvintiili suhe on kõigi leibkondade andmetest. Pensi
 - `node tests/e2e.mjs [URL]`: Playwright (`playwright-core`, `npm install`) süsteemi Chrome'iga (`CHROME_PATH` või macOS-i vaikimisi tee). Vaikimisi URL `http://localhost:8766`; käivita enne server: `python3 -m http.server 8766`. Sama testi saab jooksutada avaliku lehe vastu.
 - Claude Code'i eelvaate liivakast ei loe kausta `~/Documents`, seepärast käivita server Bashist.
 
+## Pitch'i demo video
+
+Elukaare demo (u 50 s) salvestatakse skriptiga, et seda saaks pärast Elukaare muutmist kohe uuesti teha:
+
+```bash
+python3 -m http.server 8766
+node scripts/demo/record.mjs /tmp/demo
+node scripts/demo/encode.mjs /tmp/demo
+```
+
+Tulemus `elukaar_demo.mp4` (H.264, 1600×900). Video tehakse Chrome'i enda kodeerijaga, ffmpeg-i pole vaja. Lugu: Tuleva konto näidisandmed, kõik korraga välja ja kulutase „mugav“ → kulud kaetud 86. eluaastani → Elukaare soovitusel fondipension ja riiklik pension 2 a hiljem → kaetud kuni 100. Kui Elukaare sammud või valikud muutuvad, kohenda `record.mjs`-i valijaid.
+
 ## Majutus
 
 - GitHub Pages töövooga `.github/workflows/pages.yml`: avaldab ainult `main`-i. Keskkonna `github-pages` reegel lubab avaldada ainult harudest `main` ja `gh-pages` (muudetud 10.10.2026, et vana haru ei kirjutaks lehte üle).

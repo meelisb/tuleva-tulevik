@@ -1,0 +1,82 @@
+/* Tulevane Mina: loo vaade. Tokenid tulevad failist tuleva.css. */
+
+/* Eluteekond */
+.path { list-style: none; display: flex; gap: 0.25rem; padding: 0; margin: 0; overflow-x: auto; position: relative; }
+.path li { flex: 1 0 4.25rem; position: relative; }
+.path li::before { content: ''; position: absolute; top: 1.25rem; left: -50%; width: 100%; height: 3px; background: var(--gray-border-2); z-index: 0; }
+.path li:first-child::before { display: none; }
+.path li.visited::before { background: var(--bright-blue); }
+.path button { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; width: 100%; border: 0; background: none; padding: 0 0 0.25rem; color: var(--text-secondary); font-size: 0.8125rem; border-radius: 0.5rem; }
+.path button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.path-dot { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #fff; border: 2px solid var(--gray-border-3); font-size: 1.125rem; transition: transform 0.15s; }
+.path li.visited .path-dot { border-color: var(--bright-blue); background: var(--blue-bg-1); }
+.path li.current .path-dot { border-color: var(--blue); background: var(--blue); transform: scale(1.12); box-shadow: 0 0 0 4px var(--blue-border-1); }
+.path li.current .path-label { color: var(--navy); font-weight: 700; }
+.path li.past .path-dot { filter: grayscale(0.6); }
+.path-label { margin-top: 0.25rem; white-space: nowrap; }
+.path-now { font-size: 0.6875rem; font-weight: 700; color: #fff; background: var(--green); border-radius: 1rem; padding: 0 0.4rem; margin-top: 0.125rem; }
+
+/* Peatükk */
+.chapter { animation: fadein 0.25s ease-out; }
+.chapter[hidden] { display: none !important; }
+@keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .chapter { animation: none; } .path-dot { transition: none; } }
+.chapter-head { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; }
+.chapter-art { flex: 0 0 4.5rem; height: 4.5rem; display: grid; place-items: center; font-size: 2.5rem; border-radius: 1rem; background: linear-gradient(135deg, var(--blue-bg-1), #e6f6fd); border: 1px solid var(--blue-border-1); }
+.chapter-kicker { margin: 0 0 0.125rem; font-size: 0.8125rem; font-weight: 500; letter-spacing: 0.02em; color: var(--text-navy-secondary); text-transform: uppercase; }
+.chapter h2 { margin: 0; }
+.chapter h2:focus { outline: none; }
+.chapter fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.chapter fieldset:disabled { opacity: 0.5; }
+
+/* Valikukaardid: raadionupp jääb nähtavaks ja klaviatuuriga kasutatavaks */
+.choices { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.choices-sm { grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
+.choice { position: relative; display: block; cursor: pointer; }
+.choice input { position: absolute; top: 0.9rem; right: 0.9rem; width: 1.1rem; height: 1.1rem; accent-color: var(--blue); }
+.choice-body { display: flex; flex-direction: column; gap: 0.25rem; height: 100%; padding: 0.9rem 2.5rem 0.9rem 1rem; border: 1px solid var(--gray-border-3); border-radius: 0.75rem; background: #fff; transition: border-color 0.15s, box-shadow 0.15s; }
+.choice-body small { color: var(--text-secondary); }
+.choice:hover .choice-body { border-color: var(--blue); }
+.choice input:checked + .choice-body { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue); background: var(--blue-bg-1); }
+.choice input:focus-visible + .choice-body { outline: 3px solid var(--navy); outline-offset: 2px; }
+.choice-emoji { font-size: 1.75rem; line-height: 1; }
+fieldset:disabled .choice { cursor: not-allowed; }
+
+.story-note { background: var(--gray-bg-2); border-left: 4px solid var(--bright-blue); border-radius: 0.25rem; padding: 0.75rem 1rem; }
+
+/* Kulupaketid */
+.packages { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+.pkg .choice-body { padding-right: 1rem; }
+.pkg input { top: 1.1rem; }
+.pkg-top { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; padding-right: 2rem; }
+.pkg-top strong { font-size: 1.125rem; color: var(--navy); }
+.pkg-price { flex-basis: 100%; font-weight: 700; color: var(--navy); white-space: nowrap; }
+.pkg-price small { font-weight: 400; color: var(--text-secondary); }
+.pkg-bar { display: flex; height: 0.6rem; border-radius: 1rem; overflow: hidden; background: var(--gray-bg-2); margin: 0.5rem 0 0.25rem; }
+.seg.base, .dot.base { background: var(--navy); }
+.seg.joy, .dot.joy { background: var(--bright-blue); }
+.seg.future, .dot.future { background: var(--green); }
+.dot { display: inline-block; width: 0.6rem; height: 0.6rem; border-radius: 50%; margin: 0 0.25rem 0 0.75rem; }
+.dot:first-child { margin-left: 0; }
+.pkg-legend { grid-column: 1 / -1; }
+.pkg-facts { list-style: none; padding: 0; margin: 0.25rem 0 0; font-size: 0.875rem; }
+.pkg-facts li { display: flex; gap: 0.4rem; padding: 0.15rem 0; }
+
+/* Jooksev kokkuvõte */
+.pot-bar { position: sticky; bottom: 0.75rem; z-index: 5; display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; padding: 0.75rem 1rem; background: var(--navy); color: #fff; border-radius: 0.75rem; box-shadow: var(--box-shadow-calculator); }
+.pot-item { display: flex; align-items: center; gap: 0.5rem; }
+.pot-emoji { font-size: 1.25rem; }
+.pot-item strong { display: block; line-height: 1.1; }
+.pot-item small { display: block; opacity: 0.8; font-size: 0.75rem; }
+
+/* Tulemus */
+.legacy-card { border: 1px solid var(--blue-border-1); border-radius: 0.75rem; padding: 1rem 1.25rem; background: linear-gradient(180deg, var(--blue-bg-1), #fff); }
+.recap { list-style: none; padding: 0; margin: 0; }
+.recap li { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid var(--gray-border-2); }
+.recap li:last-child { border-bottom: 0; }
+.table-compare th.mine { color: var(--blue); }
+
+@media (max-width: 575px) {
+  .chapter-art { flex-basis: 3.25rem; height: 3.25rem; font-size: 1.75rem; }
+  .pot-bar { gap: 0.5rem 1rem; font-size: 0.875rem; }
+}

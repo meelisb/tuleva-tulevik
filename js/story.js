@@ -106,7 +106,7 @@
     const p3Age = Math.max(55, currentAge);
     const p3Allowed = p3Has && p3Age < pa && p3OpenAge < p3Age;
     const p3Plan = p3Allowed ? (radio('p3plan') || 'keep') : 'keep';
-    const p3Use = radio('p3use') || 'spend';
+    const p3Use = 'spend'; // väljavõetud III samba raha kasutatakse kohe (pensioniks ei jää)
 
     // simulate lisab III samba sissemakse igal aastal ühisesse rahasse. Eemaldame selle aastatel, kui sammas pole avatud
     // või kui sissemakse läheb väljavõetavale III samba saldole (samaväärne tänane summa, sest mudel on lineaarne).
@@ -388,15 +388,6 @@
     $('p3Locked').innerHTML = lockTxt + (lockTxt ? ' <button type="button" class="btn btn-link p-0 align-baseline" data-goto="0">Muuda III sammast</button>' : '');
     $('p3Locked').classList.toggle('d-none', !lockTxt);
     $('p3PlanSet').disabled = !!lockTxt;
-    $('p3UseSet').classList.toggle('d-none', input.p3Plan === 'keep');
-    const yrs = P.retirementYears(input) - input.p3Age;
-    $('p3Note').innerHTML = input.p3Plan === 'keep'
-      ? 'III sammas jääb kasvama ja seda kasutad pensionieas.'
-      : input.p3Plan === 'lump'
-        ? input.p3Age + '-aastaselt saad kätte <strong>' + eur(input.p3Net) + '</strong> (maksuks läheb ' + eur(input.p3Gross - input.p3Net) + '). ' +
-          (input.p3Use === 'save' ? 'See ootab hoiusel pensioni algust.' : 'Kasutad selle kohe, pensioniks seda ei jää.')
-        : input.p3Age + '–' + (P.retirementYears(input) - 1) + '-aastaselt saad keskmiselt <strong>' + eur(input.p3Net / Math.max(1, yrs * 12)) + ' kuus</strong> (kokku ' + eur(input.p3Net) + ', maksuks ' + eur(input.p3Gross - input.p3Net) + '). ' +
-          'Pensionieaks jääb III sambasse ' + eur(input.p3Rem) + '. ' + (input.p3Use === 'save' ? 'Väljamaksed paned hoiusele pensioniks.' : 'Väljamaksed kasutad kohe.');
 
     // Pensioniiga: edasilükkamine
     // Edasilükkamine käib kõigi väljamakse viisidega: vahepeal elad samba või hoiuse rahast.

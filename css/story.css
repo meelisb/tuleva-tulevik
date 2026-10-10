@@ -237,3 +237,11 @@ main.container { padding-bottom: 1rem; }
 .chart-explain li { margin-bottom: 0.25rem; }
 @media (max-width: 575px) { .chart-wrap { height: 300px; } }
 .chart-summary li { margin-bottom: 0.2rem; }
+
+/* Akordionide nool (summary display:flex peidab brauseri vaikimisi kolmnurga) */
+details > summary { list-style: none; cursor: pointer; gap: 0.5rem; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: ''; flex: 0 0 auto; width: 0.55rem; height: 0.55rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform 0.15s; margin-right: 0.15rem; }
+details[open] > summary::before { transform: rotate(45deg); }
+@media (prefers-reduced-motion: reduce) { details > summary::before { transition: none; } }
+details > summary:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 0.25rem; }

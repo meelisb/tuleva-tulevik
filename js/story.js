@@ -634,32 +634,66 @@
     $('compare').innerHTML = head + '<tbody>' + body + '</tbody>';
   }
 
+  // Triibumuster (sama värv + tumesinised triibud), et hoiuse osa ei eristuks ainult värviga.
+  function stripes(base, line) {
+    const c = document.createElement('canvas'); c.width = c.height = 8;
+    const g = c.getContext('2d');
+    g.fillStyle = base; g.fillRect(0, 0, 8, 8);
+    g.strokeStyle = line; g.lineWidth = 1.5;
+    g.beginPath(); g.moveTo(0, 8); g.lineTo(8, 0); g.moveTo(-2, 2); g.lineTo(2, -2); g.moveTo(6, 10); g.lineTo(10, 6); g.stroke();
+    return g.createPattern(c, 'repeat');
+  }
+
+  // Graafiku tekstiline kokkuvõte (põhijäreldused) ja andmetabel (WCAG 1.1.1, ka klaviatuuri ja ekraanilugeja kasutajale).
+  function chartSummary(r, input) {
+    const pa = r.pensionStartAge, start = r.rows.find((x) => x.age === pa) || r.rows[0];
+    const parts = ['Pensioni alguses (' + pa + '-aastaselt) tuleb kuus ' + eur(start.i1) + ' riiklikku pensioni ja ' + eur(start.i23 + start.dep) + ' samba või hoiuse rahast.',
+      'Sinu kulud on ' + eur(input.needMonthly) + ' kuus.'];
+    if (r.coversNeedUntil === null) parts.push('Kulud on kaetud kuni 100. eluaastani.');
+    else parts.push('Kulud on kaetud kuni ' + r.coversNeedUntil + '. eluaastani.');
+    if (r.moneyEndAge !== null) parts.push('Samba ja hoiuse raha lõpeb ' + r.moneyEndAge + '-aastaselt, siis jääb ainult riiklik pension ' + eur(r.incomeAfterMoney) + ' kuus.');
+    return parts.join(' ');
+  }
+  function chartTable(r, input) {
+    const rows = r.rows.filter((x) => x.age >= r.pensionStartAge);
+    return '<table class="table table-sm align-middle mb-0"><caption id="chartTableCaption">Sissetulek ja kulud kuus vanuse järgi (tänastes eurodes)</caption>' +
+      '<thead><tr><th scope="col">Vanus</th><th scope="col">Aasta</th><th scope="col" class="text-end">I sammas</th><th scope="col" class="text-end">II ja III sammas</th><th scope="col" class="text-end">Hoiuselt</th><th scope="col" class="text-end">Kulud</th><th scope="col" class="text-end">Puudu</th><th scope="col" class="text-end">Elus</th></tr></thead><tbody>' +
+      rows.map((x) => '<tr><th scope="row">' + x.age + '</th><td>' + x.year + '</td><td class="text-end">' + eur(x.i1) + '</td><td class="text-end">' + eur(x.i23) + '</td><td class="text-end">' + eur(x.dep) +
+        '</td><td class="text-end">' + eur(input.needMonthly) + '</td><td class="text-end">' + (x.shortfall > 0.5 ? eur(x.shortfall) : '–') + '</td><td class="text-end">' + Math.round(x.alive * 100) + '%</td></tr>').join('') +
+      '</tbody></table>';
+  }
+
   function renderChart(r, input) {
     const rows = r.rows;
+    $('chartSummary').textContent = chartSummary(r, input);
+    $('chartTableWrap').innerHTML = chartTable(r, input);
+    const font = { family: 'Roboto', size: 13 };
     const data = {
       labels: rows.map((x) => x.age),
       datasets: [
+        // Värvid samad. Lisaks: heledamatel tulpadel tumesinine äär (eristub valgest taustast), hoiusel triibud.
         { type: 'bar', label: 'I sammas', data: rows.map((x) => Math.round(x.i1)), backgroundColor: '#002f63', stack: 'income', yAxisID: 'y' },
-        { type: 'bar', label: 'II ja III sammas', data: rows.map((x) => Math.round(x.i23)), backgroundColor: '#00aeea', stack: 'income', yAxisID: 'y' },
-        { type: 'bar', label: 'Hoiuselt', data: rows.map((x) => Math.round(x.dep)), backgroundColor: '#9fd8f0', stack: 'income', yAxisID: 'y' },
+        { type: 'bar', label: 'II ja III sammas', data: rows.map((x) => Math.round(x.i23)), backgroundColor: '#00aeea', borderColor: '#002f63', borderWidth: 1, stack: 'income', yAxisID: 'y' },
+        { type: 'bar', label: 'Hoiuselt', data: rows.map((x) => Math.round(x.dep)), backgroundColor: stripes('#9fd8f0', '#002f63'), borderColor: '#002f63', borderWidth: 1, stack: 'income', yAxisID: 'y' },
         { type: 'line', label: 'Kulud', data: rows.map(() => input.needMonthly), borderColor: '#db2200', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, stack: 'need', yAxisID: 'y' },
-        { type: 'line', label: 'Elus (%)', data: rows.map((x) => Math.round(x.alive * 100)), borderColor: '#8a8d91', borderWidth: 2, pointRadius: 0, tension: 0.3, yAxisID: 'y1' },
+        { type: 'line', label: 'Elus (%)', data: rows.map((x) => Math.round(x.alive * 100)), borderColor: '#8a8d91', backgroundColor: '#fff', borderWidth: 2, tension: 0.3, yAxisID: 'y1',
+          pointRadius: rows.map((x) => (x.age % 5 === 0 ? 3.5 : 0)), pointBorderWidth: 2, pointStyle: 'circle' },
       ],
     };
     const options = {
       responsive: true, maintainAspectRatio: false, animation: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Roboto' } } },
+        legend: { position: 'bottom', labels: { boxWidth: 14, boxHeight: 14, font: font, usePointStyle: false } },
         tooltip: { callbacks: {
           title: (items) => items[0].label + '-aastaselt (' + rows[items[0].dataIndex].year + ')',
           label: (c) => c.dataset.label + ': ' + (c.dataset.yAxisID === 'y1' ? c.raw + '%' : eur(c.raw)),
         } },
       },
       scales: {
-        x: { stacked: true, grid: { display: false }, ticks: { font: { family: 'Roboto' }, autoSkip: true, maxRotation: 0 } },
-        y: { stacked: true, beginAtZero: true, ticks: { callback: (v) => v + ' €', font: { family: 'Roboto' } }, grid: { color: '#e0e6ec' } },
-        y1: { position: 'right', min: 0, max: 100, grid: { display: false }, ticks: { callback: (v) => v + '%', font: { family: 'Roboto' } } },
+        x: { stacked: true, grid: { display: false }, title: { display: true, text: 'Vanus', font: font, color: '#293036' }, ticks: { font: font, color: '#293036', autoSkip: true, maxRotation: 0 } },
+        y: { stacked: true, beginAtZero: true, title: { display: true, text: '€ kuus', font: font, color: '#293036' }, ticks: { callback: (v) => v + ' €', font: font, color: '#293036' }, grid: { color: '#e0e6ec' } },
+        y1: { position: 'right', min: 0, max: 100, grid: { display: false }, title: { display: true, text: 'Elus (%)', font: font, color: '#293036' }, ticks: { callback: (v) => v + '%', font: font, color: '#293036' } },
       },
     };
     if (chart) { chart.data = data; chart.options = options; chart.update(); }
@@ -812,6 +846,14 @@
     if (b) go(parseInt(b.dataset.goto, 10));
   });
   $('resetPkg').addEventListener('click', () => { delete overrides[readInput().pkg.id]; breakdownKey = null; update(); });
+  // Graafik ↔ tabel
+  $('chartToggle').addEventListener('click', () => {
+    const show = $('chartToggle').getAttribute('aria-expanded') !== 'true';
+    $('chartToggle').setAttribute('aria-expanded', String(show));
+    $('chartToggle').textContent = show ? 'Näita graafikuna' : 'Näita tabelina';
+    $('chartTableWrap').classList.toggle('d-none', !show);
+    $('chartWrap').classList.toggle('d-none', show);
+  });
   $('backBtn').addEventListener('click', () => move(-1));
   $('nextBtn').addEventListener('click', () => move(1));
   document.querySelectorAll('.chapter input, .chapter select').forEach((el) => {

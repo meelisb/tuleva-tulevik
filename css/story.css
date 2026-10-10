@@ -149,3 +149,10 @@ main.container { padding-bottom: 1rem; }
 /* Vaadatud samm: linnuke (mitte ainult värv) */
 .path-check { position: absolute; top: -0.2rem; left: calc(50% + 0.6rem); z-index: 2; display: grid; place-items: center; width: 1.05rem; height: 1.05rem; border-radius: 50%; background: var(--navy); color: #fff; border: 2px solid #fff; }
 .path-check .ico { width: 0.65rem; height: 0.65rem; stroke-width: 3.5; vertical-align: 0; }
+/* Ligipääsetav graafik */
+.chart-figure { margin: 0; }
+.chart-summary { color: var(--text-primary); margin-bottom: 0.75rem; }
+.chart-table { max-height: 420px; overflow-y: auto; }
+.chart-table caption { caption-side: top; color: var(--text-secondary); font-size: 0.875rem; }
+.chart-table thead th { position: sticky; top: 0; background: #fff; }
+.chart-table:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }

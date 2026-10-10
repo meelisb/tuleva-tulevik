@@ -69,10 +69,7 @@
         <div class="col-6 col-md-3">
           <label class="form-label" for="p3">III sammas täna, €</label>
           <input class="form-control" id="p3" type="number" min="0" step="1000" value="5000">
-        </div>
-        <div class="col-6 col-md-3">
-          <label class="form-label" for="p3Before2021">III sambaga liitusin</label>
-          <select class="form-select" id="p3Before2021"><option value="1">enne 2021</option><option value="0">2021 või hiljem</option></select>
+          <div class="form-text">0, kui sul seda pole</div>
         </div>
         <div class="col-12 col-md-6">
           <label class="form-label" for="p1Monthly">Riiklik pension pensionieas, €/kuus</label>
@@ -150,9 +147,10 @@
         <div class="chapter-art" aria-hidden="true">💼</div>
         <div>
           <p class="chapter-kicker" id="k3"></p>
-          <h2 id="h3" tabindex="-1">Tööaastad: kas jääd oma fondi juurde?</h2>
+          <h2 id="h3" tabindex="-1">Tööaastad: kuidas oma pensioni kogud?</h2>
         </div>
       </div>
+      <h3 class="h5 section-title">II sammas</h3>
       <fieldset class="mb-3">
         <legend class="form-label">Sinu fond edaspidi</legend>
         <div class="choices">
@@ -184,11 +182,30 @@
           </select>
           <div class="form-text">Riik lisab 4% sotsiaalmaksust.</div>
         </div>
+      </div>
+
+      <h3 class="h5 section-title mt-4">III sammas</h3>
+      <fieldset class="mb-3">
+        <legend class="form-label">Kas avad III samba?</legend>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="p3has" value="yes" checked>
+            <span class="choice-body"><span class="choice-emoji" aria-hidden="true">🌱</span><strong>Avan / avasin III samba</strong><small>Vabatahtlik lisakogumine. Sissemaksetelt saad tulumaksu tagasi.</small></span></label>
+          <label class="choice"><input type="radio" name="p3has" value="no">
+            <span class="choice-body"><span class="choice-emoji" aria-hidden="true">🚫</span><strong>Ei ava</strong><small>Kogun ainult II sambas.</small></span></label>
+        </div>
+      </fieldset>
+      <div id="p3HasMore" class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+          <label class="form-label" for="p3OpenAge">Vanus avamisel</label>
+          <input class="form-control" id="p3OpenAge" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-describedby="p3OpenYear">
+          <div class="form-text" id="p3OpenYear"></div>
+        </div>
         <div class="col-6 col-md-4">
-          <label class="form-label" for="p3Monthly">III sambasse, €/kuus</label>
+          <label class="form-label" for="p3Monthly">Sissemakse, €/kuus</label>
           <input class="form-control" id="p3Monthly" type="number" min="0" step="10" value="50">
         </div>
       </div>
+      <div class="small-muted mb-3" id="p3WorkNote" aria-live="polite"></div>
       <div class="story-note mt-3" id="workNote" aria-live="polite"></div>
     </section>
 

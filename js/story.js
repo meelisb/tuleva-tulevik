@@ -166,10 +166,15 @@
     };
   }
 
+  // Lisastsenaarium: raha jääb fondi, lepingut ega ühekordset väljamakset pole. pension.js katab siis vajaduse
+  // lisaväljamaksetega sambast (10% tulumaks) ja ülejäänu kasvab edasi.
+  const GROW = { id: 'E', name: 'Jätkan kasvatamist', short: 'Raha jääb fondi, võtad välja ainult nii palju, kui vaja (10% tulumaks).' };
+
   // Valikud → üks stsenaarium failist pension.js.
   function scenarioFor(input) {
     const S = (id) => P.SCENARIOS.find((s) => s.id === id);
     if (input.payout === 'lump') return S('A');
+    if (input.payout === 'grow') return GROW;
     if (input.deferral > 0) return Object.assign({}, S('C'), { deferral: input.deferral });
     return input.contract === 'yearly' ? S('D') : S('B');
   }
@@ -373,7 +378,10 @@
           'Pensionieaks jääb III sambasse ' + eur(input.p3Rem) + '. ' + (input.p3Use === 'save' ? 'Väljamaksed paned hoiusele pensioniks.' : 'Väljamaksed kasutad kohe.');
 
     // Pensioniiga: edasilükkamine
-    const lump = input.payout === 'lump';
+    const lump = input.payout === 'lump' || input.payout === 'grow'; // edasilükkamist arvestab ainult fondipensioni sild
+    $('deferLockedTxt').textContent = input.payout === 'grow'
+      ? 'Kui jätkad kasvatamist, arvestab see lugu riikliku pensioniga kohe pensionieas.'
+      : 'Kui võtad samba raha korraga välja, arvestab see lugu riikliku pensioniga kohe pensionieas.';
     $('deferLocked').classList.toggle('d-none', !lump);
     $('deferSet').disabled = lump;
     const curDef = lump ? 0 : input.deferral;
@@ -387,7 +395,8 @@
 
     // 66+
     let lockMsg = '';
-    if (lump) lockMsg = 'Võtsid samba raha korraga välja, nii et fondipensioni lepingut pole vaja. Raha on hoiusel ja kasutad seda vajaduse järgi.';
+    if (input.payout === 'grow') lockMsg = 'Jätkad kasvatamist, nii et fondipensioni lepingut pole. Raha kasvab fondis edasi ja võtad välja ainult nii palju, kui kuus vaja (10% tulumaks).';
+    else if (lump) lockMsg = 'Võtsid samba raha korraga välja, nii et fondipensioni lepingut pole vaja. Raha on hoiusel ja kasutad seda vajaduse järgi.';
     else if (input.deferral > 0) lockMsg = 'Lükkasid riikliku pensioni ' + input.deferral + ' aastat edasi. Seni elad samba rahast (sild) ja fondipensioni lepingu sõlmid siis, kui riiklik pension algab (' + (pa + input.deferral) + '-aastaselt).';
     $('contractLocked').textContent = lockMsg;
     $('contractLocked').classList.toggle('d-none', !lockMsg);
@@ -396,7 +405,7 @@
 
   function renderPotBar(input) {
     const pa = P.retirementYears(input);
-    const p1 = input.payout === 'lump' ? input.p1Monthly : input.p1Monthly * (1 + P.DEFERRAL_INCREASE[input.deferral]);
+    const p1 = input.payout !== 'fund' ? input.p1Monthly : input.p1Monthly * (1 + P.DEFERRAL_INCREASE[input.deferral]);
     const items = [
       ['🏦', eur(potAtPension(input, input.realReturn)), 'sammastes ' + pa + '-aastaselt'],
       ['🏛️', eur(p1) + ' /kuus', 'riiklik pension'],
@@ -474,8 +483,8 @@
     const items = [
       [0, '🙂', 'Sündinud ' + input.birthYear + ', II sammas ' + eur(input.p2) + ', III sammas ' + eur(input.p3Base)],
       [4, '🔓', !input.p3Has ? 'III sammast ei ole' : input.p3Plan === 'keep' ? 'III sammas jääb kasvama' : (input.p3Plan === 'lump' ? 'Võtan III samba ' + input.p3Age + '-aastaselt korraga välja: ' + eur(input.p3Net) : 'Täiendav fondipension III sambast alates ' + input.p3Age + '-aastaselt: ' + eur(input.p3Net)) + (input.p3Plan === 'keep' ? '' : input.p3Use === 'save' ? ', hoiusele' : ', kasutan kohe')],
-      [5, '🧳', input.payout === 'lump' ? 'Võtan samba raha korraga välja' : 'Võtan samba raha välja fondipensionina'],
-      [6, '🏛️', input.payout === 'lump' || !input.deferral ? 'Riiklik pension ' + pa + '-aastaselt' : 'Riiklik pension ' + (pa + input.deferral) + '-aastaselt (' + input.deferral + ' a hiljem)'],
+      [5, '🧳', { grow: 'Jätkan kasvatamist, võtan välja vajaduse järgi', lump: 'Võtan samba raha korraga välja', fund: 'Võtan samba raha välja fondipensionina' }[input.payout]],
+      [6, '🏛️', input.payout !== 'fund' || !input.deferral ? 'Riiklik pension ' + pa + '-aastaselt' : 'Riiklik pension ' + (pa + input.deferral) + '-aastaselt (' + input.deferral + ' a hiljem)'],
       [7, '🌳', scenario.id + '. ' + scenario.name],
       [8, '🛒', input.pkg.name + (input.edited ? ' (muudetud)' : '') + ': ' + eur(input.needMonthly) + ' kuus'],
     ];
@@ -536,7 +545,7 @@
 
   function renderResult(input) {
     const scenario = scenarioFor(input);
-    const defs = P.SCENARIOS.map((s) => (s.id === 'C' ? Object.assign({}, s, { deferral: input.deferral || 2 }) : s));
+    const defs = P.SCENARIOS.map((s) => (s.id === 'C' ? Object.assign({}, s, { deferral: input.deferral || 2 }) : s)).concat([GROW]);
     const results = defs.map((s) => Object.assign(P.simulate(input, T, s), { sustainable: P.sustainableNeed(input, T, s) }));
     const mine = Object.assign(P.simulate(input, T, scenario), { sustainable: P.sustainableNeed(input, T, scenario) });
     $('answer').innerHTML = answerText(mine, input);

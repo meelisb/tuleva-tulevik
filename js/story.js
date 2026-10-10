@@ -487,7 +487,7 @@
         '🌱 Jäta III sammas kasvama']);
       box.innerHTML = '<div class="legacy-card"><h3 class="h5">Raha üle ei jää. Mida saaks muuta?</h3>' +
         (tips.length ? '<ul class="tips">' + tips.map((x) => '<li><span>' + x[1] + '</span> <button type="button" class="btn btn-primary btn-sm mt-1" data-tip="' + x[0] + '">' + x[2] + '</button></li>').join('') + '</ul>' : '') +
-        '<p class="text-secondary mb-2">' + (tips.length ? 'Või proovi' : 'Proovi') + ' mõnda neist ja vaata, kuidas tulemus muutub.</p><div class="d-flex flex-wrap gap-2">' +
+        '<p class="legacy-hint mb-2">' + (tips.length ? 'Või proovi' : 'Proovi') + ' mõnda neist ja vaata, kuidas tulemus muutub.</p><div class="d-flex flex-wrap gap-2">' +
         '<button type="button" class="btn btn-outline-primary btn-sm" data-goto="6">🏛️ Lükka riiklik pension edasi</button>' +
         '<button type="button" class="btn btn-outline-primary btn-sm" data-goto="8">🛒 Vali teine kulupakett</button></div></div>';
       box.querySelectorAll('[data-tip]').forEach((btn) => btn.addEventListener('click', () => {

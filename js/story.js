@@ -98,7 +98,9 @@
   const LAST = chapters.length - 1;
   // Minevikuetapid (0–18, 18) ja tööaastad jäävad eraldi etapina välja: kõik on esimeses vaates.
   const SKIP = new Set([1, 2, 3]); // tööaastate küsimused on esimeses vaates
-  const shown = chapters.map((c, i) => i).filter((i) => !SKIP.has(i));
+  // 55 a samm on loos ainult siis, kui III sambaga liitusid enne 2021 (siis avaneb soodusmaks 55-aastaselt).
+  const skipped = (i) => SKIP.has(i) || (i === 4 && $('p3Joined').value !== 'before');
+  const shownSteps = () => chapters.map((c, i) => i).filter((i) => !skipped(i));
   let step = 0;
   let visited = new Set([0]);
   let legacyChoice = null;
@@ -151,7 +153,7 @@
     const p3Allowed = p3Has && p3Age < pa && p3OpenAge < p3Age;
     // Täiendav fondipension on võimalik alles soodusvanusest (enne 2021 liitunul 55, hiljem 60). Varem ainult korraga (22%).
     const p3FundOk = p3Age >= p3Open;
-    let p3Plan = p3Allowed ? (radio('p3plan') || 'keep') : 'keep';
+    let p3Plan = p3Allowed && $('p3Joined').value === 'before' ? (radio('p3plan') || 'keep') : 'keep';
     if (p3Plan === 'fund' && !p3FundOk) p3Plan = 'keep';
     const p3Use = 'spend'; // väljavõetud III samba raha kasutatakse kohe (pensioniks ei jää)
 
@@ -465,7 +467,6 @@
     $('p3Locked').innerHTML = lockTxt + (lockTxt ? ' <button type="button" class="btn btn-link p-0 align-baseline" data-goto="0">Muuda III sammast<span class="visually-hidden"> sinu andmetes</span></button>' : '');
     $('p3Locked').classList.toggle('d-none', !lockTxt);
     $('p3PlanSet').disabled = !!lockTxt;
-    $('p3JoinedWrap').classList.toggle('d-none', !input.p3Has);
 
     // Pensioniiga: edasilükkamine
     // Edasilükkamine käib kõigi väljamakse viisidega: vahepeal elad samba või hoiuse rahast.
@@ -618,7 +619,7 @@
     // Iga „Muuda“ nupu ekraanilugeja nimi ütleb, mida see muudab (WCAG 2.4.4).
     const RECAP_WHAT = { 0: 'sinu andmeid', 4: 'III samba valikut 55-aastaselt', 5: 'II ja III samba valikut ' + (pa - 5) + '-aastaselt',
       6: 'riikliku pensioni ja samba raha valikut pensionieas', 7: 'pensionipõlve valikut', 8: 'kulupaketti' };
-    $('recap').innerHTML = items.map((x) => '<li><span aria-hidden="true">' + x[1] + '</span><span class="flex-grow-1">' + x[2] + '</span><button type="button" class="btn btn-link btn-sm p-0" data-goto="' + x[0] + '">Muuda<span class="visually-hidden"> ' + (RECAP_WHAT[x[0]] || chapters[x[0]].dataset.label) + '</span></button></li>').join('');
+    $('recap').innerHTML = items.filter((x) => !skipped(x[0])).map((x) => '<li><span aria-hidden="true">' + x[1] + '</span><span class="flex-grow-1">' + x[2] + '</span><button type="button" class="btn btn-link btn-sm p-0" data-goto="' + x[0] + '">Muuda<span class="visually-hidden"> ' + (RECAP_WHAT[x[0]] || chapters[x[0]].dataset.label) + '</span></button></li>').join('');
   }
 
   // Otsuste kaart: reeglid ja maksud (Pensionikeskus, SKA 2026) koos kasutaja valikuga.
@@ -708,21 +709,57 @@
       '</tbody></table>';
   }
 
+  // Selgitus: kuidas graafikut lugeda + sinu graafik etappide kaupa (muutub koos valikutega).
+  const isMobile = () => window.matchMedia('(max-width: 575px)').matches;
+  function chartExplain(r, input, mobile) {
+    const pa = r.pensionStartAge;
+    const rows = r.rows.filter((x) => x.age >= pa);
+    const kind = mobile ? 'Kihid' : 'Tulbad';
+    const how = '<ul class="mb-2">' +
+      '<li><strong>' + kind + '</strong> näitavad iga vanuse kohta, millest sinu kulud kuus kaetakse (tänastes eurodes): <strong>tumesinine</strong> on riiklik pension (I sammas), <strong>sinine</strong> II ja III sammas, <strong>triibuline</strong> hoiuselt (varem sambast välja võetud raha).</li>' +
+      '<li><strong>Punane katkendjoon</strong> on sinu kulud kuus (' + eur(input.needMonthly) + '). Kui ' + kind.toLowerCase() + ' jäävad joonest allapoole, on raha puudu.</li>' +
+      '<li><strong>Hall joon</strong> näitab, mitu protsenti sinuvanustest on selles vanuses veel elus (Statistikaamet)' + (mobile ? '; täpse protsendi näed, kui puudutad graafikut' : ', parem telg') + '.</li></ul>';
+    // Etapid: järjestikused aastad, kus kulude katmise allikad on samad.
+    const label = (x) => {
+      const src = [x.i1 > 0.5 ? 'riiklik pension' : '', x.i23 > 0.5 ? 'II ja III sammas' : '', x.dep > 0.5 ? 'hoius' : ''].filter(Boolean);
+      return (src.length ? src.join(', ') : 'sissetulekut pole') + (x.shortfall > 0.5 ? '|puudu' : '|kaetud');
+    };
+    const phases = [];
+    rows.forEach((x) => {
+      const k = label(x), last = phases[phases.length - 1];
+      if (last && last.k === k) { last.to = x.age; last.short += x.shortfall; last.n++; last.i1 = x.i1; }
+      else phases.push({ k: k, from: x.age, to: x.age, short: x.shortfall, n: 1, i1: x.i1 });
+    });
+    const items = phases.map((ph) => {
+      const [src, state] = ph.k.split('|');
+      const ages = ph.from === ph.to ? ph.from + ' a' : ph.from + '–' + ph.to + ' a';
+      const what = src.charAt(0).toUpperCase() + src.slice(1);
+      return '<li><strong>' + ages + ':</strong> ' + what + '. ' + (state === 'kaetud' ? 'Kulud on kaetud.' : 'Raha jääb puudu keskmiselt ' + eur(ph.short / ph.n) + ' kuus.') + '</li>';
+    });
+    return '<p class="mb-1">Graafik näitab, kuidas sinu raha pensionieast ' + (mobile ? '' : 'kuni 100. eluaastani ') + 'kulusid katab.</p>' + how +
+      '<p class="mb-1 fw-medium">Sinu graafik etappide kaupa</p><ul class="mb-0">' + items.join('') + '</ul>';
+  }
+
   function renderChart(r, input) {
-    const rows = r.rows;
+    const mobile = isMobile();
+    $('chartExplain').innerHTML = chartExplain(r, input, mobile);
+    // Mobiilis: kihiline pindgraafik pensioniea algusest (tulpade asemel), elus-% ilma eraldi teljeta.
+    const rows = mobile ? r.rows.filter((x) => x.age >= r.pensionStartAge) : r.rows;
     $('chartSummary').textContent = chartSummary(r, input);
     $('chartTableWrap').innerHTML = chartTable(r, input);
     const font = { family: 'Roboto', size: 14 };
+    // Mobiilis tulbad → kihid (sama värv ja muster), tühjad aastad ei teki rägastikuks.
+    const area = (fill) => (mobile ? { type: 'line', fill: fill, pointRadius: 0, tension: 0, borderWidth: 1, stepped: false } : {});
     const data = {
       labels: rows.map((x) => x.age),
       datasets: [
         // Värvid samad. Lisaks: heledamatel tulpadel tumesinine äär (eristub valgest taustast), hoiusel triibud.
-        { type: 'bar', label: 'I sammas', data: rows.map((x) => Math.round(x.i1)), backgroundColor: '#002f63', stack: 'income', yAxisID: 'y' },
-        { type: 'bar', label: 'II ja III sammas', data: rows.map((x) => Math.round(x.i23)), backgroundColor: '#00aeea', borderColor: '#002f63', borderWidth: 1, stack: 'income', yAxisID: 'y' },
-        { type: 'bar', label: 'Hoiuselt (välja võetud raha)', data: rows.map((x) => Math.round(x.dep)), backgroundColor: stripes('#9fd8f0', '#002f63'), borderColor: '#002f63', borderWidth: 1, stack: 'income', yAxisID: 'y' },
+        Object.assign({ type: 'bar', label: 'I sammas', data: rows.map((x) => Math.round(x.i1)), backgroundColor: '#002f63', stack: 'income', yAxisID: 'y' }, area('origin')),
+        Object.assign({ type: 'bar', label: 'II ja III sammas', data: rows.map((x) => Math.round(x.i23)), backgroundColor: '#00aeea', borderColor: '#002f63', borderWidth: 1, stack: 'income', yAxisID: 'y' }, area('-1')),
+        Object.assign({ type: 'bar', label: 'Hoiuselt (välja võetud raha)', data: rows.map((x) => Math.round(x.dep)), backgroundColor: stripes('#9fd8f0', '#002f63'), borderColor: '#002f63', borderWidth: 1, stack: 'income', yAxisID: 'y' }, area('-1')),
         { type: 'line', label: 'Kulud', data: rows.map(() => input.needMonthly), borderColor: '#db2200', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, stack: 'need', yAxisID: 'y' },
-        { type: 'line', label: 'Elus (%, paremal teljel)', data: rows.map((x) => Math.round(x.alive * 100)), borderColor: '#8a8d91', backgroundColor: '#fff', borderWidth: 2, tension: 0.3, yAxisID: 'y1',
-          pointRadius: rows.map((x) => (x.age % 5 === 0 ? 3.5 : 0)), pointBorderWidth: 2, pointStyle: 'circle' },
+        { type: 'line', label: mobile ? 'Elus (%)' : 'Elus (%, paremal teljel)', data: rows.map((x) => Math.round(x.alive * 100)), borderColor: '#8a8d91', backgroundColor: '#fff', borderWidth: 2, tension: 0.3, yAxisID: 'y1',
+          pointRadius: rows.map((x) => (!mobile && x.age % 5 === 0 ? 3.5 : 0)), pointBorderWidth: 2, pointStyle: 'circle' },
       ],
     };
     const options = {
@@ -743,13 +780,14 @@
         } },
       },
       scales: {
-        x: { stacked: true, grid: { display: false }, title: { display: true, text: 'Vanus', font: font, color: '#293036' }, ticks: { font: font, color: '#293036', autoSkip: true, maxRotation: 0 } },
+        x: { stacked: true, grid: { display: false }, title: { display: true, text: 'Vanus', font: font, color: '#293036' }, ticks: { font: font, color: '#293036', autoSkip: true, maxRotation: 0, maxTicksLimit: mobile ? 6 : undefined } },
         y: { stacked: true, beginAtZero: true, title: { display: true, text: '€ kuus', font: font, color: '#293036' }, ticks: { callback: (v) => v + ' €', font: font, color: '#293036' }, grid: { color: '#e0e6ec' } },
-        y1: { position: 'right', min: 0, max: 100, grid: { display: false }, title: { display: true, text: 'Elus (%)', font: font, color: '#293036' }, ticks: { callback: (v) => v + '%', font: font, color: '#293036' } },
+        y1: { display: !mobile, position: 'right', min: 0, max: 100, grid: { display: false }, title: { display: true, text: 'Elus (%)', font: font, color: '#293036' }, ticks: { callback: (v) => v + '%', font: font, color: '#293036' } },
       },
     };
+    if (chart && chart.$mobile !== mobile) { chart.destroy(); chart = null; }
     if (chart) { chart.data = data; chart.options = options; chart.update(); }
-    else chart = new Chart($('chart'), { data: data, options: options });
+    else { chart = new Chart($('chart'), { data: data, options: options }); chart.$mobile = mobile; }
   }
 
   function renderResult(input) {
@@ -805,7 +843,7 @@
   // ---------- Navigeerimine ----------
   function renderPath(input) {
     $('path').innerHTML = chapters.map((c, i) => {
-      if (SKIP.has(i)) return '';
+      if (skipped(i)) return '';
       const ages = stageAges(P.retirementYears(input))[i];
       const past = ages && ages[1] < input.currentAge;
       const now = ages && ages[0] <= input.currentAge && ages[1] >= input.currentAge;
@@ -822,13 +860,15 @@
 
   // Liigu järgmisele/eelmisele näidatavale etapile (vahelejäetud etapid jäävad vahele).
   function move(dir) {
+    const shown = shownSteps();
     const k = shown.indexOf(step) + dir;
     go(shown[Math.max(0, Math.min(shown.length - 1, k))]);
   }
 
   function go(n, focus) {
     step = Math.max(0, Math.min(LAST, n));
-    if (SKIP.has(step)) step = shown.find((i) => i > step);
+    const shown = shownSteps();
+    if (skipped(step)) step = shown.find((i) => i > step);
     visited.add(step);
     chapters.forEach((c, i) => { c.hidden = i !== step; });
     const pos = shown.indexOf(step);
@@ -965,6 +1005,8 @@
     $('chartTableWrap').classList.toggle('d-none', !show);
     $('chartWrap').classList.toggle('d-none', show);
   });
+  $('p3Joined').addEventListener('change', () => go(skipped(step) ? shownSteps().find((i) => i > step) : step, false));
+  window.matchMedia('(max-width: 575px)').addEventListener('change', () => { if (step === LAST) update(); });
   $('backBtn').addEventListener('click', () => move(-1));
   $('nextBtn').addEventListener('click', () => move(1));
   document.querySelectorAll('.chapter input, .chapter select').forEach((el) => {

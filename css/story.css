@@ -224,3 +224,15 @@ main.container { padding-bottom: 1rem; }
 /* Graafik ei tohi olla laiem kui konteiner (mobiil, akna suuruse muutmine) */
 .chart-wrap { width: 100%; min-width: 0; }
 .chart-wrap canvas { max-width: 100%; }
+
+/* Mobiilis on sildid kõigil sammudel (14px). Esimene ja viimane joondatud servale. */
+@media (max-width: 575px) {
+  .path li:not(.current) .path-label { position: static; width: auto; height: auto; overflow: visible; clip: auto; }
+  .path-label { margin-top: 0.2rem; letter-spacing: -0.01em; }
+}
+/* Graafiku selgitus */
+.chart-explain { border: 1px solid var(--gray-border-2); border-radius: 0.5rem; padding: 0 1rem; background: var(--gray-bg-1); }
+.chart-explain[open] { padding-bottom: 0.75rem; }
+.chart-explain ul { padding-left: 1.1rem; }
+.chart-explain li { margin-bottom: 0.25rem; }
+@media (max-width: 575px) { .chart-wrap { height: 300px; } }

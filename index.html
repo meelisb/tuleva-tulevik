@@ -21,7 +21,15 @@
 
     <!-- 1. Sisendid -->
     <section class="card card-calculator p-4 mb-4" aria-labelledby="h-input">
-      <h2 id="h-input" class="mb-3">Sinu andmed</h2>
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+        <h2 id="h-input" class="mb-0">Sinu andmed</h2>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-primary" id="prefillBtn">Täida Tuleva konto andmetega (näidis)</button>
+          <button type="button" class="btn btn-outline-primary d-none" id="clearBtn">Tühjenda</button>
+        </div>
+      </div>
+      <p class="small-muted mb-3">Prototüübis on need väljamõeldud liikme näidisandmed. Päris tootes tulevad need sinu Tuleva kontolt pärast sisselogimist.</p>
+      <div id="prefillPanel" class="prefill-panel d-none mb-3"></div>
       <form id="form" class="row g-3" novalidate>
         <div class="col-6 col-md-3">
           <label class="form-label" for="birthYear">Sünniaasta</label>
@@ -34,10 +42,17 @@
             <option value="M">Mees</option>
           </select>
         </div>
-        <div class="col-12 col-md-6">
-          <label class="form-label" for="p1Monthly">Riiklik pension pensionieas, €/kuus</label>
+        <div class="col-6 col-md-3">
+          <label class="form-label" for="pensionAgeYears">Pensioniiga</label>
+          <select class="form-select" id="pensionAgeYears">
+            <option value="65">65 a</option><option value="66">66 a</option><option value="67">67 a</option><option value="68">68 a</option>
+          </select>
+          <div class="form-text" id="paHint"></div>
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label" for="p1Monthly">Riiklik pension, €/kuus</label>
           <input class="form-control" id="p1Monthly" type="number" min="0" step="10" value="900">
-          <div class="form-text">Vaata oma prognoosi <a href="https://iseteenindus.sotsiaalkindlustusamet.ee/self-service/pension-calculator" target="_blank" rel="noopener">SKA pensionikalkulaatorist</a> (I sammas).</div>
+          <div class="form-text"><a href="https://iseteenindus.sotsiaalkindlustusamet.ee/self-service/pension-calculator" target="_blank" rel="noopener">SKA kalkulaatorist</a></div>
         </div>
         <div class="col-6 col-md-3">
           <label class="form-label" for="p2">II sammas, €</label>
@@ -54,21 +69,56 @@
             <option value="0">2021 või hiljem</option>
           </select>
         </div>
-        <div class="col-12 col-md-6">
-          <label class="form-label" for="needMonthly">Vajan pensionil, €/kuus</label>
-          <input class="form-control" id="needMonthly" type="number" min="0" step="50" value="1200">
-          <div class="form-text">Näidisväärtus. Asenda oma tegelike kuludega.</div>
+        <div class="col-6 col-md-3">
+          <label class="form-label" for="grossMonthly">Brutopalk, €/kuus</label>
+          <input class="form-control" id="grossMonthly" type="number" min="0" step="100" value="2000">
         </div>
-        <div class="col-12 col-md-6">
-          <label class="form-label" for="realReturn">Fondi tootlus pärast inflatsiooni</label>
+        <div class="col-6 col-md-3">
+          <label class="form-label" for="p2Rate">II samba makse</label>
+          <select class="form-select" id="p2Rate">
+            <option value="0">puudub</option><option value="0.02" selected>2%</option><option value="0.04">4%</option><option value="0.06">6%</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label" for="p3Monthly">III sambasse, €/kuus</label>
+          <input class="form-control" id="p3Monthly" type="number" min="0" step="10" value="0">
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label" for="realReturn">Tootlus pärast inflatsiooni</label>
           <select class="form-select" id="realReturn">
             <option value="0">0% aastas</option>
             <option value="0.02" selected>2% aastas</option>
             <option value="0.04">4% aastas</option>
           </select>
-          <div class="form-text">Tuleva 50+ kalkulaatori vaikeväärtus on 2%.</div>
         </div>
       </form>
+    </section>
+
+    <!-- 1b. Vajadus -->
+    <section class="card p-4 mb-4" aria-labelledby="h-need">
+      <h2 id="h-need" class="mb-1">Mida vajad pensionil?</h2>
+      <p class="text-secondary mb-3">Vaikimisi on täidetud Statistikaameti andmed: kui palju sinuvanused pensionärid keskmiselt kulutavad. Muuda neid oma elu järgi.</p>
+      <div class="row g-3 align-items-end mb-2">
+        <div class="col-12 col-md-5">
+          <label class="form-label" for="household">Leibkond</label>
+          <select class="form-select" id="household">
+            <option value="uksi">Elan üksi</option>
+            <option value="paar">Elan paaris (minu osa)</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-4">
+          <label class="form-label" for="needMonthly">Vajan kokku, €/kuus</label>
+          <input class="form-control" id="needMonthly" type="number" min="0" step="10" value="1200">
+        </div>
+        <div class="col-6 col-md-3">
+          <button type="button" class="btn btn-outline-primary w-100" id="statBtn">Täida statistikast</button>
+        </div>
+      </div>
+      <details id="needDetails">
+        <summary class="small-muted">Kulud kategooriate kaupa</summary>
+        <div class="row g-2 mt-1" id="needCats"></div>
+      </details>
+      <p class="small-muted mt-2 mb-0" id="needSource"></p>
     </section>
 
     <!-- 2. Otsuste kaart -->
@@ -122,7 +172,8 @@
       </div>
       <p class="mb-1"><strong>Eeldused (v1):</strong></p>
       <ul>
-        <li>Summad on tänastes eurodes. Riiklik pension on indekseeritud, samba vara kasvab valitud reaaltootlusega. Uusi sissemakseid ei arvestata.</li>
+        <li>Summad on tänastes eurodes. Riiklik pension on indekseeritud, samba vara kasvab valitud reaaltootlusega. Sissemaksed jätkuvad pensionini (II sammas: sinu makse + riigi 4%, III sammas: sinu kuumakse), palk reaalselt ei kasva.</li>
+        <li>Kulude vaikeväärtus: Statistikaamet LE205, leibkonnaliikme kulutused (<span id="kuludMeta"></span>), iga kategooria korrigeeritud oma tarbijahinnaindeksiga (IA002). See näitab, mida pensionärid keskmiselt kulutavad, mitte seda, mida sina vajad.</li>
         <li>Ühine kulureegel: igal aastal kulutad oma vajaduse. Esmalt riiklik pension, siis samba plaanijärgne väljamakse, siis hoius, siis lisaväljamakse sambast (10% maks). Ülejääk läheb hoiusele (0% reaaltootlus).</li>
         <li>Väljamaksed algavad pensionieas (täisaastates). Maksuvaba fondipensioni periood on Statistikaameti elada jäänud aastad vanuse ja soo järgi. „Elu lõpuni“ on vanus, milleni jõuab elusalt 10% sinuvanustest.</li>
         <li>Edasilükkamise tõusud on SKA 2026 keskmised. Pensionäri maksuvaba tulu ja kindlustuslepingut ei arvestata.</li>
@@ -134,6 +185,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="data/elutabel.js"></script>
+  <script src="data/kulud.js"></script>
   <script src="js/pension.js"></script>
   <script src="js/app.js"></script>
 </body>

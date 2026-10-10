@@ -49,8 +49,21 @@
     return Math.max(1, Math.round(table.elada_jaanud[sex][Math.min(age, MAX_AGE)]));
   }
 
+  // Pensioniiga aastates: kasutaja (või Tuleva konto) antud väärtus või ligikaudne reegel.
+  function retirementYears(input) {
+    return input.pensionAgeYears || pensionAge(input.birthYear).years;
+  }
+
+  // Aastane sissemakse sammastesse kuni pensionini (tänastes eurodes, palk reaalselt ei kasva).
+  // II sammas: töötaja 2/4/6% + riik 4% sotsiaalmaksust, kui II sammas on aktiivne. III sammas: oma kuumakse.
+  function yearlyContribution(input) {
+    const rate = input.p2Rate || 0;
+    return (input.grossMonthly || 0) * 12 * (rate > 0 ? rate + 0.04 : 0) + (input.p3Monthly || 0) * 12;
+  }
+
   function decisionMap(input) {
-    const pa = pensionAge(input.birthYear);
+    const pa = Object.assign({}, pensionAge(input.birthYear));
+    if (input.pensionAgeYears) { pa.years = input.pensionAgeYears; pa.label = input.pensionAgeYears + ' a'; }
     const at = (age) => input.birthYear + age;
     const p3Age = input.p3Before2021 ? 55 : 60;
     return [
@@ -72,7 +85,7 @@
   function simulate(input, table, scenario, needOverride) {
     const need = needOverride !== undefined ? needOverride : input.needMonthly;
     const r = input.realReturn;
-    const pa = pensionAge(input.birthYear).years;
+    const pa = retirementYears(input);
     const currentAge = CURRENT_YEAR - input.birthYear;
     const startAge = Math.max(currentAge, 55);
     const deferral = scenario.id === 'C' ? scenario.deferral : 0;
@@ -80,9 +93,10 @@
     const p1Year = input.p1Monthly * (1 + DEFERRAL_INCREASE[deferral]) * 12;
     const needYear = need * 12;
 
-    // Samba vara kasvab kuni kasutamiseni (uusi sissemakseid v1 ei arvesta).
+    // Samba vara kasvab kuni kasutamiseni ja sinna lisanduvad sissemaksed.
     let fund = input.p2 + input.p3;
-    for (let a = currentAge; a < pa; a++) fund *= 1 + r;
+    const contrib = yearlyContribution(input);
+    for (let a = currentAge; a < pa; a++) fund = fund * (1 + r) + contrib;
 
     let deposit = 0;
     if (scenario.id === 'A') { deposit = fund * (1 - TAX_SHORT); fund = 0; }
@@ -175,7 +189,7 @@
     { id: 'D', name: 'Leping igal aastal uuesti', short: 'Maksuvaba fondipension, mille lepingu sõlmid igal aastal uuesti. Ei saa otsa, aga väheneb vanas eas.' },
   ];
 
-  const api = { CURRENT_YEAR, DEFERRAL_INCREASE, SCENARIOS, pensionAge, survival, horizonAge, fundPensionTerm, decisionMap, simulate, sustainableNeed };
+  const api = { CURRENT_YEAR, DEFERRAL_INCREASE, SCENARIOS, pensionAge, retirementYears, yearlyContribution, survival, horizonAge, fundPensionTerm, decisionMap, simulate, sustainableNeed };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Pension = api;
 })(typeof window !== 'undefined' ? window : globalThis);

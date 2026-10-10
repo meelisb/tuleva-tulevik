@@ -23,6 +23,10 @@
       p3Before2021: $('p3Before2021').value === '1',
       needMonthly: num('needMonthly'),
       realReturn: parseFloat($('realReturn').value),
+      pensionAgeYears: parseInt($('pensionAgeYears').value, 10),
+      grossMonthly: num('grossMonthly'),
+      p2Rate: parseFloat($('p2Rate').value),
+      p3Monthly: num('p3Monthly'),
     };
   }
 
@@ -139,10 +143,118 @@
     renderCompare(defs, results);
   }
 
+  // ---------- Kulud statistikast (Statistikaamet LE205 + IA002) ----------
+  const K = window.KULUD;
+  const CATS = K.kategooriad;
+  function renderNeedCats() {
+    $('needCats').innerHTML = CATS.map((c, i) =>
+      '<div class="col-6 col-md-4"><label class="form-label small mb-0" for="cat' + i + '">' + c.nimi + '</label>' +
+      '<input class="form-control form-control-sm need-cat" id="cat' + i + '" type="number" min="0" step="5" value="0"></div>'
+    ).join('');
+    document.querySelectorAll('.need-cat').forEach((el) => el.addEventListener('input', () => {
+      el.classList.remove('is-prefilled');
+      $('needMonthly').value = Array.from(document.querySelectorAll('.need-cat')).reduce((a, x) => a + (parseFloat(x.value) || 0), 0);
+      setNeedSource('own');
+      update();
+    }));
+  }
+  function setNeedSource(kind) {
+    const hh = K.leibkonnad[$('household').value];
+    $('needSource').innerHTML = kind === 'stat'
+      ? '<span class="src-chip stat">Statistikaamet</span> ' + hh + ', uuring ' + K.uuringuaasta + ', hinnad ' + K.hinnad + '. Pensionärid kulutavad keskmiselt nii palju, kui sissetulek lubab. Sinu vajadus võib olla suurem.'
+      : 'Sinu enda sisestatud kulud.';
+    $('needMonthly').classList.toggle('is-prefilled', kind === 'stat');
+  }
+  function fillNeedFromStats() {
+    const hh = $('household').value;
+    CATS.forEach((c, i) => { const el = $('cat' + i); el.value = c[hh]; el.classList.add('is-prefilled'); });
+    $('needMonthly').value = CATS.reduce((a, c) => a + c[hh], 0);
+    setNeedSource('stat');
+  }
+  $('statBtn').addEventListener('click', () => { fillNeedFromStats(); update(); });
+  $('household').addEventListener('change', () => { fillNeedFromStats(); update(); });
+  $('needMonthly').addEventListener('input', () => {
+    document.querySelectorAll('.need-cat').forEach((el) => { el.value = ''; el.classList.remove('is-prefilled'); });
+    setNeedSource('own');
+  });
+  $('kuludMeta').textContent = 'uuring ' + K.uuringuaasta + ', hinnad ' + K.hinnad;
+
+  // ---------- Pensioniiga: ligikaudne reegel, kuni kasutaja või Tuleva konto annab väärtuse ----------
+  let paTouched = false;
+  function syncPensionAge() {
+    const rule = P.pensionAge(parseInt($('birthYear').value, 10) || 1966);
+    if (!paTouched) $('pensionAgeYears').value = String(rule.years);
+    $('paHint').textContent = 'Reegli järgi ' + rule.label;
+  }
+  $('pensionAgeYears').addEventListener('change', () => { paTouched = true; });
+  $('birthYear').addEventListener('input', syncPensionAge);
+
+  // ---------- Tuleva konto eeltäitmine (näidisandmed) ----------
+  // Väljamõeldud liige. Päris tootes tulevad väärtused Tuleva API-st (TulevaEE/onboarding-client).
+  const DEMO = {
+    fields: { birthYear: 1968, sex: 'N', pensionAgeYears: 66, p2: 38400, p3: 21700, p3Before2021: '1', grossMonthly: 2900, p2Rate: '0.04', p3Monthly: 150 },
+    rows: [
+      ['Sünnikuupäev', '14.03.1968 → 58-aastane', 'tuleva', '/v1/me · dateOfBirth, age'],
+      ['Sugu', 'naine', 'tuleva', 'isikukoodi 1. number, arvutatakse brauseris'],
+      ['Pensioniiga', '66 a (registris 65, Tuleva prognoos sünniaasta järgi)', 'tuleva', '/v1/me · retirementAge'],
+      ['II sammas', '38 400 €', 'tuleva', '/v1/me/capital'],
+      ['III sammas', '21 700 €', 'tuleva', '/v1/me/capital'],
+      ['III sambaga liitumine', '05.2012 → soodusmaks alates 55 (14.03.2023)', 'tuleva', '/v1/me · thirdPillarInitDate; /v1/withdrawals/eligibility'],
+      ['II samba makse', '4%', 'tuleva', '/v1/me · secondPillarPaymentRates'],
+      ['Brutopalk', '2 900 €/kuus', 'tuleva', 'tuletatud: /v1/contributions'],
+      ['III sambasse', '150 €/kuus', 'tuleva', 'tuletatud: /v1/contributions'],
+      ['Fonditasu', '0,28% aastas (kaalutud keskmine)', 'tuleva', '/v1/me/conversion · weightedAverageFee'],
+      ['Varase pensioni kuupäev', '14.03.2028 (60-aastaselt)', 'tuleva', '/v1/withdrawals/eligibility · earlyRetirementDate'],
+      ['Maksuvaba fondipensioni periood', 'selgub 60-aastaselt', 'tuleva', '/v1/withdrawals/eligibility · recommendedDurationYears'],
+      ['Aktiivne fondipension', 'ei', 'tuleva', '/v1/withdrawals/fund-pension-status'],
+      ['Riiklik pension', 'Tuleval puudub: sisesta SKA kalkulaatorist', 'puudub', 'tulevikus SKA päring nõusolekul (X-tee)'],
+      ['Kulud', 'Tuleval puudub: täidetud statistikast', 'stat', 'Statistikaamet LE205, IA002'],
+    ],
+  };
+  const CHIP = { tuleva: 'Tuleva konto', stat: 'Statistikaamet', ska: 'SKA', puudub: 'puudub' };
+  const DEFAULTS = {};
+  Object.keys(DEMO.fields).forEach((id) => { DEFAULTS[id] = $(id).value; });
+  function labelFor(id) { return document.querySelector('label[for="' + id + '"]'); }
+  function applyDemo() {
+    Object.entries(DEMO.fields).forEach(([id, v]) => {
+      const el = $(id); el.value = String(v); el.classList.add('is-prefilled');
+      const lab = labelFor(id);
+      if (lab && !lab.querySelector('.src-chip')) lab.insertAdjacentHTML('beforeend', '<span class="src-chip tuleva">Tuleva</span>');
+    });
+    paTouched = true;
+    $('p1Monthly').classList.remove('is-prefilled');
+    $('prefillPanel').innerHTML = '<div class="fw-medium text-navy mb-1">Tuleva kontolt eeltäidetud (näidis)</div>' +
+      '<div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Väli</th><th>Väärtus</th><th>Allikas</th></tr></thead><tbody>' +
+      DEMO.rows.map((r) => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td><span class="src-chip ' + r[2] + ' ms-0">' + CHIP[r[2]] + '</span> <code>' + r[3] + '</code></td></tr>').join('') +
+      '</tbody></table></div>';
+    $('prefillPanel').classList.remove('d-none');
+    $('clearBtn').classList.remove('d-none');
+    syncPensionAge();
+    fillNeedFromStats();
+    update();
+  }
+  function clearDemo() {
+    Object.entries(DEFAULTS).forEach(([id, v]) => {
+      const el = $(id); el.value = v; el.classList.remove('is-prefilled');
+      const chip = labelFor(id) && labelFor(id).querySelector('.src-chip'); if (chip) chip.remove();
+    });
+    paTouched = false;
+    $('prefillPanel').classList.add('d-none');
+    $('clearBtn').classList.add('d-none');
+    syncPensionAge();
+    update();
+  }
+  $('prefillBtn').addEventListener('click', applyDemo);
+  $('clearBtn').addEventListener('click', clearDemo);
+
   $('lifeYear').textContent = T.aasta;
-  document.querySelectorAll('#form input, #form select, #deferral').forEach((el) => {
+  document.querySelectorAll('#form input, #form select, #deferral, #needMonthly').forEach((el) => {
     el.addEventListener('input', update);
     el.addEventListener('change', update);
+    if (el.closest('#form')) el.addEventListener('input', () => el.classList.remove('is-prefilled'));
   });
+  renderNeedCats();
+  syncPensionAge();
+  fillNeedFromStats();
   update();
 })();

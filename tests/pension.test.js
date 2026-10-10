@@ -49,6 +49,22 @@ for (const s of [B, D]) {
   assert.ok(over.coversNeedUntil !== null && over.coversNeedUntil <= over.horizonAge, s.id + ' L+50 ei kata');
 }
 
+// Sissemaksed: II sammas 4% + riigi 4% palgast, III sammas oma kuumakse.
+assert.strictEqual(P.yearlyContribution({ grossMonthly: 2000, p2Rate: 0.04, p3Monthly: 100 }), 2000 * 12 * 0.08 + 1200);
+assert.strictEqual(P.yearlyContribution({ grossMonthly: 2000, p2Rate: 0, p3Monthly: 0 }), 0);
+const withC = P.simulate({ ...base, birthYear: 1970, grossMonthly: 2500, p2Rate: 0.02, p3Monthly: 100 }, table, B);
+const noC = P.simulate({ ...base, birthYear: 1970 }, table, B);
+assert.ok(withC.expectedLifetime > noC.expectedLifetime, 'sissemaksed suurendavad sissetulekut');
+// Pensioniea valik nihutab riikliku pensioni algust.
+assert.strictEqual(P.simulate({ ...base, pensionAgeYears: 66 }, table, B).rows.find((x) => x.age === 65).i1, 0);
+
+// Kulud statistikast: üksik 65+ ja paar, kõik kategooriad olemas ja positiivsed.
+const ks = fs.readFileSync(path.join(__dirname, '../data/kulud.js'), 'utf-8');
+const kulud = JSON.parse(ks.slice(ks.indexOf('{'), ks.lastIndexOf('}') + 1));
+assert.ok(kulud.kategooriad.length >= 10 && kulud.kategooriad.every((c) => c.uksi > 0 && c.paar > 0));
+const total = kulud.kategooriad.reduce((a, c) => a + c.uksi, 0);
+assert.ok(total > 600 && total < 1200, 'üksik 65+ kulud mõistlikus vahemikus: ' + total);
+
 for (const s of P.SCENARIOS) {
   const r = P.simulate(base, table, s.id === 'C' ? Cx : s);
   console.log(s.id, 'katab', r.coversNeedUntil, 'raha lõpeb', r.moneyEndAge, '90a', r.spendAt90.toFixed(0),

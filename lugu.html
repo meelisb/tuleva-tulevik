@@ -384,11 +384,6 @@
           <h2 id="h9" tabindex="-1">Kas raha jätkub elu lõpuni?</h2>
         </div>
       </div>
-      <div class="result-actions d-flex flex-wrap gap-2 mb-3">
-        <button type="button" class="btn btn-outline-primary btn-sm" id="dlMd">Laadi alla (Markdown)</button>
-        <button type="button" class="btn btn-outline-primary btn-sm" id="dlPdf" aria-describedby="dlPdfHint">Laadi alla (PDF)</button>
-        <span class="small-muted align-self-center" id="dlPdfHint">PDF: vali printimisaknas „Salvesta PDF-ina“.</span>
-      </div>
       <div class="answer mb-3" id="answer" aria-live="polite"></div>
       <div id="actionWarn" class="note mb-3 d-none" role="status"></div>
       <div class="row g-2 mb-3" id="metrics"></div>
@@ -418,6 +413,12 @@
         <div class="table-responsive mt-2"><table class="table table-compare align-middle mb-0" id="compare"></table></div>
       </details>
 
+      <h3 class="h5 section-title mt-4" id="dlTitle">Salvesta tulemus</h3>
+      <div class="result-actions d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-outline-primary btn-sm" id="dlMd">Laadi alla (Markdown)</button>
+        <button type="button" class="btn btn-outline-primary btn-sm" id="dlPdf" aria-describedby="dlPdfHint">Laadi alla (PDF)</button>
+        <span class="small-muted align-self-center" id="dlPdfHint">PDF: vali printimisaknas „Salvesta PDF-ina“.</span>
+      </div>
     </section>
 
     <!-- Navigeerimine -->

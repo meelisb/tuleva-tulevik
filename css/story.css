@@ -113,3 +113,20 @@ main.container { padding-bottom: 1rem; }
 /* 2. Rada mobiilis: kerimine ühe sammu kaupa */
 .path { scroll-snap-type: x proximity; scrollbar-width: thin; }
 .path li { scroll-snap-align: center; }
+
+/* SVG ikoonid (asendavad emojisid) */
+.ico { width: 1.25em; height: 1.25em; display: inline-block; vertical-align: -0.2em; flex-shrink: 0; }
+.path-dot { color: var(--navy); }
+.path-dot .ico { width: 1.25rem; height: 1.25rem; }
+.path li.current .path-dot { color: #fff; }
+.path li.past .path-dot { filter: none; color: var(--text-navy-secondary); }
+.chapter-art { color: var(--blue); }
+.chapter-art .ico { width: 2.25rem; height: 2.25rem; stroke-width: 1.75; }
+.choice-emoji { color: var(--blue); line-height: 1; }
+.choice-emoji .ico { width: 1.75rem; height: 1.75rem; }
+.choice input:checked + .choice-body .choice-emoji { color: var(--navy); }
+.pot-emoji { color: var(--bright-blue); display: inline-flex; }
+.pkg-facts li > span:first-child, .pkg-alt > span:first-child, .recap li > span:first-child { color: var(--blue); display: inline-flex; }
+.hh-emoji { color: var(--navy); display: inline-flex; }
+.hh-emoji .ico { width: 1.75rem; height: 1.75rem; }
+@media (max-width: 575px) { .chapter-art .ico { width: 1.75rem; height: 1.75rem; } }

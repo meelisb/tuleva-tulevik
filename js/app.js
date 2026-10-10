@@ -40,7 +40,7 @@
 
   function renderTabs(defs) {
     $('tabs').innerHTML = defs.map((s) =>
-      '<div class="col-12 col-md-4"><button type="button" role="tab" aria-selected="' + (s.id === active) + '" ' +
+      '<div class="col-12 col-sm-6 col-lg-3"><button type="button" role="tab" aria-selected="' + (s.id === active) + '" ' +
       'class="btn w-100 h-100 ' + (s.id === active ? 'btn-primary' : 'btn-outline-primary') + '" data-id="' + s.id + '">' +
       '<span class="fw-medium">' + s.id + '. ' + s.name + '</span><small>' + s.short + '</small></button></div>'
     ).join('');
@@ -49,25 +49,23 @@
   }
 
   function answerText(r, input) {
-    const parts = ['Pensioni alguses on su sissetulek <strong>' + eur(r.startIncome) + ' kuus</strong>.'];
-    if (r.fundEndAge === null) {
-      parts.push('Samba raha ei lõpe enne 100. eluaastat.');
-    } else {
-      parts.push('Samba raha lõpeb <strong>' + r.fundEndAge + '-aastaselt</strong>, edasi jääb ainult riiklik pension ' + eur(r.incomeAfterFund) + ' kuus.');
-      parts.push('<strong>100 sinusugusest elab ' + r.fundEndAge + '-aastaseks ' + Math.round(r.aliveAtFundEnd * 100) + '.</strong>');
-    }
-    if (r.coversNeedUntil === null) parts.push('Sissetulek katab vajaduse (' + eur(input.needMonthly) + ') elu lõpuni.');
-    else if (r.coversNeedUntil <= r.pensionStartAge) parts.push('Sissetulek jääb vajadusest (' + eur(input.needMonthly) + ') alla juba pensioni alguses.');
-    else parts.push('Sissetulek katab vajaduse (' + eur(input.needMonthly) + ') kuni ' + r.coversNeedUntil + '. eluaastani.');
+    const need = eur(input.needMonthly);
+    const parts = [];
+    if (r.coversNeedUntil === null) parts.push('Sinu vajadus (' + need + ' kuus) on kaetud <strong>kuni 100. eluaastani</strong>.');
+    else if (r.coversNeedUntil <= r.pensionStartAge) parts.push('Sinu vajadus (' + need + ' kuus) <strong>ei ole kaetud juba pensioni alguses</strong>.');
+    else parts.push('Sinu vajadus (' + need + ' kuus) on kaetud <strong>kuni ' + r.coversNeedUntil + '. eluaastani</strong>. 100 sinusugusest elab ' + r.coversNeedUntil + '-aastaseks ' + Math.round(r.aliveAtShortfall * 100) + '.');
+    if (r.moneyEndAge === null) parts.push('Samba raha ei saa enne 100. eluaastat otsa.');
+    else parts.push('Samba ja hoiuse raha lõpeb ' + r.moneyEndAge + '-aastaselt, edasi jääb riiklik pension ' + eur(r.incomeAfterMoney) + ' kuus.');
+    parts.push('<strong>Elu lõpuni</strong> (' + r.horizonAge + '. eluaastani, milleni jõuab 10% sinuvanustest) kannab see plaan kuni <strong>' + eur(r.sustainable) + ' kuus</strong>.');
     return parts.join(' ');
   }
 
   function renderMetrics(r) {
     const tiles = [
-      [eur(r.startIncome), 'kuus pensioni alguses'],
-      [r.fundEndAge === null ? '100+' : r.fundEndAge + ' a', 'samba raha lõpeb'],
-      [eur(r.fundEndAge === null ? r.startIncome : r.incomeAfterFund), 'kuus pärast seda'],
-      [eur(r.expectedLifetime), 'oodatav kogusissetulek eluea tõenäosust arvestades'],
+      [r.coversNeedUntil === null ? '100+' : r.coversNeedUntil + ' a', 'vajadus kaetud kuni'],
+      [r.moneyEndAge === null ? 'ei lõpe' : r.moneyEndAge + ' a', 'samba raha lõpeb'],
+      [eur(r.spendAt90), 'kuus 90-aastaselt'],
+      [eur(r.sustainable), 'kuus kannab plaan elu lõpuni (' + r.horizonAge + ' a)'],
     ];
     $('metrics').innerHTML = tiles.map((t) =>
       '<div class="col-6 col-md-3"><div class="metric"><div class="value">' + t[0] + '</div><div class="label">' + t[1] + '</div></div></div>'
@@ -76,12 +74,12 @@
 
   function renderCompare(defs, results) {
     const rows = [
-      ['Kuus pensioni alguses', (r) => r.startIncome, eur, 'max'],
-      ['Samba raha lõpeb', (r) => (r.fundEndAge === null ? 101 : r.fundEndAge), (v) => (v > 100 ? '100+' : v + ' a'), 'max'],
-      ['Kuus pärast samba lõppu', (r) => (r.fundEndAge === null ? r.startIncome : r.incomeAfterFund), eur, 'max'],
-      ['Elus samba lõppedes', (r) => r.aliveAtFundEnd, pct, null],
-      ['Katab vajaduse kuni', (r) => (r.coversNeedUntil === null ? 101 : r.coversNeedUntil), (v) => (v > 100 ? 'elu lõpuni' : v + ' a'), 'max'],
-      ['Oodatav kogusissetulek', (r) => r.expectedLifetime, eur, 'max'],
+      ['Vajadus kaetud kuni', (r) => (r.coversNeedUntil === null ? 101 : r.coversNeedUntil), (v) => (v > 100 ? '100+' : v + ' a'), 'max'],
+      ['Elus sellest vanusest kauem', (r) => (r.coversNeedUntil === null ? 0 : r.aliveAtShortfall), pct, null],
+      ['Samba raha lõpeb', (r) => (r.moneyEndAge === null ? 101 : r.moneyEndAge), (v) => (v > 100 ? 'ei lõpe' : v + ' a'), 'max'],
+      ['Kuus 90-aastaselt', (r) => r.spendAt90, eur, 'max'],
+      ['Kannab elu lõpuni, kuus', (r) => r.sustainable, eur, 'max'],
+      ['Oodatav kogukulutus', (r) => r.expectedLifetime, eur, 'max'],
     ];
     const head = '<thead><tr><th></th>' + defs.map((s) => '<th>' + s.id + '. ' + s.name + '</th>').join('') + '</tr></thead>';
     const body = rows.map(([label, get, fmt, best]) => {
@@ -101,6 +99,7 @@
       datasets: [
         { type: 'bar', label: 'I sammas', data: rows.map((x) => Math.round(x.i1)), backgroundColor: '#002f63', stack: 'income', yAxisID: 'y' },
         { type: 'bar', label: 'II ja III sammas', data: rows.map((x) => Math.round(x.i23)), backgroundColor: '#00aeea', stack: 'income', yAxisID: 'y' },
+        { type: 'bar', label: 'Hoiuselt', data: rows.map((x) => Math.round(x.dep)), backgroundColor: '#9fd8f0', stack: 'income', yAxisID: 'y' },
         { type: 'line', label: 'Vajadus', data: rows.map(() => input.needMonthly), borderColor: '#db2200', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, stack: 'need', yAxisID: 'y' },
         { type: 'line', label: 'Elus (%)', data: rows.map((x) => Math.round(x.alive * 100)), borderColor: '#8a8d91', borderWidth: 2, pointRadius: 0, tension: 0.3, yAxisID: 'y1' },
       ],
@@ -130,7 +129,7 @@
   function update() {
     const input = readInput();
     const defs = scenarioDefs();
-    const results = defs.map((s) => P.simulate(input, T, s));
+    const results = defs.map((s) => Object.assign(P.simulate(input, T, s), { sustainable: P.sustainableNeed(input, T, s) }));
     const r = results[defs.findIndex((s) => s.id === active)];
     renderTimeline(input);
     renderTabs(defs);

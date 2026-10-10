@@ -95,7 +95,7 @@
       <div class="answer mb-3" id="answer" aria-live="polite"></div>
       <div class="row g-2 mb-3" id="metrics"></div>
       <div class="chart-wrap mb-2"><canvas id="chart" aria-label="Sissetulek ja vajadus vanuse järgi"></canvas></div>
-      <p class="small-muted mb-0">Tulbad: kuusissetulek tänastes eurodes. Punane joon: vajadus. Hall joon: tõenäosus olla selles vanuses elus (Statistikaamet).</p>
+      <p class="small-muted mb-0">Tulbad: millest vajadus kaetakse (tänastes eurodes). Punane joon: vajadus. Hall joon: tõenäosus olla selles vanuses elus (Statistikaamet).</p>
     </section>
 
     <!-- 4. Võrdlus -->
@@ -123,7 +123,8 @@
       <p class="mb-1"><strong>Eeldused (v1):</strong></p>
       <ul>
         <li>Summad on tänastes eurodes. Riiklik pension on indekseeritud, samba vara kasvab valitud reaaltootlusega. Uusi sissemakseid ei arvestata.</li>
-        <li>Väljamaksed algavad pensionieas (täisaastates). Fondipensioni periood on Statistikaameti elada jäänud aastad vanuse ja soo järgi. Ühekordne väljamakse on maksustatud 10% ja raha seisab hoiusel 0% reaaltootlusega.</li>
+        <li>Ühine kulureegel: igal aastal kulutad oma vajaduse. Esmalt riiklik pension, siis samba plaanijärgne väljamakse, siis hoius, siis lisaväljamakse sambast (10% maks). Ülejääk läheb hoiusele (0% reaaltootlus).</li>
+        <li>Väljamaksed algavad pensionieas (täisaastates). Maksuvaba fondipensioni periood on Statistikaameti elada jäänud aastad vanuse ja soo järgi. „Elu lõpuni“ on vanus, milleni jõuab elusalt 10% sinuvanustest.</li>
         <li>Edasilükkamise tõusud on SKA 2026 keskmised. Pensionäri maksuvaba tulu ja kindlustuslepingut ei arvestata.</li>
         <li>Ellujäämise tõenäosus: Statistikaamet RV046, <span id="lifeYear"></span>. Perioodi elutabel pigem alahindab tegelikku eluiga.</li>
       </ul>

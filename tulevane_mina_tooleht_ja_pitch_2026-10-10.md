@@ -14,8 +14,8 @@
 ## 0. Kokkuvõte
 
 1. **Probleem ei ole info puudus, vaid see, et süsteemist ei ole võimalik ise aru saada.** Reeglid sõltuvad sünniaastast, liitumise ajast, sambast ja väljamakse viisist ning muutuvad igal aastal. Kuus omavahel seotud otsust tuleb teha 10 aasta jooksul (55–65) ja enamik neist on pöördumatud.
-2. **Ükski tööriist ei vasta küsimusele „kas mu raha jätkub elu lõpuni“.** SKA uus kalkulaator liidab I, II ja III samba kokku, aga ei näita vajadust, eluea tõenäosusi ega seda, mis saab pärast II ja III samba raha lõppemist. Tuleva kalkulaatorid eeldavad kõigile 19 või 20 aastat.
-3. **Maksuvaba „pikk“ fondipension lõpeb keskmise eluea järgi. Sellest kauem elab üle poole inimestest:** 65-aastastest meestest 51% ja naistest 57% `[inferred, Statistikaamet RV046]`.
+2. **Ükski tööriist ei näita kogu sissetulekut (I + II + III) vajaduse ja eluea tõenäosuse vastu.** SKA uus kalkulaator liidab I, II ja III samba kokku, aga ei näita vajadust, eluea tõenäosusi ega seda, mis saab pärast II ja III samba raha lõppemist. Tuleva sisselogitud kalkulaator (`pension.tuleva.ee/calculator`, küsimusega „Kas rahast jätkub elu lõpuni?“) modelleerib II ja III sammast ning fondipensioni strateegiaid, aga ei arvesta I sammast, vajadust ega sugu.
+3. **Ühe fondipensioni lepinguga lõpeb väljamakse keskmise eluea juures ja sellest kauem elab üle poole inimestest:** 65-aastastest meestest 51% ja naistest 57% `[inferred, Statistikaamet RV046]`. Kui lepingut igal aastal uuendada, raha nulli ei jõua, aga 90-ndates on kuumakse vaid murdosa algsest (näide jaotises 3.6). **Kumbki viis ei lisa raha juurde.** Elukestvat kindlust annavad ainult riiklik pension (ja selle edasilükkamine) ning pikaealisuse riski jagamine (kindlustusleping, tulevikus ühistuline kogum).
 4. **Eesmärk on elukestev sissetulek, mitte valik paindlikkuse ja kindluse vahel.** Paindlikud võtted, näiteks I samba edasilükkamine, osaline töötamine või fondipension, on vahendid selle saavutamiseks.
 5. **Lahendus:** üks vaade, mis näitab, millised otsused sul ees on, kas plaan katab vajaduse elu lõpuni, ja viib otsusest otse avalduseni.
 
@@ -55,7 +55,7 @@
 **Mis teda takistab:**
 - **Süsteem on liiga keeruline, et seda ise mõista.** Reeglid sõltuvad sünniaastast, liitumise ajast, sambast ja väljamakse viisist ning muutuvad igal aastal. Isegi pensioniiga pole ette teada. Näited on jaotises 2.2.
 - **Otsuseid on palju ja need on omavahel seotud.** Igal sambal on oma ajastus, oma maksureeglid ja oma väljamakse viisid. Valikuid on nii palju, et paindlikkusest saab koormus.
-- **Kõige olulisem muutuja on teadmata: kui kaua ma elan.** Kalkulaatorid asendavad selle ühe keskmise numbriga (19 või 20 aastat), kuigi üle poole inimestest elab keskmisest kauem.
+- **Kõige olulisem muutuja on teadmata: kui kaua ma elan.** Kalkulaatorid asendavad selle ühe keskmise numbriga (19 või 20 aastat), kuigi üle poole inimestest elab keskmisest kauem. Vaikimisi sõlmitakse üks fondipensioni leping, mis lõpeb keskmise eluea juures. Võimalusest lepingut igal aastal uuendada teab vähe inimesi ja keegi ei tee seda nende eest.
 - **Info on killustatud kolme asutuse vahel** (SKA, Pensionikeskus, fondivalitseja), umbes kümnel lehel ja kuues kalkulaatoris. Igaüks vastab ühele või kahele küsimusele, mitte kõigile kuuele.
 - **Kindlustusandjaid ei usaldata ja neid peetakse kalliks.** Liikmete sõnul „kindlustusandja pension ei tõmba“. Tuleva leht soovitab samuti kindlustuslepingut mitte kaaluda. Ainus elukestev lahendus peale riikliku pensioni jääb seetõttu kõrvale.
 
@@ -130,8 +130,8 @@ Prototüübi osad:
 ### 2.1 Probleemlaused (vali üks avalauseks)
 
 1. „Eestis peab iga pensionieale lähenev inimene tegema kuus omavahel seotud ja pöördumatut otsust kolme samba kohta. Reeglid sõltuvad tema sünniaastast, liitumise ajast ja muutuvad igal aastal. Isegi oma pensioniiga ei saa ta ette teada.“
-2. „Maksuvaba fondipension on arvutatud keskmise eluea järgi. Keskmisest kauem elab aga üle poole inimestest. Iga teine pensionär jääb 80. eluaastate keskel ilma samba sissetulekuta.“
-3. „Ükski kalkulaator Eestis ei vasta küsimusele, mida inimene tegelikult küsib: kas mu raha jätkub elu lõpuni?“
+2. „Tavaline fondipensioni leping on arvutatud keskmise eluea järgi. Keskmisest kauem elab aga üle poole inimestest. Lepingut saab igal aastal uuendada, aga seda ei tea peaaegu keegi. Ja ka siis on 95-aastaselt kuumakse vaid murdosa algsest.“
+3. „Ükski kalkulaator Eestis ei näita inimesele tema kogu sissetulekut (riiklik pension ja sambad) tema vajaduse ja eluea tõenäosuse vastu.“
 4. „Pooled Tuleva liikmetest muretsevad oma tuleviku elustandardi pärast. See on küsitluse suurim lahendamata mure ja nad ütlevad: me ei oska.“
 5. „Me ei vaja paindlikkust ega kindlust eraldi. Me vajame elukestvat sissetulekut. Paindlikud võtted on lihtsalt viisid selleni jõuda.“
 
@@ -151,6 +151,7 @@ Prototüübi osad:
 | II samba väljamaksete alustamisel **lõpevad sissemaksed II sambasse igaveseks** | Kõigile | Tuleva `[verified]` |
 | Pensionäri maksuvaba tulu läheb esmalt riiklikule pensionile, kasutamata osa II samba 10% väljamaksetele. 2025: 7 848 €/a. Pensionikeskuse lehel on endiselt „kuni 6000 eurot“ | Pensioniealistele | SEB, Pensionikeskus `[secondary]` |
 | Iga samba väljamakse algust saab ajastada **eraldi** | Kõigile | SKA kalkulaator `[verified]` |
+| Fondipensioni saab igal ajal lõpetada ja sõlmida uue lepingu. Uus leping on maksuvaba, kui periood on vähemalt soovituslik (elada jäänud aastad lepingu sõlmimisel). Igal aastal uuendades ei jõua väljamakse nulli. Vanemaid lepinguid lõpetades võivad kaduda nende algsed tingimused | Fondipensioni saajatele | Pensionikeskus, Tuleva kalkulaator `[verified]` |
 
 **Järeldus:** sama vanusega inimestele võivad kehtida erinevad reeglid, olenevalt sellest, millal nad sündisid, millal nad III sambaga liitusid ja mis aastal nad pensioniikka jõuavad. Reeglid muutuvad igal aastal. Tavainimene ei saa seda ise kokku panna. `[inferred]`
 
@@ -184,7 +185,7 @@ Allikas: Tuleva liikmeküsitlus 13.04–03.05.2026, 5 014 vastajat. Tuleva mater
 | 65-aastaseid ja vanemaid | 290 944 | Statistikaamet RV021, 1.1.2026 `[verified]` |
 | 65-aastase elada jäänud aastad: mehed / naised | 16,3 / 21,4 a | Statistikaamet RV045, 2025 `[verified]` |
 | 60-aastase elada jäänud aastad: mehed / naised | 19,8 / 25,8 a | Statistikaamet RV045, 2025 `[verified]` |
-| **Elab pika fondipensioni lõpust kauem:** 65-aastane mees (periood kuni 81) / naine (kuni 86) | **51% / 57%** | Statistikaamet RV046, 2025, minu arvutus `[inferred]` |
+| **Elab ühe lepingu fondipensioni lõpust kauem:** 65-aastane mees (periood kuni 81) / naine (kuni 86) | **51% / 57%** | Statistikaamet RV046, 2025, minu arvutus `[inferred]` |
 | 65-aastastest elab 90-aastaseks: mehed / naised | 19% / 38% | Statistikaamet RV046, 2025, minu arvutus `[inferred]` |
 | 65+ suhtelise vaesuse määr | 37,7% (2024), ELis kolmas | Eurostat TradingEconomicsi kaudu `[secondary]` |
 | Üksi elavate 65+ suhteline vaesus | 71% (2023) | Statistikaamet ERRi kaudu `[secondary]` |
@@ -202,7 +203,7 @@ Allikas: Tuleva liikmeküsitlus 13.04–03.05.2026, 5 014 vastajat. Tuleva mater
 |---|---|---|
 | Kust info tuleb | 3 asutust, umbes 10 lehte, 6 kalkulaatorit | Üks vaade |
 | Mitmele küsimusele vastab | Igaüks 1–2 küsimusele kuuest | Kõigile kuuele |
-| Eluiga | Fikseeritud 19 või 20 aastat | Tõenäosused soo ja vanuse järgi Statistikaameti elutabelist |
+| Eluiga | Fikseeritud 19 või 20 aastat; Tuleva sisselogitud kalkulaator kasutab Statistikaameti sootut elada jäänud aastate tabelit | Tõenäosused soo ja vanuse järgi Statistikaameti elutabelist |
 | Vajadus ehk kulud | Ei arvesta | Statistiline vaikeväärtus, mida saab asendada oma kuludega |
 | Mis saab pärast II ja III samba lõppu | Ei näita | Näitab rahavoogu kuni 100. eluaastani |
 | Millised otsused mul ees on | Ei loetle | Otsuste kaart sinu sünniaasta ja liitumise aja järgi |
@@ -227,7 +228,7 @@ Küsimuste õige järjekord: **sisendid ennem, otsused pärast.**
 | 60 | II sammas (ühekordne, osaline, fondipension, kindlustusleping); III sammas neile, kes alustasid 2021 või hiljem; paindlik riiklik pension (vähendatud) | 0 / 10% |
 | Pensioniiga (65 a + 0–4 k) | Riiklik pension täissummas | — |
 | Pensioniiga +1 kuni +5 a | Riikliku pensioni edasilükkamine (+7,93% kuni +51,57%) | — |
-| Kogu pensioniaeg | Fondipensioni saab peatada ja uuesti alustada; II samba osaline väljamakse kuni kord kuus | 0 / 10% |
+| Kogu pensioniaeg | Fondipensioni saab peatada ja uuesti alustada; lepingut saab igal aastal uuendada; II samba osaline väljamakse kuni kord kuus | 0 / 10% |
 
 ### 3.2 Andmed: statistiline vaikeväärtus ja personaliseerimine
 
@@ -255,6 +256,7 @@ Küsimuste õige järjekord: **sisendid ennem, otsused pärast.**
 |---|---|---|
 | **SKA uus pensionikalkulaator** (iseteenindus) | Isikuandmed päringuga. Näitab I, II ja III samba kuusummasid. Iga samba ajastust saab valida eraldi, paindliku pensioni protsendid on näha. Ajatelg | Vajadus ehk kulud. Eluea tõenäosused. Mis saab pärast II ja III samba lõppu. Maks. Väljamakse viiside võrdlus. Avaldus II ja III samba jaoks |
 | **Tuleva väljamaksete avaldus** (sisselogitult) | Teab vanust ja saldosid. Ütleb, millal soodustingimused avanevad. Näitab maksu ja netosummat | Ei vasta küsimusele, kas raha jätkub. Ei arvesta I sammast |
+| **Tuleva sisselogitud pensionikalkulaator** (`pension.tuleva.ee/calculator`, alates 07/2026) | Eeltäidab vanuse, pensioniea, palga, sissemaksed, saldod, tasud. Kogumine ja fondipension, maks, pärand, strateegiad „üks leping“, „võimalikult suur kuumakse“ ja „võimalikult suur pärand“ (iga-aastane uuendamine) | I sammas. Vajadus. Ellujäämise tõenäosus ja sugu (kasutab sootut tabelit). Otsuste kaart |
 | **Tuleva väljamaksete kalkulaator ja otsustuspuu** | Otsustuspuu on sisult hea: kõigepealt kasuta hoiuseid ja muid investeeringuid, siis III sammast, siis II sammast; fondipension siis, kui I sammas ei kata kulusid | Kalkulaator ei ütle, mis samba kohta see käib. Algus fikseeritud 65-le, kestus 19 aastale. Ei arvesta sugu ega I sammast |
 | **Tuleva 50+ kalkulaator** | Kogumine kuni pensionini, seejärel 20 aasta väljamakse (5% väljavõtumäär) tänastes eurodes | Tunnistab ise, et pikema eluea korral ei pruugi raha jätkuda. Ei arvesta I sammast |
 | **Tuleva II samba kalkulaator** | Kogumine kuni 65 ja tasude mõju | Ainult kogumisfaas |
@@ -269,6 +271,20 @@ Küsimuste õige järjekord: **sisendid ennem, otsused pärast.**
 | Riikliku pensioni algus ja ajastus | SKA iseteenindus |
 | Kindlustusleping | Pensionikeskuse kalkulaator → kindlustusseltsi avaldus |
 | Fondipensioni muutmine | Lõpeta olemasolev ja esita uus avaldus |
+
+### 3.6 Üks leping või iga-aastane uuendamine: näide
+
+65-aastane, samba vara 55 000 €, reaaltootlus 2%, kuumakse tänastes eurodes. Arvutus Statistikaameti 2025 elutabeliga `[inferred]`.
+
+| Vanus | Naine: üks leping (21 a) | Naine: uuendad igal aastal | Naine: üks leping 35 a (kuni 100) | Naine elus | Mees: üks leping (16 a) | Mees: uuendad igal aastal | Mees elus |
+|---|---|---|---|---|---|---|---|
+| 65 | 218 € | 218 € | 131 € | 100% | 286 € | 286 € | 100% |
+| 75 | 266 € | 238 € | 160 € | 88% | 349 € | 234 € | 73% |
+| 85 | 324 € | 189 € | 195 € | 61% | 0 € | 143 € | 37% |
+| 90 | 0 € | 116 € | 215 € | 38% | 0 € | 76 € | 19% |
+| 95 | 0 € | 48 € | 237 € | 15% | 0 € | 19 € | 6% |
+
+**Järeldus:** iga-aastane uuendamine hoiab ära nulli jõudmise, aga mitte vähenemise. Pikem leping (näiteks kuni 95–100) annab väiksema alguse ja suurema lõpu. Kumbki ei lisa raha juurde. Valik on alati kompromiss praeguse ja hilisema kuumakse vahel.
 
 ---
 
@@ -286,6 +302,8 @@ Küsimuste õige järjekord: **sisendid ennem, otsused pärast.**
 - [ ] Pensionäri maksuvaba tulu 2026. aastal.
 - [ ] Kas III samba piir „alates 60“ on 2021+ liitujate jaoks seotud pensioniea muutumisega (pensioniiga −5)?
 - [ ] Mitu kindlustusseltsi pakub praegu II samba pensionilepingut? Pensionikeskuse leht nimetab ainult Compensat.
+- [ ] Kas maksuvaba fondipensioni periood arvutatakse vanuse **ja soo** järgi (Pensionikeskuse leht) või sootult (Tuleva kalkulaator)? Sisselogitud kasutajale tuleb väärtus API-st `/v1/withdrawals/eligibility` → `recommendedDurationYears`.
+- [ ] Kas fondipensioni lõpetamise ja uue lepingu vahele jääb kuu ilma väljamakseta?
 
 ---
 

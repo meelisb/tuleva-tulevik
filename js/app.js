@@ -124,9 +124,8 @@
 
   // ---------- otsused ----------
   function defaultPlan(input) {
-    const pa = input.pensionAgeYears;
-    const end = Math.max(pa, input.workUntil || pa);
-    return { stateOffset: 0, p2: { method: 'renew', start: end }, p3: { method: 'renew', start: Math.max(P.p3ReducedAge(input), end) } };
+    const st = P.payoutStart(input);
+    return { stateOffset: 0, p2: { method: 'renew', start: st.p2 }, p3: { method: 'renew', start: st.p3 } };
   }
   function methodRadios(name, cur) {
     return '<div class="choice-list" role="radiogroup" aria-label="Väljamakse viis">' + METHODS.map(([v, t, d]) =>
@@ -153,7 +152,7 @@
       s2opts.map((a) => '<option value="' + a + '"' + (a === plan.p2.start ? ' selected' : '') + '>' + a + '-aastaselt (' + (by + a) + ')</option>').join('') + '</select>' +
       (losing ? '<p class="warn mt-2 mb-0"><strong>Riigi tugi kaob.</strong> Töötad ' + input.workUntil + '-aastaseni. Kui alustad II sambast ' + plan.p2.start + '-aastaselt, lõpevad II samba sissemaksed, ka riigi 4%: umbes ' + eur(input.grossMonthly * 12 * 0.04) + ' aastas.</p>' :
         '<p class="small text-secondary mt-2 mb-0">II samba esimese väljamaksega lõpevad II samba sissemaksed, ka riigi 4%. Kui töötad edasi, tasub II sambast alustada pärast töötamist.</p>') + '</section>';
-    const offs = []; for (let k = -5; k <= 5; k++) if (pa + k >= Math.min(cur, pa)) offs.push(k);
+    const offs = []; for (let k = -5; k <= 5; k++) if (k === 0 || pa + k >= cur) offs.push(k);
     const i1 = '<section class="decision" aria-labelledby="d1"><h3 class="h6 mb-1" id="d1">Riiklik pension (I sammas)</h3>' +
       '<p class="window">Ajaaken: kuni 5 aastat enne vanaduspensioniiga (' + (pa - 5) + '-aastaselt) või ükskõik millal hiljem.</p>' +
       '<p class="small mb-2">Riiklik pension ehk I sammas on Sotsiaalkindlustusameti makstav vanaduspension. Vanaduspensioniealt (' + pa + ') saad selle ilma vähendamise ja suurendamiseta. Varem või hiljem võtmist nimetab Sotsiaalkindlustusamet <strong>paindlikuks pensioniks</strong>: varem väheneb ja hiljem suureneb pension eluks ajaks.</p>' +
@@ -180,7 +179,7 @@
     state.plan.p2.start = Math.min(75, Math.max(state.plan.p2.start, 60, cur));
     state.plan.p3.start = Math.min(75, Math.max(state.plan.p3.start, 55, cur));
     state.plan.stateOffset = Math.max(-5, Math.min(5, state.plan.stateOffset));
-    if (input.pensionAgeYears + state.plan.stateOffset < Math.min(cur, input.pensionAgeYears)) state.plan.stateOffset = 0;
+    if (state.plan.stateOffset !== 0 && input.pensionAgeYears + state.plan.stateOffset < cur) state.plan.stateOffset = 0;
   }
 
   // ---------- tulemus ----------
@@ -188,10 +187,16 @@
     const need = input.needMonthly;
     let h = r.lastsUntil === null
       ? '<p class="headline">Sinu raha jätkub kogu eluks, vähemalt 100-aastaseks.</p>'
-      : r.lastsUntil <= r.workUntil
-        ? '<p class="headline">Sinu sissetulek ei kata vajadust juba pensioni alguses.</p>'
-        : '<p class="headline">Sinu raha jätkub ' + r.lastsUntil + '-aastaseks.</p>';
-    if (r.lastsUntil !== null) {
+      : r.gapTemporary
+        ? '<p class="headline">Sul jääb raha puudu ' + r.lastsUntil + (r.gapEnd > r.lastsUntil ? '–' + r.gapEnd : '') + '-aastaselt.</p>'
+        : r.lastsUntil <= r.workUntil
+          ? '<p class="headline">Sinu sissetulek ei kata vajadust juba pensioni alguses.</p>'
+          : '<p class="headline">Sinu raha jätkub ' + r.lastsUntil + '-aastaseks.</p>';
+    if (r.gapTemporary) {
+      const why = r.lastsUntil < r.stateStart ? 'Riiklik pension algab alles ' + r.stateStart + '-aastaselt.'
+        : r.lastsUntil < 60 ? 'II sambast saad raha alles 60-aastaselt.' : '';
+      h += '<p class="mb-1">' + why + ' Alates ' + (r.gapEnd + 1) + '-aastaselt katab sissetulek vajaduse jälle. Auk tuleb katta säästudest või töötada kauem.</p>';
+    } else if (r.lastsUntil !== null) {
       const cover = r.needAfter > 0 ? Math.round(r.stateAfter / r.needAfter * 100) : 0;
       h += '<p class="mb-1">Pärast seda jääb riiklik pension ' + eur(r.stateAfter) + ' kuus, mis katab ' + cover + '% sinu vajadusest (' + eur(r.needAfter) + '). Tõenäosus, et elad kauem kui ' + r.lastsUntil + '-aastaseks: ' + pct(r.aliveBeyond) + '.</p>';
     }
@@ -202,7 +207,7 @@
   function renderMetrics(r) {
     const tiles = [
       [r.lastsUntil === null ? '100+' : r.lastsUntil + ' a', 'raha jätkub kuni'],
-      [r.lastsUntil === null ? '–' : eur(r.stateAfter), 'kuus pärast seda (ainult riiklik pension)'],
+      [r.lastsUntil === null ? '–' : eur(r.stateAfter), r.gapTemporary ? 'riiklik pension kuus alates ' + r.stateStart + ' a' : 'kuus pärast seda (ainult riiklik pension)'],
       [eur(r.inheritance90), 'jääb pärandiks, kui elad 90-aastaseks'],
       [eur(r.tax90), 'tulumaks sammaste väljamaksetelt kuni 90'],
       [eur(r.stateSupport), 'riigi tugi sissemaksetele (II samba 4%, III samba tagastus)'],
@@ -338,8 +343,9 @@
   });
 
   // ---------- sündmused ----------
-  $('pensionAgeYears').addEventListener('change', () => { state.paTouched = true; state.plan = null; });
-  $('workUntil').addEventListener('change', () => { state.workTouched = true; state.plan = null; });
+  // Plaan arvutatakse uuesti (algus sõltub töö lõpust). „input“ käivitab arvutuse enne „change“-i, seega arvuta siin uuesti.
+  $('pensionAgeYears').addEventListener('change', () => { state.paTouched = true; state.plan = null; update(); });
+  $('workUntil').addEventListener('change', () => { state.workTouched = true; state.plan = null; update(); });
   document.querySelectorAll('input[name=level]').forEach((r) => r.addEventListener('change', () => { fillNeedFromStats(); update(); }));
   $('household').addEventListener('change', () => { fillNeedFromStats(); update(); });
   $('needMonthly').addEventListener('input', () => {

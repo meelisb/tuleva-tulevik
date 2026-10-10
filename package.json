@@ -3,7 +3,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "test": "node tests/pension.test.js",
+    "test": "node tests/pension.test.js && node tests/scenarios.test.js",
     "e2e": "node tests/e2e.mjs"
   },
   "devDependencies": {

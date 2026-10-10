@@ -90,6 +90,24 @@ async function run(label, viewport) {
 await run('lauaarvuti', { width: 1366, height: 900 });
 await run('mobiil', { width: 375, height: 812 });
 
+console.log('\nPrototüüp 1 · ajutine auk');
+{
+  // Töö lõpeb 60, riiklik pension 2 a hiljem: raha saab otsa enne riiklikku pensioni, pärast seda katab pension vajaduse.
+  const page = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto(base + '/', { waitUntil: 'networkidle' });
+  await page.selectOption('#workUntil', '60');
+  await page.click('#stepper button[data-step="4"]');
+  check((await page.inputValue('#s2')) === '60', 'II samba vaikimisi algus = töö lõpp (60)');
+  await page.selectOption('#s1', '2');
+  const ans = await page.textContent('#answer');
+  check(/Sul jääb raha puudu \d+(–\d+)?-aastaselt/.test(ans) && ans.includes('Riiklik pension algab alles 67'), 'vastus nimetab ajutise augu: ' + ans.slice(0, 80));
+  check((await page.textContent('#metrics')).includes('riiklik pension kuus alates 67'), 'plaat näitab riiklikku pensioni alates 67, mitte 0 €');
+  check(errors.length === 0, 'JavaScripti vigu pole' + (errors.length ? ': ' + errors.join(' | ') : ''));
+  await page.close();
+}
+
 console.log('\nPrototüüp 2');
 {
   const page = await browser.newPage({ viewport: { width: 375, height: 812 } });

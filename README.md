@@ -35,7 +35,8 @@ Nupp „Täida Tuleva konto andmetega (näidis)“ näitab väljamõeldud liikme
 | `scripts/fetch_elutabel.py` | Uuendab elutabelit Statistikaameti API-st: `python3 scripts/fetch_elutabel.py` |
 | `data/kulud.js` | Pensionäride kulud kategooriate kaupa (Statistikaamet LE205, hinnad IA002 järgi tänasesse rahasse). Genereeritud |
 | `scripts/fetch_kulud.py` | Uuendab kulusid ja kolme taset (kokkuhoidlik, optimaalne, mugav): `python3 scripts/fetch_kulud.py` |
-| `tests/pension.test.js` | Arvutuste testid: `node tests/pension.test.js` |
+| `tests/pension.test.js` | Arvutuste põhitestid: `node tests/pension.test.js` |
+| `tests/scenarios.test.js` | Stsenaariumitestid (~9 600 kontrolli): käsitsi arvutatud juhtumid, rahavoogude tasakaal ja loogikakontrollid 162 persona peal (sissetulek, sugu, vanus, töötamine, kulud × strateegiad). Tabel: `node tests/scenarios.test.js --table` |
 | `tests/e2e.mjs` | Brauseritest (lauaarvuti ja mobiil, kõik põhifunktsioonid): `npm install` ja `node tests/e2e.mjs http://localhost:8000` |
 
 ## Eeldused (v1)

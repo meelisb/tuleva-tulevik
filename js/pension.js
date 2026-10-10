@@ -60,7 +60,7 @@
 
   // Ühe samba plaanijärgne väljamakse sellel aastal. Muudab samba objekti.
   function scheduled(pillar, age, table, sex) {
-    const m = pillar.plan.method, start = pillar.plan.start;
+    const m = pillar.plan.method, start = pillar.start;
     if (age < start || pillar.bal <= 0) return 0;
     if (m === 'renew') return pillar.bal / fundPensionTerm(table, sex, age);
     if (m === 'fund') {
@@ -83,8 +83,9 @@
     const p3Reduced = p3ReducedAge(input);
     const gross = (input.grossMonthly || 0) * 12;
 
-    const ii = { bal: input.p2, plan: plan.p2 };
-    const iii = { bal: input.p3, plan: plan.p3 };
+    // Algus ei saa olla minevikus: kui oled valitud vanusest vanem, algab väljamakse sel aastal.
+    const ii = { bal: input.p2, plan: plan.p2, start: Math.max(plan.p2.start, currentAge) };
+    const iii = { bal: input.p3, plan: plan.p3, start: Math.max(plan.p3.start, currentAge) };
     let tkf = input.tkf || 0, tkfBasis = tkf, dep = input.savings || 0;
     let iiStopped = false, iiStoppedAge = null;
     let taxTotal = 0, stateSupport = 0, refundTotal = 0;
@@ -107,7 +108,7 @@
       }
       // 2) ühekordne väljamakse alguses
       for (const [p, name] of [[ii, 'ii'], [iii, 'iii']]) {
-        if (p.plan.method === 'lump' && age === Math.max(p.plan.start, currentAge) && p.bal > 0) {
+        if (p.plan.method === 'lump' && age === p.start && p.bal > 0) {
           const t = name === 'iii' && age < p3Reduced ? TAX_EARLY : TAX_REDUCED;
           taxTotal += p.bal * t; dep += p.bal * (1 - t); p.bal = 0;
           if (name === 'ii' && !iiStopped) { iiStopped = true; iiStoppedAge = age; }
@@ -115,7 +116,10 @@
       }
       // 3) plaanijärgsed (maksuvabad) väljamaksed
       const s2 = scheduled(ii, age, table, input.sex); ii.bal -= s2;
-      const s3 = scheduled(iii, age, table, input.sex); iii.bal -= s3;
+      const s3gross = scheduled(iii, age, table, input.sex); iii.bal -= s3gross;
+      // III sammas enne soodusvanust (55 või 60): ka igakuine väljamakse on 22% maksuga.
+      const s3tax = age < p3Reduced ? s3gross * TAX_EARLY : 0;
+      const s3 = s3gross - s3tax; taxTotal += s3tax;
       if (s2 > 0 && !iiStopped) { iiStopped = true; iiStoppedAge = age; }
       const i1 = age >= stateStart ? stateYear : 0;
       const income = i1 + s2 + s3;
@@ -169,6 +173,16 @@
     const needStart = workUntil;
     const fromStart = rows.filter((x) => x.age >= needStart);
     const short = fromStart.find((x) => x.shortfall > 0.5);
+    // Esimene puudujäägi vahemik. Kui pärast seda puudujääki enam ei ole, on see ajutine auk
+    // (nt riiklik pension algab hiljem või II sammas on kättesaadav alles 60-aastaselt).
+    let gapEnd = null, gapTemporary = false;
+    if (short) {
+      const i0 = rows.indexOf(short);
+      let i = i0;
+      while (i + 1 < rows.length && rows[i + 1].shortfall > 0.5) i++;
+      gapEnd = rows[i].age;
+      gapTemporary = gapEnd < MAX_AGE && !rows.slice(i + 1).some((x) => x.shortfall > 0.5);
+    }
     const at = (a) => rows.find((x) => x.age === a);
     const horizon = horizonAge(table, input.sex, currentAge);
     const r90 = at(90) || rows[rows.length - 1];
@@ -180,7 +194,9 @@
       horizonAge: horizon,
       lastsUntil: short ? short.age : null, // null = jätkub kuni 100
       aliveBeyond: short ? short.alive : 0,
-      stateAfter: short ? short.i1 : null,
+      stateAfter: short ? stateYear / 12 : null, // riiklik pension kuus (ka siis, kui see algab alles hiljem)
+      gapEnd: gapEnd,
+      gapTemporary: gapTemporary,
       needAfter: short ? short.need : null,
       spendAt90: r90.i1 + r90.i23 + r90.sav,
       inheritance90: r90.moneyLeft,
@@ -203,19 +219,30 @@
   }
 
   // Valmisstrateegiad võrdluseks. Sinu oma plaan tuleb kasutajaliidesest.
+  // Sammaste väljamakse vaikimisi algus: kui töö lõpeb, aga mitte enne, kui seda soodsa maksuga saab
+  // (II sammas 60, III sammas 55 või 60). Nii ei kao riigi 4% ja töötamise ajal ei koguneta raha hoiusele.
+  function payoutStart(input) {
+    const pa = input.pensionAgeYears || pensionAge(input.birthYear).years;
+    const end = Math.max(CURRENT_YEAR - input.birthYear, input.workUntil || pa);
+    return { p2: Math.max(II_MIN_AGE, end), p3: Math.max(p3ReducedAge(input), end) };
+  }
+
+  // Valmisstrateegiad võrdluseks. Erinevad ainult väljamakse viisi poolest; algus on kõigil sama.
   function presets(input) {
     const pa = input.pensionAgeYears || pensionAge(input.birthYear).years;
-    const p3s = Math.max(p3ReducedAge(input), pa);
-    const both = (method, start2, start3) => ({ p2: { method: method, start: start2 }, p3: { method: method, start: start3 } });
+    const st = payoutStart(input);
+    const both = (method) => ({ p2: { method: method, start: st.p2 }, p3: { method: method, start: st.p3 } });
+    // Kui oled juba vanem kui pensioniiga + 2, ei saa riiklikku pensioni enam 2 aastat hiljem alustada.
+    const later = pa + 2 >= CURRENT_YEAR - input.birthYear ? 2 : 0;
     return [
-      Object.assign({ id: 'A', name: 'Kõik korraga', short: 'II ja III sammas pensionieas korraga välja (10% maks), raha hoiusel.', stateOffset: 0 }, both('lump', pa, p3s)),
-      Object.assign({ id: 'B', name: 'Üks fondipensioni leping', short: 'Maksuvaba igakuine väljamakse elada jäänud aastate peale. Lõpeb perioodi lõpus.', stateOffset: 0 }, both('fund', pa, p3s)),
-      Object.assign({ id: 'C', name: 'Leping igal aastal uuesti', short: 'Maksuvaba igakuine väljamakse, leping uueneb igal aastal. Ei saa otsa, väheneb vanas eas.', stateOffset: 0 }, both('renew', pa, p3s)),
-      Object.assign({ id: 'D', name: 'Riiklik pension 2 a hiljem', short: 'Paindlik pension: riiklik pension algab 2 aastat hiljem (+16,88% eluks ajaks), vahepeal elad sammastest.', stateOffset: 2 }, both('renew', pa, p3s)),
+      Object.assign({ id: 'A', name: 'Kõik korraga', short: 'II ja III sammas korraga välja, kui töö lõpeb (10% maks), raha hoiusel.', stateOffset: 0 }, both('lump')),
+      Object.assign({ id: 'B', name: 'Üks fondipensioni leping', short: 'Maksuvaba igakuine väljamakse elada jäänud aastate peale. Lõpeb perioodi lõpus.', stateOffset: 0 }, both('fund')),
+      Object.assign({ id: 'C', name: 'Leping igal aastal uuesti', short: 'Maksuvaba igakuine väljamakse, leping uueneb igal aastal. Ei saa otsa, väheneb vanas eas.', stateOffset: 0 }, both('renew')),
+      Object.assign({ id: 'D', name: 'Riiklik pension 2 a hiljem', short: 'Paindlik pension: riiklik pension algab 2 aastat hiljem (+16,88% eluks ajaks), vahepeal elad sammastest.', stateOffset: later }, both('renew')),
     ];
   }
 
-  const api = { CURRENT_YEAR, STATE_COEF, pensionAge, survival, horizonAge, fundPensionTerm, p3ReducedAge, needAt, simulate, sustainableNeed, presets };
+  const api = { CURRENT_YEAR, STATE_COEF, pensionAge, survival, horizonAge, fundPensionTerm, p3ReducedAge, needAt, simulate, sustainableNeed, payoutStart, presets };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Pension = api;
 })(typeof window !== 'undefined' ? window : globalThis);

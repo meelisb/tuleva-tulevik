@@ -67,7 +67,13 @@ Kõik arvutustestid: `npm test`.
 
 ## Eeldused
 
-Summad on tänases rahas. Palk ja riiklik pension reaalselt ei kasva. Edasilükkamise tõusud on SKA 2026 keskmised. Pensionäri maksuvaba tulu ja kindlustuslepingut ei arvestata.
+Summad on tänases rahas. Edasilükkamise tõusud on SKA 2026 keskmised. Kindlustuslepingut (annuiteeti) ei arvestata.
+
+**Lihtsustused (mõlemas prototüübis):**
+
+- Riiklikult pensionilt tulumaksu ei arvestata (ka pensionäri maksuvaba tulu mitte).
+- Palk ja riiklik pension reaalselt ei kasva: mõlemad on kogu aeg tänases rahas sama suured.
+- Pensioniea järel töötamine riiklikku pensioni ei suurenda.
 
 - Kalkulaator: sissemaksed jätkuvad töötamise lõpuni, hoiuse intress jääb vaikimisi inflatsioonist 1% maha, III samba tulumaksutagastus on arvestatud.
 - Elukaar: väljamaksed algavad pensionieas, hoiuse intress jääb inflatsioonist 1% maha (nagu kalkulaatoris), III samba tulumaksutagastust ei arvestata.

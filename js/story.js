@@ -73,7 +73,7 @@
 
     // III sammas: kas on, mis vanuses avati, sissemakse. Avamise aasta määrab maksureeglid (enne 2021 või hiljem).
     // have: sammas on olemas (liitumise aeg enne/pärast 2021); future: avan hiljem; no: ei ava.
-    const p3Kind = radio('p3has') || 'have';
+    const p3Kind = num('p3') > 0 ? 'have' : 'no'; // kasvu valikud on peidus: III sammas on, kui summa > 0
     const p3Has = p3Kind !== 'no';
     const joinedBefore = $('p3Joined').value === 'before';
     const p3OpenAge = p3Kind === 'have'
@@ -356,7 +356,7 @@
       '<ul class="mb-0 small"><li>Korraga: ' + (input.p3Open <= 55 ? '10%' : '22% (alates ' + input.p3Open + ': 10%)') + ' tulumaks</li><li>Jupiti, täiendava fondipensionina: ' + (input.p3Open <= 55 ? '0%' : '22% (alates ' + input.p3Open + ': 0%)') + ' tulumaks</li></ul>';
     $('p3LumpTxt').textContent = 'Kogu III sammas ühe korraga, ' + (soon ? '10%' : '22%') + ' tulumaksuks.';
     $('p3FundTxt').textContent = 'Igakuine väljamakse elada jäänud aastate peale, ' + (soon ? 'maksuvaba' : '22% tulumaksuks kuni ' + input.p3Open + '. eluaastani, siis maksuvaba') + '. Ülejäänu kasvab edasi.';
-    const lockTxt = !input.p3Has ? 'Sul ei ole III sammast, seega siin pole midagi välja võtta.'
+    const lockTxt = !input.p3Has ? 'Sul ei ole III sammast (summa esimeses vaates on 0), seega siin pole midagi välja võtta.'
       : input.p3Age >= pa0 ? 'Oled juba pensionieas, seega kasutad III sammast koos II sambaga pensionieas.'
       : !input.p3Allowed ? 'Avad III samba alles ' + input.p3OpenAge + '-aastaselt, seega 55-aastaselt pole veel midagi välja võtta.' : '';
     $('p3Locked').innerHTML = lockTxt + (lockTxt ? ' <button type="button" class="btn btn-link p-0 align-baseline" data-goto="0">Muuda III sammast</button>' : '');
@@ -440,7 +440,6 @@
     if (left < 1000 || r.coversNeedUntil !== null && r.coversNeedUntil <= median) {
       box.innerHTML = '<div class="legacy-card"><h3 class="h5">Raha üle ei jää. Mida saaks muuta?</h3>' +
         '<p class="text-secondary">Proovi mõnda neist ja vaata, kuidas tulemus muutub.</p><div class="d-flex flex-wrap gap-2">' +
-        '<button type="button" class="btn btn-outline-primary btn-sm" data-goto="0">💼 Vali teine fond või suurem makse</button>' +
         '<button type="button" class="btn btn-outline-primary btn-sm" data-goto="6">🏛️ Lükka riiklik pension edasi</button>' +
         '<button type="button" class="btn btn-outline-primary btn-sm" data-goto="8">🛒 Vali teine kulupakett</button></div></div>';
       return;
@@ -474,7 +473,6 @@
     const pa = P.retirementYears(input);
     const items = [
       [0, '🙂', 'Sündinud ' + input.birthYear + ', II sammas ' + eur(input.p2) + ', III sammas ' + eur(input.p3Base)],
-      [0, '💼', (radio('fundChange') !== 'switch' ? 'Jään fondi: ' + FUNDS[input.fund18].name.toLowerCase() : (input.switchAge > input.currentAge ? 'Vahetan ' + input.switchAge + '-aastaselt' : 'Vahetan kohe') + ' fondi: ' + FUNDS[input.fundNow].name.toLowerCase()) + ', II sammas ' + pct(input.p2Rate) + (input.p3Kind === 'have' ? ', III sambasse ' + eur(input.p3Monthly) + ' kuus' : input.p3Kind === 'future' ? ', avan III samba ' + input.p3OpenAge + '-aastaselt, ' + eur(input.p3Monthly) + ' kuus' : ', III sammast ei ava')],
       [4, '🔓', !input.p3Has ? 'III sammast ei ole' : input.p3Plan === 'keep' ? 'III sammas jääb kasvama' : (input.p3Plan === 'lump' ? 'Võtan III samba ' + input.p3Age + '-aastaselt korraga välja: ' + eur(input.p3Net) : 'Täiendav fondipension III sambast alates ' + input.p3Age + '-aastaselt: ' + eur(input.p3Net)) + (input.p3Plan === 'keep' ? '' : input.p3Use === 'save' ? ', hoiusele' : ', kasutan kohe')],
       [5, '🧳', input.payout === 'lump' ? 'Võtan samba raha korraga välja' : 'Võtan samba raha välja fondipensionina'],
       [6, '🏛️', input.payout === 'lump' || !input.deferral ? 'Riiklik pension ' + pa + '-aastaselt' : 'Riiklik pension ' + (pa + input.deferral) + '-aastaselt (' + input.deferral + ' a hiljem)'],

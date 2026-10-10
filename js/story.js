@@ -873,8 +873,6 @@
   switchEl.addEventListener('input', () => { switchEl.value = switchEl.value.replace(/\D/g, ''); });
   switchEl.addEventListener('change', () => { switchEl.value = String(readInput().switchAge); update(); });
 
-  $('kuludMeta').textContent = 'uuring ' + K.uuringuaasta + ', hinnad ' + K.hinnad;
-  $('lifeYear').textContent = T.aasta;
   syncPensionAge();
   go(0, false);
 })();

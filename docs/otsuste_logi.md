@@ -4,6 +4,9 @@ Kuupäevadega otsused, kontrollid ja parandatud vead. Uuemad üleval. Lisa siia 
 
 ## 10.10.2026
 
+### Tasuvusmudel
+- Lisatud `docs/kulumudel.md` ja `scripts/kulumudel.js`. Keskmises stsenaariumis (saldo 40 000 €, arendus 50 000 € + 15 000 €/a, 5 a) on tasuvuspunkt umbes 160 ühekordselt väljamakselt fondipensionile suunatud kogujat. Kõige ebakindlam eeldus on tööriista mõju (mitu kasutajat otsust muudab); see tuleb mõõta.
+
 ### Repo ja majutus
 - Kolm prototüüpi ühes repos, igaüks oma kaustas: `kalkulaator/` (prototüüp 1), `printsiibid/` (2), `elukaar/` (3). Avaleht juurkaustas.
 - Elukaare arendusharu ühendati `main`-i ajalooga (seis 9a685e8), haru kustutati. Elukaare muudatused tehakse nüüd otse `main`-i kausta `elukaar/`.

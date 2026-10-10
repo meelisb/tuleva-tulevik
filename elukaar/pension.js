@@ -155,6 +155,8 @@
         year: input.birthYear + age,
         i1: i1 / 12,
         i23: (sched + extraNet + sched3 + extra3) / 12,
+        i2: (sched + extraNet) / 12, // II sammas (ühine pott); eraldi III samba pott on i3
+        i3: (sched3 + extra3) / 12,
         dep: fromDeposit / 12,
         spend: spend / 12,
         shortfall: age >= pa ? Math.max(0, needYear - spend) / 12 : 0,

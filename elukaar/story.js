@@ -207,6 +207,7 @@
       p2: num('p2'),
       p3Base: p3Base,
       p3: (p3Plan === 'keep' ? p3Base : 0) + childNow + switchAdj + p3RemNow + c3Adj,
+      p3RemNow: p3RemNow, c3Adj: c3Adj,
       p3Pre: (p3Plan === 'keep' ? p3Base : 0) + childNow + p3RemNow + c3Adj,
       p3Before2021: p3Before2021,
       p3Has: p3Has, p3Kind: p3Kind, p3OpenAge: p3OpenAge, p3Allowed: p3Allowed,
@@ -247,11 +248,15 @@
     ? Object.assign({}, s, { name: 'Paindlik pension', short: 'Riikliku pensioni lükkad edasi ja seni kasutad II ja III sammast fondipensionina.' })
     : s));
 
-  // III sammas eraldi potiks (pension.js p3Sep), kui selle väljamakse viis erineb II samba omast.
+  // III sammas on alati eraldi pott (pension.js p3Sep): oma sissemaksed, oma väljamakse viis, graafikul eraldi.
+  // Kui III sammas jäi 55-aastaselt kasvama, kehtib selle pensionieas valik (p3pa). Kui see võeti 55-aastaselt
+  // fondipensionina, jätkub ülejäägi fondipension; kui korraga välja, kasvavad hilisemad sissemaksed edasi.
   function withP3(input) {
-    const sepNeeded = input.p3Has && input.p3Plan === 'keep' && input.p3Base > 0 && input.p3pa !== input.method;
-    if (!sepNeeded) return Object.assign(input, { p3Sep: null });
-    return Object.assign(input, { p3: input.p3 - input.p3Base, p3Pre: input.p3Pre, p3Sep: { amount: input.p3Base, mode: input.p3pa } });
+    if (!input.p3Has) return Object.assign(input, { p3Sep: null });
+    const keep = input.p3Plan === 'keep';
+    const amount = (keep ? input.p3Base : input.p3RemNow) + input.c3Adj; // c3Adj: tegemata sissemaksed (nt avad hiljem)
+    const mode = keep ? input.p3pa : input.p3Plan === 'fund' ? 'fund' : 'grow';
+    return Object.assign(input, { p3: input.p3 - amount, p3Pre: input.p3Pre - amount, p3Sep: { amount: amount, mode: mode } });
   }
 
   // Valikud → üks stsenaarium failist pension.js.
@@ -705,10 +710,20 @@
     return g.createPattern(c, 'repeat');
   }
 
+  // Täppide muster (III sammas), et II ja III sammas ei eristuks ainult värviga.
+  function dots(base, dot) {
+    const c = document.createElement('canvas'); c.width = c.height = 8;
+    const g = c.getContext('2d');
+    g.fillStyle = base; g.fillRect(0, 0, 8, 8);
+    g.fillStyle = dot; g.beginPath(); g.arc(2, 2, 1.2, 0, Math.PI * 2); g.arc(6, 6, 1.2, 0, Math.PI * 2); g.fill();
+    return g.createPattern(c, 'repeat');
+  }
+
   // Graafiku tekstiline kokkuvõte (põhijäreldused) ja andmetabel (WCAG 1.1.1, ka klaviatuuri ja ekraanilugeja kasutajale).
   function chartSummary(r, input) {
     const pa = r.pensionStartAge, start = r.rows.find((x) => x.age === pa) || r.rows[0];
-    const parts = ['Pensioni alguses (' + pa + '-aastaselt) tuleb kuus ' + eur(start.i1) + ' riiklikku pensioni ja ' + eur(start.i23 + start.dep) + ' samba või hoiuse rahast.',
+    const src = [eur(start.i1) + ' riiklikku pensioni', start.i2 > 0.5 ? eur(start.i2) + ' II sambast' : '', start.i3 > 0.5 ? eur(start.i3) + ' III sambast' : '', start.dep > 0.5 ? eur(start.dep) + ' hoiuselt' : ''].filter(Boolean);
+    const parts = ['Pensioni alguses (' + pa + '-aastaselt) tuleb kuus ' + (src.length > 1 ? src.slice(0, -1).join(', ') + ' ja ' + src[src.length - 1] : src[0]) + '.',
       'Sinu kulud on ' + eur(input.needMonthly) + ' kuus.'];
     if (r.coversNeedUntil === null) parts.push('Kulud on kaetud kuni 100. eluaastani.');
     else parts.push('Kulud on kaetud kuni ' + r.coversNeedUntil + '. eluaastani.');
@@ -718,8 +733,8 @@
   function chartTable(r, input) {
     const rows = r.rows.filter((x) => x.age >= r.pensionStartAge);
     return '<table class="table table-sm align-middle mb-0"><caption id="chartTableCaption">Sissetulek ja kulud kuus vanuse järgi (tänastes eurodes)</caption>' +
-      '<thead><tr><th scope="col">Vanus</th><th scope="col">Aasta</th><th scope="col" class="text-end">I sammas</th><th scope="col" class="text-end">II ja III sammas</th><th scope="col" class="text-end">Hoiuselt</th><th scope="col" class="text-end">Kulud</th><th scope="col" class="text-end">Puudu</th><th scope="col" class="text-end">Elus</th></tr></thead><tbody>' +
-      rows.map((x) => '<tr><th scope="row">' + x.age + '</th><td>' + x.year + '</td><td class="text-end">' + eur(x.i1) + '</td><td class="text-end">' + eur(x.i23) + '</td><td class="text-end">' + eur(x.dep) +
+      '<thead><tr><th scope="col">Vanus</th><th scope="col">Aasta</th><th scope="col" class="text-end">I sammas</th><th scope="col" class="text-end">II sammas</th><th scope="col" class="text-end">III sammas</th><th scope="col" class="text-end">Hoiuselt</th><th scope="col" class="text-end">Kulud</th><th scope="col" class="text-end">Puudu</th><th scope="col" class="text-end">Elus</th></tr></thead><tbody>' +
+      rows.map((x) => '<tr><th scope="row">' + x.age + '</th><td>' + x.year + '</td><td class="text-end">' + eur(x.i1) + '</td><td class="text-end">' + eur(x.i2) + '</td><td class="text-end">' + eur(x.i3) + '</td><td class="text-end">' + eur(x.dep) +
         '</td><td class="text-end">' + eur(input.needMonthly) + '</td><td class="text-end">' + (x.shortfall > 0.5 ? eur(x.shortfall) : '–') + '</td><td class="text-end">' + Math.round(x.alive * 100) + '%</td></tr>').join('') +
       '</tbody></table>';
   }
@@ -743,7 +758,7 @@
     const ageOf = (a) => a + '-aastaselt';
     const alive = (a) => { const x = rows.find((y) => y.age === a); return x ? Math.round(x.alive * 100) : null; };
     // Etapid: järjestikused aastad, kus kulude katmise allikad on samad.
-    const key = (x) => [x.i1 > 0.5, x.i23 > 0.5, x.dep > 0.5, x.shortfall > 0.5].map(Number).join('');
+    const key = (x) => [x.i1 > 0.5, x.i2 > 0.5, x.i3 > 0.5, x.dep > 0.5, x.shortfall > 0.5].map(Number).join('');
     const phases = [];
     rows.forEach((x) => {
       const last = phases[phases.length - 1];
@@ -754,7 +769,8 @@
     const surplus = (ph) => ph.rows.reduce((s, x) => s + Math.max(0, x.i1 + x.i23 - x.spend), 0) / ph.rows.length;
     const parts = (ph) => [
       avg(ph, 'i1') > 0.5 ? 'riiklik pension ' + eur(avg(ph, 'i1')) : '',
-      avg(ph, 'i23') > 0.5 ? 'II ja III sammas ' + eur(avg(ph, 'i23')) : '',
+      avg(ph, 'i2') > 0.5 ? 'II sammas ' + eur(avg(ph, 'i2')) : '',
+      avg(ph, 'i3') > 0.5 ? 'III sammas ' + eur(avg(ph, 'i3')) : '',
       avg(ph, 'dep') > 0.5 ? 'hoiuselt ' + eur(avg(ph, 'dep')) : '',
     ].filter(Boolean);
     // Miks etapp muutus (võrreldes eelmisega).
@@ -762,10 +778,12 @@
       const had = (p, f) => avg(p, f) > 0.5;
       const out = [];
       if (!had(prev, 'i1') && had(ph, 'i1')) out.push('algab riiklik pension');
-      if (had(prev, 'i23') && !had(ph, 'i23')) out.push(had(ph, 'dep') ? 'lõpevad fondipensioni väljamaksed' : 'saab samba raha otsa');
+      if (had(prev, 'i2') && !had(ph, 'i2')) out.push(had(ph, 'dep') ? 'lõpevad II samba väljamaksed' : 'saab II samba raha otsa');
+      if (had(prev, 'i3') && !had(ph, 'i3')) out.push('saab III samba raha otsa');
       if (!had(prev, 'dep') && had(ph, 'dep')) out.push('hakkad kasutama hoiusele kogunenud raha');
       if (had(prev, 'dep') && !had(ph, 'dep')) out.push('saab hoiuse raha otsa');
-      if (!had(prev, 'i23') && had(ph, 'i23')) out.push('hakkad kasutama samba raha');
+      if (!had(prev, 'i2') && had(ph, 'i2')) out.push('hakkad kasutama II samba raha');
+      if (!had(prev, 'i3') && had(ph, 'i3')) out.push('hakkad kasutama III samba raha');
       if (avg(prev, 'shortfall') < 0.5 && avg(ph, 'shortfall') > 0.5) out.push('hakkab raha puudu jääma');
       return out.length ? ph.from + '-aastaselt ' + out.join(' ja ') + '. ' : '';
     };
@@ -789,7 +807,7 @@
     const kind = mobile ? 'Kihid' : 'Tulbad';
     const look = '<ul class="mb-0">' +
       '<li>' + kind + ' näitavad iga vanuse kohta, millest kulud kaetakse: ' +
-        [rows.some((x) => x.i1 > 0.5) ? 'tumesinine on riiklik pension' : '', rows.some((x) => x.i23 > 0.5) ? 'sinine II ja III sammas' : '', rows.some((x) => x.dep > 0.5) ? 'triibuline hoiuselt' : ''].filter(Boolean).join(', ') + '.</li>' +
+        [rows.some((x) => x.i1 > 0.5) ? 'tumesinine on riiklik pension' : '', rows.some((x) => x.i2 > 0.5) ? 'sinine II sammas' : '', rows.some((x) => x.i3 > 0.5) ? 'täpiline III sammas' : '', rows.some((x) => x.dep > 0.5) ? 'triibuline hoiuselt' : ''].filter(Boolean).join(', ') + '.</li>' +
       '<li>Punane katkendjoon on sinu kulud kuus. Kui ' + kind.toLowerCase() + ' jäävad joonest allapoole, on raha puudu.</li>' +
       '<li>Hall joon näitab, mitu protsenti sinuvanustest on veel elus' + (mobile ? ' (täpse protsendi näed graafikut puudutades).' : ' (parem telg).') + '</li></ul>';
     return '<p class="mb-2">' + lead + '</p>' +
@@ -812,7 +830,8 @@
       datasets: [
         // Värvid samad. Lisaks: heledamatel tulpadel tumesinine äär (eristub valgest taustast), hoiusel triibud.
         Object.assign({ type: 'bar', label: 'I sammas', data: rows.map((x) => Math.round(x.i1)), backgroundColor: '#002f63', stack: 'income', yAxisID: 'y', order: 3 }, area('origin')),
-        Object.assign({ type: 'bar', label: 'II ja III sammas', data: rows.map((x) => Math.round(x.i23)), backgroundColor: '#00aeea', borderColor: '#002f63', borderWidth: 1, stack: 'income', yAxisID: 'y', order: 3 }, area('-1')),
+        Object.assign({ type: 'bar', label: 'II sammas', data: rows.map((x) => Math.round(x.i2)), backgroundColor: '#00aeea', borderColor: '#002f63', borderWidth: 1, stack: 'income', yAxisID: 'y', order: 3 }, area('-1')),
+        Object.assign({ type: 'bar', label: 'III sammas', data: rows.map((x) => Math.round(x.i3)), backgroundColor: dots('#006ce6', '#ffffff'), borderColor: '#002f63', borderWidth: 1, stack: 'income', yAxisID: 'y', order: 3 }, area('-1')),
         Object.assign({ type: 'bar', label: 'Hoiuselt (välja võetud raha)', data: rows.map((x) => Math.round(x.dep)), backgroundColor: stripes('#9fd8f0', '#002f63'), borderColor: '#002f63', borderWidth: 1, stack: 'income', yAxisID: 'y', order: 3 }, area('-1')),
         // Joonte valge „halo“ (laiem valge joon all), et jooned paistaksid ka tumedate tulpade peal. Legendis ja vihjes ei näidata.
         { type: 'line', label: '_halo', data: rows.map(() => input.needMonthly), borderColor: '#fff', borderWidth: 6, pointRadius: 0, stack: 'needHalo', yAxisID: 'y', order: 2, halo: true },

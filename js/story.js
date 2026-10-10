@@ -40,8 +40,8 @@
   // ---------- Olek ----------
   const chapters = Array.from(document.querySelectorAll('.chapter'));
   const LAST = chapters.length - 1;
-  // Minevikuetapid (0–18 ja 18) jäävad loost välja: tänane sambasumma tuleb esimesest vaatest.
-  const SKIP = new Set([1, 2]);
+  // Minevikuetapid (0–18, 18) ja tööaastad jäävad eraldi etapina välja: kõik on esimeses vaates.
+  const SKIP = new Set([1, 2, 3]); // tööaastate küsimused on esimeses vaates
   const shown = chapters.map((c, i) => i).filter((i) => !SKIP.has(i));
   let step = 0;
   let visited = new Set([0]);
@@ -359,7 +359,7 @@
     const lockTxt = !input.p3Has ? 'Sul ei ole III sammast, seega siin pole midagi välja võtta.'
       : input.p3Age >= pa0 ? 'Oled juba pensionieas, seega kasutad III sammast koos II sambaga pensionieas.'
       : !input.p3Allowed ? 'Avad III samba alles ' + input.p3OpenAge + '-aastaselt, seega 55-aastaselt pole veel midagi välja võtta.' : '';
-    $('p3Locked').innerHTML = lockTxt + (lockTxt ? ' <button type="button" class="btn btn-link p-0 align-baseline" data-goto="3">Muuda III sammast</button>' : '');
+    $('p3Locked').innerHTML = lockTxt + (lockTxt ? ' <button type="button" class="btn btn-link p-0 align-baseline" data-goto="0">Muuda III sammast</button>' : '');
     $('p3Locked').classList.toggle('d-none', !lockTxt);
     $('p3PlanSet').disabled = !!lockTxt;
     $('p3UseSet').classList.toggle('d-none', input.p3Plan === 'keep');
@@ -440,7 +440,7 @@
     if (left < 1000 || r.coversNeedUntil !== null && r.coversNeedUntil <= median) {
       box.innerHTML = '<div class="legacy-card"><h3 class="h5">Raha üle ei jää. Mida saaks muuta?</h3>' +
         '<p class="text-secondary">Proovi mõnda neist ja vaata, kuidas tulemus muutub.</p><div class="d-flex flex-wrap gap-2">' +
-        '<button type="button" class="btn btn-outline-primary btn-sm" data-goto="3">💼 Vali teine fond või suurem makse</button>' +
+        '<button type="button" class="btn btn-outline-primary btn-sm" data-goto="0">💼 Vali teine fond või suurem makse</button>' +
         '<button type="button" class="btn btn-outline-primary btn-sm" data-goto="6">🏛️ Lükka riiklik pension edasi</button>' +
         '<button type="button" class="btn btn-outline-primary btn-sm" data-goto="8">🛒 Vali teine kulupakett</button></div></div>';
       return;
@@ -474,7 +474,7 @@
     const pa = P.retirementYears(input);
     const items = [
       [0, '🙂', 'Sündinud ' + input.birthYear + ', II sammas ' + eur(input.p2) + ', III sammas ' + eur(input.p3Base)],
-      [3, '💼', (radio('fundChange') !== 'switch' ? 'Jään fondi: ' + FUNDS[input.fund18].name.toLowerCase() : (input.switchAge > input.currentAge ? 'Vahetan ' + input.switchAge + '-aastaselt' : 'Vahetan kohe') + ' fondi: ' + FUNDS[input.fundNow].name.toLowerCase()) + ', II sammas ' + pct(input.p2Rate) + (input.p3Kind === 'have' ? ', III sambasse ' + eur(input.p3Monthly) + ' kuus' : input.p3Kind === 'future' ? ', avan III samba ' + input.p3OpenAge + '-aastaselt, ' + eur(input.p3Monthly) + ' kuus' : ', III sammast ei ava')],
+      [0, '💼', (radio('fundChange') !== 'switch' ? 'Jään fondi: ' + FUNDS[input.fund18].name.toLowerCase() : (input.switchAge > input.currentAge ? 'Vahetan ' + input.switchAge + '-aastaselt' : 'Vahetan kohe') + ' fondi: ' + FUNDS[input.fundNow].name.toLowerCase()) + ', II sammas ' + pct(input.p2Rate) + (input.p3Kind === 'have' ? ', III sambasse ' + eur(input.p3Monthly) + ' kuus' : input.p3Kind === 'future' ? ', avan III samba ' + input.p3OpenAge + '-aastaselt, ' + eur(input.p3Monthly) + ' kuus' : ', III sammast ei ava')],
       [4, '🔓', !input.p3Has ? 'III sammast ei ole' : input.p3Plan === 'keep' ? 'III sammas jääb kasvama' : (input.p3Plan === 'lump' ? 'Võtan III samba ' + input.p3Age + '-aastaselt korraga välja: ' + eur(input.p3Net) : 'Täiendav fondipension III sambast alates ' + input.p3Age + '-aastaselt: ' + eur(input.p3Net)) + (input.p3Plan === 'keep' ? '' : input.p3Use === 'save' ? ', hoiusele' : ', kasutan kohe')],
       [5, '🧳', input.payout === 'lump' ? 'Võtan samba raha korraga välja' : 'Võtan samba raha välja fondipensionina'],
       [6, '🏛️', input.payout === 'lump' || !input.deferral ? 'Riiklik pension ' + pa + '-aastaselt' : 'Riiklik pension ' + (pa + input.deferral) + '-aastaselt (' + input.deferral + ' a hiljem)'],

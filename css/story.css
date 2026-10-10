@@ -165,3 +165,8 @@ main.container { padding-bottom: 1rem; }
 /* Riba tühi osa: valge täide + tumehall äär (3,7:1 nii valgel kui valitud helesinisel taustal) */
 .pkg-bar { background: #fff; border: 1px solid #7d8186; }
 .dot.rest { background: #fff; border: 1px solid #7d8186; }
+/* Keelatud valikukaart (nt täiendav fondipension enne soodusvanust) */
+.choice.is-disabled { cursor: not-allowed; }
+.choice.is-disabled .choice-body { background: var(--gray-bg-2); border-style: dashed; }
+.choice.is-disabled .choice-body strong, .choice.is-disabled .choice-body small { color: var(--text-secondary); }
+.choice.is-disabled:hover .choice-body { border-color: var(--gray-border-3); }

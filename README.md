@@ -14,7 +14,7 @@ Tiimi „Tulevane Mina“ töö Tuleva häkatonil (9.–11.10.2026). Küsimus, m
 | 2. **Printsiibid** | `printsiibid/` | Kuus põhimõtet ja otsustuspuu, arvutusi ei tehta | – |
 | 3. **Elukaar** (Kadi) | `elukaar/` | Pensionilugu eluetappide kaupa: valikud 55-, 60- ja pensionieas, kulutase, tulemus ja allalaadimine | `elukaar/pension.js` |
 
-Igal arvutaval prototüübil on oma mootor. Elukaare mootor on kalkulaatori varasema mootori edasiarendus. Samade sisenditega (ilma sissemakseteta, hoius 0%) annavad mõlemad sama tulemuse; seda kontrollib `tests/elukaar.scenarios.test.js`.
+Igal arvutaval prototüübil on oma mootor. Elukaare mootor on kalkulaatori varasema mootori edasiarendus. Samade sisenditega (ilma sissemakseteta) annavad mõlemad sama tulemuse; seda kontrollib `tests/elukaar.scenarios.test.js`.
 
 Ühised failid: `css/tuleva.css` (Tuleva disainisüsteemi tokenid ja põhistiilid, prototüübi omad stiilid on prototüübi kaustas) ja `data/` (Statistikaameti andmed).
 
@@ -30,7 +30,9 @@ Seejärel ava http://localhost:8000.
 
 Failide URL-idel on versioon (`?v=…`). Muuda see kõigis `index.html` failides iga avaldamisega, muidu võib brauser kasutada vana ja uue koodi segu (GitHub Pages: `cache-control: max-age=600`).
 
-Avaldamine: `.github/workflows/pages.yml` avaldab haru `main` juurkausta ja iga teise haru alamkausta `/<haru-nimi>/`.
+Avaldamine: `.github/workflows/pages.yml` avaldab ainult haru `main` aadressile https://meelisb.github.io/tuleva-tulevik/ (avaleht, `/kalkulaator/`, `/printsiibid/`, `/elukaar/`). Teisi harusid ei avaldata ja GitHubi keskkond `github-pages` lubab avaldada ainult `main`-ist. Vana aadress `/kadi-branch/` suunab `/elukaar/` lehele.
+
+Muudatused: tee lühiajaline haru, ühenda see `main`-i ja kustuta haru. Elukaare muudatused käivad kausta `elukaar/`.
 
 ## Kulutasemed (mõlemas prototüübis samad)
 
@@ -68,6 +70,6 @@ Kõik arvutustestid: `npm test`.
 Summad on tänases rahas. Palk ja riiklik pension reaalselt ei kasva. Edasilükkamise tõusud on SKA 2026 keskmised. Pensionäri maksuvaba tulu ja kindlustuslepingut ei arvestata.
 
 - Kalkulaator: sissemaksed jätkuvad töötamise lõpuni, hoiuse intress jääb vaikimisi inflatsioonist 1% maha, III samba tulumaksutagastus on arvestatud.
-- Elukaar: väljamaksed algavad pensionieas, hoius 0% pärast inflatsiooni, III samba tulumaksutagastust ei arvestata.
+- Elukaar: väljamaksed algavad pensionieas, hoiuse intress jääb inflatsioonist 1% maha (nagu kalkulaatoris), III samba tulumaksutagastust ei arvestata.
 
 Tööversioon. Ei ole finants-, maksu- ega õigusnõu.

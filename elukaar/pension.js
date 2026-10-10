@@ -3,7 +3,7 @@
 //
 // Ühine kulureegel (kõik stsenaariumid): igal aastal kulutad oma vajaduse.
 // Allikad järjekorras: riiklik pension → samba plaanijärgne väljamakse → hoius (varasemad ülejäägid
-// või ühekordne väljamakse) → lisaväljamakse sambast (10% maks). Ülejääk läheb hoiusele (reaaltootlus 0%).
+// või ühekordne väljamakse) → lisaväljamakse sambast (10% maks). Ülejääk läheb hoiusele (reaaltootlus vaikimisi −1%, nagu kalkulaatoris).
 // Nii on stsenaariumid võrreldavad: kõik püüavad katta sama vajaduse ja erinevad ainult maksu,
 // tootluse, riikliku pensioni ajastuse ja väljamakse graafiku poolest.
 (function (root) {
@@ -85,6 +85,7 @@
   function simulate(input, table, scenario, needOverride) {
     const need = needOverride !== undefined ? needOverride : input.needMonthly;
     const r = input.realReturn;
+    const rd = input.depositReturn !== undefined ? input.depositReturn : -0.01; // hoiuse intress jääb tavaliselt inflatsioonist maha
     const pa = retirementYears(input);
     const currentAge = CURRENT_YEAR - input.birthYear;
     const startAge = Math.max(currentAge, 55);
@@ -145,7 +146,8 @@
         }
       }
       // Kasv enne pensioniiga on kogumisfaasis (ülal) juba arvestatud; siin kasvab vara ainult pensionieast alates.
-      if (age >= pa) { fund *= 1 + r; fund3 *= 1 + r; }
+      // Kasv ja hoiuse väärtuse muutus pensionieast (ühekordne väljamakse on arvestatud pensioniea seisuga).
+      if (age >= pa) { fund *= 1 + r; fund3 *= 1 + r; deposit *= 1 + rd; }
       const income = i1 + sched + extraNet + sched3 + extra3;
       const spend = income + fromDeposit - saved;
       rows.push({

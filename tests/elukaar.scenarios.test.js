@@ -37,8 +37,9 @@ for (const { label, input } of personas) {
   check(near(row(a, pa).moneyLeft, ref * 0.9, 0.01), label + '/A: korraga välja = 90% varast');
 }
 
-// 2. Rahavoogude tasakaal pensionieast: raha muutus = riiklik pension − kulutus − maks, kus 0 ≤ maks ≤ sambast võetu / 9.
-for (const { label, input } of personas.filter((p) => p.input.realReturn === 0)) {
+// 2. Rahavoogude tasakaal pensionieast (tootlus ja hoius 0%): raha muutus = riiklik pension − kulutus − maks, kus 0 ≤ maks ≤ sambast võetu / 9.
+for (const { label, input: inp } of personas.filter((p) => p.input.realReturn === 0)) {
+  const input = { ...inp, depositReturn: 0 };
   for (const id of Object.keys(SC)) {
     const s = E.simulate(input, T, SC[id]);
     const pa = Math.max(E.retirementYears(input), E.CURRENT_YEAR - input.birthYear);
@@ -72,7 +73,7 @@ for (const { label, input } of personas.filter((_, k) => k % 4 === 0)) {
     }
     check(lasts(E.simulate({ ...input, needMonthly: input.needMonthly + 200 }, T, SC[id])) <= lasts(a), label + '/' + id + ': suurem kulu ei tohi katmist pikendada');
   }
-  // Kõik korraga ei ole parem kui raha fondi jätmine (sama raha, 10% maks kohe, hoius 0% ≤ fond).
+  // Kõik korraga ei ole parem kui raha fondi jätmine (sama raha, 10% maks kohe, hoius −1% ≤ fond).
   if (input.realReturn >= 0) check(E.sustainableNeed(input, T, SC.E) >= E.sustainableNeed(input, T, SC.A), label + ': jätkan kasvatamist ≥ kõik korraga');
 }
 
@@ -94,11 +95,20 @@ for (const { label, input } of personas.filter((_, k) => k % 4 === 0)) {
   check(row(s, 65).i23 > 0 && row(s, 65).i1 === 0, 'C: pensionieas tuleb fondipension enne riiklikku pensioni');
 }
 
-// 7. Ristkontroll kalkulaatoriga: ilma sissemakseteta, hoius 0%, töö lõpeb pensionieas → sama tulemus.
+// 6b. Hoius kaotab vaikimisi 1% aastas (sama mis kalkulaatoris).
+{
+  const input = { birthYear: 1961, sex: 'N', p1Monthly: 0, p2: 10000, p3: 0, p3Before2021: true, needMonthly: 0, realReturn: 0 };
+  const s = E.simulate(input, T, SC.A);
+  check(near(row(s, 66).moneyLeft, 9000 * 0.99, 0.01), 'hoius −1%: ' + row(s, 66).moneyLeft.toFixed(2));
+  const z = E.simulate({ ...input, depositReturn: 0 }, T, SC.A);
+  check(near(row(z, 66).moneyLeft, 9000, 0.01), 'hoius 0%, kui nii valitud');
+}
+
+// 7. Ristkontroll kalkulaatoriga: ilma sissemakseteta, hoius vaikimisi −1% mõlemas, töö lõpeb pensionieas → sama tulemus.
 //    Elukaar A, B, D, C(+2 a) = kalkulaator lump, fund, renew, renew + riiklik 2 a hiljem.
 for (const { label, input } of personas.filter((p) => E.CURRENT_YEAR - p.input.birthYear >= 55)) {
   const pa = E.retirementYears(input);
-  const k = { ...input, grossMonthly: 0, p2Rate: 0, p3Monthly: 0, pensionAgeYears: pa, workUntil: pa, tkf: 0, savings: 0, tkfMonthly: 0, depositReturn: 0, care: { on: false } };
+  const k = { ...input, grossMonthly: 0, p2Rate: 0, p3Monthly: 0, pensionAgeYears: pa, workUntil: pa, tkf: 0, savings: 0, tkfMonthly: 0, care: { on: false } };
   const e = { ...k };
   const kStart = Math.max(pa, K.CURRENT_YEAR - input.birthYear);
   const pairs = [['A', 'lump', 0], ['B', 'fund', 0], ['D', 'renew', 0], ['C', 'renew', 2]];

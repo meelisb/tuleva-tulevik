@@ -1,11 +1,11 @@
-# Avaldab GitHub Pages'i: main → juurkaust, iga teine haru → /<haru-nimi>/
-# Näiteks kadi-branch → https://meelisb.github.io/tuleva-tulevik/kadi-branch/
-# Käivitub iga push'i peale (harudes, kus see fail on) ja käsitsi (Actions → Pages → Run workflow).
+# Avaldab GitHub Pages'i ainult harust main: https://meelisb.github.io/tuleva-tulevik/
+# Prototüübid on main-is kaustades kalkulaator/, printsiibid/ ja elukaar/. Teisi harusid ei avaldata,
+# et elus oleks alati ainult kõige uuem versioon. Keskkonna „github-pages“ reegel lubab avaldada ainult main-ist.
 name: Pages
 
 on:
   push:
-    branches: ['**']
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -22,23 +22,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Pane kõik harud kokku
+      - name: Pane leht kokku
         run: |
-          git fetch origin '+refs/heads/*:refs/remotes/origin/*'
           mkdir -p _site
-          git archive origin/main | tar -x -C _site
-          rm -rf _site/.github
-          echo '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Harude eelvaated</title><body style="font-family:system-ui;margin:2rem"><h1>Harude eelvaated</h1><ul><li><a href="./">main</a></li>' > _site/harud.html
-          for b in $(git for-each-ref --format='%(refname:lstrip=3)' refs/remotes/origin | grep -v -E '^(HEAD|main|gh-pages)$'); do
-            dir=$(echo "$b" | tr '/' '-')
-            mkdir -p "_site/$dir"
-            git archive "origin/$b" | tar -x -C "_site/$dir"
-            rm -rf "_site/$dir/.github"
-            echo "<li><a href=\"$dir/\">$b</a></li>" >> _site/harud.html
-          done
-          echo '</ul></body>' >> _site/harud.html
+          git archive HEAD | tar -x -C _site
+          rm -rf _site/.github _site/tests _site/node_modules
           touch _site/.nojekyll
           find _site -maxdepth 2 -name index.html
       - uses: actions/upload-pages-artifact@v3

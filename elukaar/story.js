@@ -560,13 +560,13 @@
       const tips = [];
       const rPct = pct(input.realReturn);
       if (input.method === 'lump') tips.push(['ii', 'Ära võta II sammast korraga välja.',
-        'Väljavõetud raha seisab hoiusel ja inflatsioon sööb selle väärtust (arvutuses 0% aastas pärast inflatsiooni). Fondis kasvab see edasi (sinu valitud tootlusega ' + rPct + ' aastas pärast inflatsiooni). ' +
+        'Väljavõetud raha seisab hoiusel ja inflatsioon sööb selle väärtust (arvutuses −1% aastas pärast inflatsiooni). Fondis kasvab see edasi (sinu valitud tootlusega ' + rPct + ' aastas pärast inflatsiooni). ' +
         'Kui oled raha juba välja võtnud, pane see uuesti kasvama (nt indeksfondi), ära hoia seda arvel ega padja all.',
         ico('sprout') + ' Jätka II samba kasvatamist']);
       if (input.p3Has && input.p3Plan !== 'keep') tips.push(['iii', 'Jäta III sammas kasvama.',
         (input.p3Use === 'spend'
           ? 'Kui kulutad III samba raha ' + input.p3Age + '-aastaselt ära, pole seda pensionil.'
-          : 'Hoiusel seisev raha ei kasva (arvutuses 0% aastas pärast inflatsiooni), fondis kasvab sinu valitud tootlusega (' + rPct + ' aastas).') +
+          : 'Hoiusel seisev raha kaotab väärtust (arvutuses −1% aastas pärast inflatsiooni), fondis kasvab sinu valitud tootlusega (' + rPct + ' aastas).') +
         ' Kui oled selle juba välja võtnud, investeeri see uuesti, ära hoia seda arvel ega padja all.',
         ico('sprout') + ' Jäta III sammas kasvama']);
       box.innerHTML = '<div class="legacy-card"><h3 class="h5">Raha üle ei jää. Mida saaks muuta?</h3>' +

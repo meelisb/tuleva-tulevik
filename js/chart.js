@@ -3,7 +3,7 @@
 (function () {
   'use strict';
 
-  const COLORS = { i1: '#002f63', i23: '#00aeea', sav: '#9fd8f0', short: '#db2200', need: '#db2200', alive: '#6b7074', grid: '#e0e6ec', work: '#f5f7f9' };
+  const COLORS = { i1: '#002f63', i23: '#00aeea', sav: '#9fd8f0', short: '#db2200', need: '#db2200', alive: '#6b7074', money: '#006ce6', grid: '#e0e6ec', work: '#f5f7f9' };
   const SERIES = [
     ['i1', 'Riiklik pension (I sammas)'],
     ['i23', 'II ja III sammas'],
@@ -11,6 +11,7 @@
     ['short', 'Puudu'],
   ];
   const eur = (v) => Math.round(v).toLocaleString('et-EE') + ' €';
+  const kEur = (v) => (v >= 1000 ? Math.round(v / 1000).toLocaleString('et-EE') + ' tuh €' : Math.round(v) + ' €');
   const NS = 'http://www.w3.org/2000/svg';
 
   function niceMax(v) {
@@ -30,15 +31,18 @@
     const rows = opts.rows.filter((r) => r.age >= opts.startAge);
     const W = Math.max(300, container.clientWidth || 600);
     const narrow = W < 480;
-    const mainH = narrow ? 210 : 260, gap = 26, survH = narrow ? 56 : 64;
-    const m = { l: narrow ? 46 : 54, r: 8, t: 10, b: 22 };
-    const H = m.t + mainH + gap + survH + m.b;
+    const mainH = narrow ? 210 : 260, gap = 26, survH = narrow ? 56 : 64, monH = narrow ? 56 : 64;
+    const m = { l: narrow ? 50 : 58, r: 8, t: 10, b: 22 };
+    const H = m.t + mainH + gap + monH + gap + survH + m.b;
     const iw = W - m.l - m.r;
     const n = rows.length, bw = iw / n;
     const maxV = niceMax(Math.max(1, ...rows.map((r) => Math.max(r.need, r.i1 + r.i23 + r.sav + r.shortfall))) * 1.05);
     const y = (v) => m.t + mainH - (v / maxV) * mainH;
     const x = (i) => m.l + i * bw;
-    const ys = (p) => m.t + mainH + gap + survH - p * survH;
+    // all paneelid: raha alles (sambad + hoius + kogumisfond) ja tõenäosus olla elus
+    const maxM = Math.max(1, ...rows.map((r) => r.moneyLeft));
+    const ym = (v) => m.t + mainH + gap + monH - (v / maxM) * monH;
+    const ys = (p) => m.t + mainH + gap + monH + gap + survH - p * survH;
 
     container.innerHTML = '';
     const svg = el('svg', { width: W, height: H, viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-labelledby': 'chartT chartD', class: 'chart-svg' });
@@ -89,8 +93,18 @@
         svg.appendChild(el('line', { x1: x(i) + bw / 2, x2: x(i) + bw / 2, y1: m.t + mainH, y2: m.t + mainH + 4, stroke: COLORS.alive }));
       }
     });
+    // raha alles
+    svg.appendChild(el('text', { x: m.l, y: m.t + mainH + gap - 8, class: 'chart-label' }, 'Raha alles: sambad, hoius, kogumisfond'));
+    [0, 1].forEach((k) => {
+      svg.appendChild(el('line', { x1: m.l, x2: W - m.r, y1: ym(k * maxM), y2: ym(k * maxM), stroke: COLORS.grid }));
+      svg.appendChild(el('text', { x: m.l - 6, y: ym(k * maxM) + 4, 'text-anchor': 'end', class: 'chart-tick' }, kEur(k * maxM)));
+    });
+    let md = '';
+    rows.forEach((r, i) => { md += (i ? 'L' : 'M') + (x(i) + bw / 2) + ' ' + ym(Math.max(0, r.moneyLeft)); });
+    svg.appendChild(el('path', { d: md + 'L' + (x(n - 1) + bw / 2) + ' ' + ym(0) + 'L' + (x(0) + bw / 2) + ' ' + ym(0) + 'Z', fill: COLORS.money, 'fill-opacity': 0.12, stroke: 'none' }));
+    svg.appendChild(el('path', { d: md, fill: 'none', stroke: COLORS.money, 'stroke-width': 2 }));
     // ellujäämise paneel
-    svg.appendChild(el('text', { x: m.l, y: m.t + mainH + gap - 8, class: 'chart-label' }, 'Tõenäosus olla elus'));
+    svg.appendChild(el('text', { x: m.l, y: m.t + mainH + gap + monH + gap - 8, class: 'chart-label' }, 'Tõenäosus olla elus'));
     [0, 0.5, 1].forEach((p) => {
       svg.appendChild(el('line', { x1: m.l, x2: W - m.r, y1: ys(p), y2: ys(p), stroke: COLORS.grid }));
       svg.appendChild(el('text', { x: m.l - 6, y: ys(p) + 4, 'text-anchor': 'end', class: 'chart-tick' }, Math.round(p * 100) + '%'));
@@ -111,6 +125,7 @@
       const parts = [r.age + '-aastaselt (' + r.year + '):', 'riiklik pension ' + eur(r.i1) + ',', 'sambad ' + eur(r.i23) + ',', 'säästudest ' + eur(r.sav)];
       if (r.shortfall > 0.5) parts.push(', puudu ' + eur(r.shortfall));
       parts.push(r.working ? ' · töötad' : ' · vajadus ' + eur(r.need));
+      parts.push(' · raha alles ' + eur(r.moneyLeft));
       parts.push(' · tõenäosus olla elus ' + Math.round(r.alive * 100) + '%');
       opts.readoutEl.textContent = parts.join(' ').replace(/ ,/g, ',').replace(/\s+·/g, ' ·').replace(/\s{2,}/g, ' ');
     }
@@ -128,11 +143,11 @@
     // legend
     opts.legendEl.innerHTML = SERIES.map(([k, l]) =>
       '<li><span class="sw ' + k + '" aria-hidden="true"></span>' + l + '</li>').join('') +
-      '<li><span class="sw need" aria-hidden="true"></span>Vajadus</li><li><span class="sw alive" aria-hidden="true"></span>Tõenäosus olla elus (all)</li>';
+      '<li><span class="sw need" aria-hidden="true"></span>Vajadus</li><li><span class="sw money" aria-hidden="true"></span>Raha alles (all)</li><li><span class="sw alive" aria-hidden="true"></span>Tõenäosus olla elus (all)</li>';
     // tabel
     const tr = rows.filter((r) => r.age % 5 === 0 || r === rows[0]);
-    opts.tableEl.innerHTML = '<thead><tr><th scope="col">Vanus (aasta)</th><th scope="col">Riiklik pension</th><th scope="col">II ja III sammas</th><th scope="col">Säästudest</th><th scope="col">Puudu</th><th scope="col">Vajadus</th><th scope="col">Tõenäosus olla elus</th></tr></thead><tbody>' +
-      tr.map((r) => '<tr><th scope="row">' + r.age + ' (' + r.year + ')</th><td>' + eur(r.i1) + '</td><td>' + eur(r.i23) + '</td><td>' + eur(r.sav) + '</td><td>' + eur(r.shortfall) + '</td><td>' + (r.working ? 'töötad' : eur(r.need)) + '</td><td>' + Math.round(r.alive * 100) + '%</td></tr>').join('') + '</tbody>';
+    opts.tableEl.innerHTML = '<thead><tr><th scope="col">Vanus (aasta)</th><th scope="col">Riiklik pension</th><th scope="col">II ja III sammas</th><th scope="col">Säästudest</th><th scope="col">Puudu</th><th scope="col">Vajadus</th><th scope="col">Raha alles</th><th scope="col">Tõenäosus olla elus</th></tr></thead><tbody>' +
+      tr.map((r) => '<tr><th scope="row">' + r.age + ' (' + r.year + ')</th><td>' + eur(r.i1) + '</td><td>' + eur(r.i23) + '</td><td>' + eur(r.sav) + '</td><td>' + eur(r.shortfall) + '</td><td>' + (r.working ? 'töötad' : eur(r.need)) + '</td><td>' + eur(r.moneyLeft) + '</td><td>' + Math.round(r.alive * 100) + '%</td></tr>').join('') + '</tbody>';
   }
 
   window.PensionChart = { render: render };

@@ -137,6 +137,7 @@ details summary { cursor: pointer; }
 .sw.short { background: repeating-linear-gradient(45deg, #db2200 0 2px, #fff 2px 5px); border: 1px solid #db2200; }
 .sw.need { height: 0; border-top: 2px dashed #db2200; border-radius: 0; }
 .sw.alive { height: 0; border-top: 2px solid #6b7074; border-radius: 0; }
+.sw.money { background: rgba(0, 108, 230, 0.12); border-top: 2px solid #006ce6; border-radius: 0; }
 
 .table-compare td.mine, .table-compare th.mine { background: var(--blue-bg-1); }
 .table-compare caption { caption-side: bottom; color: var(--text-secondary); }

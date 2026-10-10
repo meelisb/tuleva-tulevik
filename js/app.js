@@ -200,6 +200,19 @@
       const cover = r.needAfter > 0 ? Math.round(r.stateAfter / r.needAfter * 100) : 0;
       h += '<p class="mb-1">Pärast seda jääb riiklik pension ' + eur(r.stateAfter) + ' kuus, mis katab ' + cover + '% sinu vajadusest (' + eur(r.needAfter) + '). Tõenäosus, et elad kauem kui ' + r.lastsUntil + '-aastaseks: ' + pct(r.aliveBeyond) + '.</p>';
     }
+    // Otsuse hind: kõigis variantides kulutad sama palju, seega rohkem alles = parem.
+    const retired = r.rows.filter((x) => !x.working);
+    if (r.lastsUntil === null && retired.length && retired.every((x) => x.i1 >= x.need - 0.5)) {
+      h += '<p class="mb-1">Riiklik pension katab sinu vajaduse üksi. Sammaste ja säästude raha on lisa: sinu valik mõjutab, kui palju maksad tulumaksu ja kui palju raha alles jääb.</p>';
+    }
+    // Võrdle ainult sama riikliku pensioni algusega strateegiatega: nii on näha väljamakse viisi mõju.
+    const best = P.presets(input).filter((c) => c.stateOffset === state.plan.stateOffset).map((c) => ({ c: c, s: P.simulate(input, T, c) }))
+      .filter((a) => (a.s.lastsUntil === null ? 101 : a.s.lastsUntil) >= (r.lastsUntil === null ? 101 : r.lastsUntil))
+      .sort((a, b) => b.s.inheritance90 - a.s.inheritance90)[0];
+    h += '<p class="mb-1">90-aastaselt on sul sammastes ja säästudes alles <strong>' + eur(r.inheritance90) + '</strong>. Tulumaksu maksad väljamaksetelt ' + eur(r.tax90) + '.' +
+      (best && best.s.inheritance90 - r.inheritance90 >= 1000
+        ? ' Strateegiaga ' + best.c.id + ' (' + best.c.name.toLowerCase() + ') jääks sama kulutamise juures alles ' + eur(best.s.inheritance90 - r.inheritance90) + ' rohkem, tulumaks ' + eur(best.s.tax90) + '.'
+        : '') + '</p>';
     h += '<p class="mb-0">Kui kulutad ühtlaselt kuni <strong>' + eur(L) + ' kuus</strong>, jätkub raha ' + r.horizonAge + '-aastaseks. Selle vanuseni jõuab 10% sinuvanustest. ' +
       (L >= need ? 'Sinu vajadus (' + eur(need) + ') mahub sellesse.' : 'Sinu vajadus (' + eur(need) + ') on sellest suurem, seepärast saab raha varem otsa.') + '</p>';
     return h;
@@ -364,4 +377,7 @@
   fillNeedFromStats();
   goStep(1);
   update();
+  // Brauser võib tagasi-nupu või uuesti laadimise järel taastada väljade väärtused ilma input-sündmuseta.
+  window.addEventListener('pageshow', () => { state.plan = null; lastBirth = null; update(); });
+  document.querySelectorAll('.step:not([data-step="4"]) input, .step:not([data-step="4"]) select').forEach((el) => el.addEventListener('change', () => update()));
 })();

@@ -257,3 +257,57 @@ details > summary::after {
 }
 details[open] > summary::after { transform: rotate(180deg); }
 @media (prefers-reduced-motion: reduce) { details > summary::after { transition: none; } }
+
+/* Esiletõstetud sissejuhatus (1. vaade ja otsustuskohtade selgitus) */
+.intro-note { background: var(--blue-bg-1); border: 1px solid var(--blue-border-1); border-left: 4px solid var(--blue); border-radius: 0.5rem; padding: 0.875rem 1rem; color: var(--navy); margin-bottom: 1.25rem; }
+
+/* Akordioni ikoon teksti kõrval (mitte rea paremas servas) */
+details > summary { justify-content: flex-start; gap: 0.5rem; }
+
+/* „Muuda kulusid ükshaaval“ näeb välja nagu nupp */
+details > summary.summary-btn { display: inline-flex; width: auto; align-items: center; gap: 0.5rem; font-weight: 500; }
+details > summary.summary-btn::after { margin-left: 0.25rem; }
+details[open] > summary.summary-btn { background: var(--blue); color: #fff; }
+#pkgDetails > summary.summary-btn { display: inline-flex; width: auto; }
+/* Väljasuunav link: ikoon teksti järel, ei murdu üksi järgmisele reale */
+.ext-link .ico { width: 0.95em; height: 0.95em; vertical-align: -0.1em; margin-left: 0.1em; }
+.ext-link:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 0.2rem; }
+/* KKK */
+.faq-item { border: 1px solid var(--gray-border-2); border-radius: 0.5rem; padding: 0 1rem; margin-bottom: 0.5rem; background: #fff; }
+.faq-item[open] { padding-bottom: 0.75rem; }
+.faq-body { padding-top: 0.25rem; }
+.faq-body ul { padding-left: 1.1rem; }
+/* Kasutusel mitteolev väli (nt III sammas, kui pole liitunud) */
+.is-off .form-label { color: var(--text-secondary); }
+.form-control:disabled { background: var(--gray-bg-2); color: var(--text-secondary); }
+
+/* ---------- Sammurida v2: ikoon ringis + silt kõrval, all edenemisriba ---------- */
+.path-v2 li::before { display: none !important; }            /* ühendusjooned asendab edenemisriba */
+.path-v2 { gap: 0.5rem; padding: 0.25rem 0; margin: 0; overflow: visible; }
+.path-v2 li { flex: 1 1 0; min-width: 0; }
+.path-v2 button { flex-direction: row; justify-content: flex-start; gap: 0.6rem; padding: 0.25rem 0.25rem; text-align: left; }
+.path-v2 .path-dot { width: 2.5rem; height: 2.5rem; flex: 0 0 auto; border: 0; background: #e8edf3; color: var(--text-navy-secondary); transform: none !important; box-shadow: none !important; }
+.path-v2 li.visited .path-dot { background: #e8edf3; color: var(--navy); }
+.path-v2 li.current .path-dot { background: var(--blue); color: #fff; }
+.path-v2 .path-label { margin-top: 0; font-size: 1rem !important; color: var(--text-secondary); white-space: nowrap; }
+.path-v2 li.current .path-label { color: var(--navy); font-weight: 700; }
+.path-v2 .path-now { margin-top: 0; margin-left: -0.2rem; }
+.path-v2 .path-check { top: -0.15rem; left: 1.85rem; }
+.path-v2 li:not(.current) button:hover .path-dot { background: #dde4ec; border: 0; }
+.path-v2 li:not(.current) button:hover .path-label { color: var(--navy); }
+.path-progress { height: 4px; background: var(--gray-border-2); border-radius: 2px; margin-top: 0.5rem; overflow: hidden; }
+.path-progress span { display: block; height: 100%; width: 0; background: var(--blue); border-radius: 2px; transition: width 0.25s; }
+@media (prefers-reduced-motion: reduce) { .path-progress span { transition: none; } }
+/* Laiuse järgi: kitsamal ekraanil (kuni ~1000px) silt ikooni alla, et 7 sammu mahuks */
+@media (max-width: 991px) {
+  .path-v2 button { flex-direction: column; justify-content: center; gap: 0.2rem; text-align: center; }
+  .path-v2 .path-label { font-size: 0.875rem !important; }
+  .path-v2 .path-check { left: calc(50% + 0.6rem); }
+  .path-v2 .path-now { margin-left: 0; }
+}
+@media (max-width: 575px) {
+  .path-v2 { gap: 0; }
+  .path-v2 .path-dot { width: 2rem; height: 2rem; }
+  .path-v2 .path-check { left: calc(50% + 0.4rem); }
+}
+@media (max-width: 575px) { .path-v2 button { padding: 0.25rem 0; } }

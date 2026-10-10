@@ -22,7 +22,8 @@
 
     <!-- Eluteekond: navigeerimine etappide vahel -->
     <nav aria-label="Loo etapid" class="mb-3">
-      <ol class="path" id="path"></ol>
+      <ol class="path path-v2" id="path"></ol>
+      <div class="path-progress" aria-hidden="true"><span id="pathFill"></span></div>
     </nav>
 
     <!-- 0. Eelküsimustik -->
@@ -34,7 +35,7 @@
           <h2 id="h0" tabindex="-1">Kes sa oled ja mis sul juba on?</h2>
         </div>
       </div>
-      <p class="text-secondary">Need andmed kehtivad kogu loo jooksul. Sammaste summad on tänased. Nende, sissemaksete ja tootluse põhjal arvutame, kui palju sul pensioniks koguneb.</p>
+      <p class="intro-note">Järgnevad sammud võtavad aluseks allpool olevad andmed. Sammaste summad on tänased. Nende, sissemaksete ja tootluse põhjal arvutame, kui palju sul pensioniks koguneb.</p>
       <div class="d-flex flex-wrap gap-2 mb-3">
         <button type="button" class="btn btn-outline-primary btn-sm" id="prefillBtn">Täida Tuleva konto andmetega (näidis)</button>
       </div>
@@ -57,7 +58,7 @@
         <div class="col-6 col-md-3">
           <label class="form-label" for="p1Monthly">Riiklik pension, €/kuus</label>
           <input class="form-control" id="p1Monthly" type="number" min="0" step="10" value="900">
-          <div class="form-text"><a href="https://iseteenindus.sotsiaalkindlustusamet.ee/self-service/pension-calculator" target="_blank" rel="noopener">SKA kalkulaatorist</a></div>
+          <div class="form-text"><a href="https://iseteenindus.sotsiaalkindlustusamet.ee/self-service/pension-calculator" target="_blank" rel="noopener">Sotsiaalkindlustusameti kalkulaatorist</a></div>
         </div>
         <div class="col-6 col-md-3">
           <label class="form-label" for="p2">II sammas praegu, €</label>
@@ -69,7 +70,7 @@
         </div>
         <div class="col-6 col-md-3" id="p3JoinedWrap">
           <label class="form-label" for="p3Joined">III sambaga liitusin</label>
-          <select class="form-select" id="p3Joined" aria-describedby="p3JoinedHint"><option value="after" selected>2021 või hiljem</option><option value="before">enne 2021</option></select>
+          <select class="form-select" id="p3Joined" aria-describedby="p3JoinedHint"><option value="after" selected>2021 või hiljem</option><option value="before">enne 2021</option><option value="none">ma ei ole liitunud</option></select>
           <div class="form-text" id="p3JoinedHint">Enne 2021 liitunul lisandub 55 a otsustuskoht.</div>
         </div>
         <div class="col-6 col-md-3">
@@ -86,12 +87,51 @@
           <label class="form-label" for="p3Monthly">III sambasse, €/kuus</label>
           <input class="form-control" id="p3Monthly" type="number" min="0" step="10" value="0">
         </div>
+        <div class="col-6 col-md-3" id="p3OpenWrap">
+          <label class="form-label" for="p3OpenAge">Avan III samba, vanus</label>
+          <input class="form-control" id="p3OpenAge" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-describedby="p3OpenYear">
+          <div class="form-text" id="p3OpenYear"></div>
+        </div>
         <div class="col-6 col-md-3">
           <label class="form-label" for="fundCur">Tootlus pärast inflatsiooni</label>
           <select class="form-select" id="fundCur"></select>
         </div>
       </div>
       <div class="story-note mt-3" id="workNote" aria-live="polite"></div>
+
+      <section class="faq mt-4" aria-labelledby="faqTitle">
+        <h3 class="h5 section-title" id="faqTitle">Korduma kippuvad küsimused</h3>
+        <details class="faq-item">
+          <summary class="fw-medium">Miks on oluline, millal III sambaga liitusin, ja kust ma seda näen?</summary>
+          <div class="faq-body">
+            <p>Sellest sõltub, mis vanusest saad III samba raha välja võtta soodsama maksuga.</p>
+            <ul>
+              <li><strong>Liitusid enne 2021:</strong> soodsam maks kehtib alates 55-aastaselt.</li>
+              <li><strong>Liitusid 2021 või hiljem:</strong> soodsam maks kehtib alates 60-aastaselt.</li>
+            </ul>
+            <p>Soodsam maks tähendab, et kogu raha korraga välja võttes on tulumaks 10% ja fondipensionina 0%. Enne seda vanust on tulumaks 22%. Kogumist peab olema vähemalt 5 aastat.</p>
+            <p class="mb-1"><strong>Kust näha, millal liitusid:</strong></p>
+            <ul class="mb-0">
+              <li>Pensionikeskuse e-teenuses (sisene ID-kaardi, Mobiil-ID või Smart-ID-ga): vaata, millal said esimesed III samba osakud. <a href="https://www.pensionikeskus.ee/" target="_blank" rel="noopener">Pensionikeskus</a></li>
+              <li>Oma panga või Tuleva kontol III samba ülevaates.</li>
+              <li>Kui sa ei tea, vali „2021 või hiljem“. Siis ei arvesta lugu soodustust, mida sul pole.</li>
+            </ul>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary class="fw-medium">Mida tähendab „tootlus pärast inflatsiooni“?</summary>
+          <div class="faq-body">
+            <p>See näitab, kui palju sinu raha ostujõud aastas päriselt kasvab, kui fondi kasvust lahutada hindade tõus ja fonditasud.</p>
+            <p><strong>Näide:</strong> fond kasvab aastas 6%, hinnad tõusevad 4%. Tootlus pärast inflatsiooni on siis umbes 2%: saad aasta pärast 2% rohkem osta kui täna.</p>
+            <ul>
+              <li><strong>0%:</strong> raha hoiab väärtust, aga ei kasva.</li>
+              <li><strong>2%:</strong> ettevaatlik eeldus.</li>
+              <li><strong>4%:</strong> optimistlik eeldus, pikaajaline aktsiafond madala tasuga.</li>
+            </ul>
+            <p class="mb-0">Seetõttu on kõik summad selles loos <strong>tänastes eurodes</strong>: saad neid võrrelda tänaste hindadega. Tootlus on eeldus, mitte lubadus.</p>
+          </div>
+        </details>
+      </section>
       <!-- Kasvu valikud on peidus: arvutus kasutab vaikeeeldusi (vt jalus). -->
       <div id="growthOpts" hidden>
       <h3 class="h5 section-title mt-4">Kuidas kogud edasi?</h3>
@@ -133,11 +173,6 @@
         </div>
       </fieldset>
       <div id="p3HasMore" class="row g-3 mb-3">
-        <div class="col-6 col-md-3" id="p3OpenWrap">
-          <label class="form-label" for="p3OpenAge">Vanus avamisel</label>
-          <input class="form-control" id="p3OpenAge" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-describedby="p3OpenYear">
-          <div class="form-text" id="p3OpenYear"></div>
-        </div>
       </div>
       <div class="small-muted mb-3" id="p3WorkNote" aria-live="polite"></div>
       </div>
@@ -238,6 +273,20 @@
             <span class="choice-body"><span class="choice-emoji" aria-hidden="true">💰</span><strong>Võtan korraga välja</strong><small id="p3LumpTxt"></small></span></label>
         </div>
       </fieldset>
+      <section class="faq mt-4" aria-labelledby="faq55Title">
+        <h3 class="h5 section-title" id="faq55Title">Korduma kippuvad küsimused</h3>
+        <details class="faq-item">
+          <summary class="fw-medium">Mis on fondipension?</summary>
+          <div class="faq-body">
+            <p>Fondipension tähendab, et võtad III samba raha välja osamaksetena, näiteks iga kuu. Raha, mida veel välja ei võtnud, jääb fondi ja kasvab edasi.</p>
+            <ul>
+              <li>Kui väljamaksete periood on vähemalt nii pikk kui sinu eeldatav elada jäänud aeg, on väljamaksed <strong>tulumaksuvabad</strong>.</li>
+              <li>Fondis olev raha läheb pärijatele.</li>
+            </ul>
+            <p class="mb-0"><a href="https://tuleva.ee/pensioni-valjamaksed/" target="_blank" rel="noopener">Loe Tuleva lehelt pensioni väljamaksete kohta</a></p>
+          </div>
+        </details>
+      </section>
     </section>
 
     <!-- 5. 60 -->
@@ -249,8 +298,7 @@
           <h2 id="h5" tabindex="-1">Mida teed II ja III samba rahaga?</h2>
         </div>
       </div>
-      <p class="text-secondary" id="p60Txt"></p>
-      <p class="small-muted mb-3">Kui valid mõlemas „Kõik korraga“, võtad II ja III samba raha korraga välja.</p>
+      <p class="intro-note" id="p60Txt"></p>
       <h3 class="h5 section-title">II sammas</h3>
       <fieldset class="mb-4">
         <legend class="visually-hidden">II samba väljamakse viis</legend>
@@ -276,6 +324,20 @@
             <span class="choice-body"><span class="choice-emoji" aria-hidden="true">💰</span><strong>Kõik korraga</strong><small>III sammas ühekordselt välja pensionieas, 10% tulumaks. Raha on hoiusel.</small></span></label>
         </div>
       </fieldset>
+      <section class="faq mt-4" aria-labelledby="faq60Title">
+        <h3 class="h5 section-title" id="faq60Title">Korduma kippuvad küsimused</h3>
+        <details class="faq-item">
+          <summary class="fw-medium">Mis on fondipension?</summary>
+          <div class="faq-body">
+            <p>Fondipension tähendab, et võtad II või III samba raha välja osamaksetena, näiteks iga kuu. Raha, mida veel välja ei võtnud, jääb fondi ja kasvab edasi.</p>
+            <ul>
+              <li>Kui väljamaksete periood on vähemalt nii pikk kui sinu eeldatav elada jäänud aeg, on väljamaksed <strong>tulumaksuvabad</strong>.</li>
+              <li>Fondis olev raha läheb pärijatele.</li>
+            </ul>
+            <p class="mb-0"><a href="https://tuleva.ee/pensioni-valjamaksed/" target="_blank" rel="noopener">Loe Tuleva lehelt pensioni väljamaksete kohta</a></p>
+          </div>
+        </details>
+      </section>
     </section>
 
     <!-- 6. Pensioniiga -->
@@ -288,14 +350,13 @@
         </div>
       </div>
       <h3 class="h5 section-title" id="deferTitle">Millal võtad riikliku pensioni?</h3>
-      <p class="text-secondary">Iga edasilükatud aasta tõstab riiklikku pensioni eluks ajaks. Vahepealsed aastad elad II ja III samba rahast. Seda nimetatakse paindlikuks pensioniks.</p>
+      <p class="intro-note">Iga edasilükatud aasta tõstab riiklikku pensioni eluks ajaks. Vahepealsed aastad elad II ja III samba rahast. Seda nimetatakse paindlikuks pensioniks.</p>
       <div id="deferLocked" class="note mb-3 d-none"><span id="deferLockedTxt"></span> <button type="button" class="btn btn-link p-0 align-baseline" data-goto="5">Muuda väljamakse viisi</button></div>
       <fieldset id="deferSet">
         <legend class="visually-hidden">Millal võtad riikliku pensioni?</legend>
         <div class="choices choices-sm" id="deferChoices"></div>
       </fieldset>
       <h3 class="h5 section-title mt-4" id="paPillarsTitle">Kuidas hakkad samba raha kasutama?</h3>
-      <p class="small-muted mb-3" id="paPillarsHint">Kui valid mõlemas „Kõik korraga“, võtad II ja III samba raha korraga välja.</p>
       <fieldset id="payoutPaSet" class="mb-4 d-none">
         <legend class="h6 text-navy">II sammas</legend>
         <p class="small-muted mb-2">Jätkasid 60-aastaselt II samba kasvatamist. Nüüd, pensionieas, otsustad.</p>
@@ -367,7 +428,7 @@
         <div class="packages" id="packages"></div>
       </fieldset>
       <details class="mt-3" id="pkgDetails">
-        <summary class="fw-medium">Muuda kulusid ükshaaval</summary>
+        <summary class="btn btn-outline-primary summary-btn">Muuda kulusid ükshaaval</summary>
         <p class="small-muted mt-2 mb-2">Kirjuta igale reale oma summa. Muudatused jäävad selle paketi juurde alles ka siis, kui vahepeal teise paketi valid.</p>
         <div id="pkgBreakdown"></div>
         <button type="button" class="btn btn-outline-primary btn-sm mt-2 d-none" id="resetPkg">Taasta paketi summad</button>

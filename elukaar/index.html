@@ -56,17 +56,19 @@
           <div class="form-text" id="paHint"></div>
         </div>
         <div class="col-6 col-md-3">
-          <label class="form-label" for="p1Monthly">Riiklik pension, €/kuus</label>
-          <input class="form-control" id="p1Monthly" type="number" min="0" step="10" value="900">
-          <div class="form-text"><a href="https://iseteenindus.sotsiaalkindlustusamet.ee/self-service/pension-calculator" target="_blank" rel="noopener">Sotsiaalkindlustusameti kalkulaatorist</a></div>
+          <label class="form-label" for="p1Monthly">Riiklik pension</label>
+          <input class="form-control" id="p1Monthly" type="number" min="0" step="10" value="900" aria-describedby="p1Unit">
+          <div class="form-text"><span id="p1Unit">eurot kuus.</span> Prognoosi leiad <a href="https://iseteenindus.sotsiaalkindlustusamet.ee/self-service/pension-calculator" target="_blank" rel="noopener">Sotsiaalkindlustusameti kalkulaatorist</a></div>
         </div>
         <div class="col-6 col-md-3">
-          <label class="form-label" for="p2">II sammas praegu, €</label>
-          <input class="form-control" id="p2" type="number" min="0" step="1000" value="25000">
+          <label class="form-label" for="p2">II sammas praegu</label>
+          <input class="form-control" id="p2" type="number" min="0" step="1000" value="25000" aria-describedby="p2Unit">
+          <div class="form-text" id="p2Unit">eurot</div>
         </div>
         <div class="col-6 col-md-3">
-          <label class="form-label" for="p3">III sammas praegu, €</label>
-          <input class="form-control" id="p3" type="number" min="0" step="1000" value="5000">
+          <label class="form-label" for="p3">III sammas praegu</label>
+          <input class="form-control" id="p3" type="number" min="0" step="1000" value="5000" aria-describedby="p3Unit">
+          <div class="form-text" id="p3Unit">eurot</div>
         </div>
         <div class="col-6 col-md-3" id="p3JoinedWrap">
           <label class="form-label" for="p3Joined">III sambaga liitusin</label>
@@ -74,8 +76,9 @@
           <div class="form-text" id="p3JoinedHint">Enne 2021 liitunul lisandub 55 a otsustuskoht.</div>
         </div>
         <div class="col-6 col-md-3">
-          <label class="form-label" for="grossMonthly">Brutopalk, €/kuus</label>
-          <input class="form-control" id="grossMonthly" type="number" min="0" step="100" value="2200">
+          <label class="form-label" for="grossMonthly">Brutopalk</label>
+          <input class="form-control" id="grossMonthly" type="number" min="0" step="100" value="2200" aria-describedby="grossUnit">
+          <div class="form-text" id="grossUnit">eurot kuus</div>
         </div>
         <div class="col-6 col-md-3">
           <label class="form-label" for="p2Rate">II samba sissemakse</label>
@@ -84,8 +87,9 @@
           </select>
         </div>
         <div class="col-6 col-md-3">
-          <label class="form-label" for="p3Monthly">III samba sissemakse, €/kuus</label>
-          <input class="form-control" id="p3Monthly" type="number" min="0" step="10" value="0">
+          <label class="form-label" for="p3Monthly">III samba sissemakse</label>
+          <input class="form-control" id="p3Monthly" type="number" min="0" step="10" value="0" aria-describedby="p3mUnit">
+          <div class="form-text" id="p3mUnit">eurot kuus</div>
         </div>
         <div class="col-6 col-md-3" id="p3OpenWrap">
           <label class="form-label" for="p3OpenAge">Avan III samba, vanus</label>

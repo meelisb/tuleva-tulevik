@@ -67,10 +67,6 @@
           <label class="form-label" for="p3">III sammas praegu, €</label>
           <input class="form-control" id="p3" type="number" min="0" step="1000" value="5000">
         </div>
-        <div class="col-12 col-md-6" id="p3JoinedWrap">
-          <label class="form-label" for="p3Joined">III sambaga liitusin</label>
-          <select class="form-select" id="p3Joined"><option value="before">enne 2021</option><option value="after">2021 või hiljem</option></select>
-        </div>
         <div class="col-6 col-md-3">
           <label class="form-label" for="grossMonthly">Brutopalk, €/kuus</label>
           <input class="form-control" id="grossMonthly" type="number" min="0" step="100" value="2200">
@@ -216,13 +212,18 @@
     </section>
 
     <!-- 4. 55 -->
-    <section class="chapter card card-calculator p-4" data-step="4" data-label="55" data-icon="🔓" aria-labelledby="h4">
+    <section class="chapter card card-calculator p-4" data-step="4" data-label="55 a" data-icon="🔓" aria-labelledby="h4">
       <div class="chapter-head">
         <div class="chapter-art" aria-hidden="true">🔓</div>
         <div>
           <p class="chapter-kicker" id="k4"></p>
           <h2 id="h4" tabindex="-1">55-aastaselt: esimene otsustuskoht</h2>
         </div>
+      </div>
+      <div class="mb-3" id="p3JoinedWrap">
+        <label class="form-label" for="p3Joined">III sambaga liitusin</label>
+        <select class="form-select w-auto" id="p3Joined"><option value="before">enne 2021</option><option value="after">2021 või hiljem</option></select>
+        <div class="form-text">Sellest sõltub, mis vanusest kehtib soodsam maks.</div>
       </div>
       <div id="p3Info" class="mb-3"></div>
       <div id="p3Locked" class="note mb-3 d-none"></div>

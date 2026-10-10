@@ -376,8 +376,8 @@
     const pa = P.retirementYears(input);
     for (let i = 1; i <= 7; i++) { const k = $('k' + i); if (k) k.textContent = kicker(input, i); }
     chapters[3].dataset.label = Math.min(input.currentAge, 55) + '–55';
-    chapters[5].dataset.label = String(pa - 5); // rajal ainult aastad, kuud on etapi tekstis
-    chapters[6].dataset.label = String(pa);
+    chapters[5].dataset.label = (pa - 5) + ' a'; // rajal vanus aastates („60 a“)
+    chapters[6].dataset.label = pa + ' a';
     // 60: III samba osa
     const p3Done = input.p3Has && input.p3Plan !== 'keep';
     $('p3At60Set').classList.toggle('d-none', !input.p3Has || p3Done);
@@ -386,7 +386,7 @@
       ? 'Sul ei ole III sammast. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="0">Muuda</button>'
       : p3Done ? 'III samba kohta tegid valiku juba ' + input.p3Age + '-aastaselt: <strong>' + (input.p3Plan === 'lump' ? 'võtsid selle korraga välja' : 'täiendav fondipension') + '</strong>. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="4">Muuda</button>' : '';
     $('p60Txt').innerHTML = (pa - 5) + '-aastaselt (5 aastat enne pensioniiga, ' + (input.birthYear + pa - 5) + ') avaneb II sammas. Väljamakse algab selles loos pensionieas. Väljamaksete alustamisel lõpevad II samba sissemaksed igaveseks.';
-    chapters[7].dataset.label = (pa + 1) + '+';
+    chapters[7].dataset.label = (pa + 1) + '+ a';
 
     // 0–18
     $('childMore').classList.toggle('d-none', input.child === 'none');
@@ -453,6 +453,7 @@
     $('p3Locked').innerHTML = lockTxt + (lockTxt ? ' <button type="button" class="btn btn-link p-0 align-baseline" data-goto="0">Muuda III sammast</button>' : '');
     $('p3Locked').classList.toggle('d-none', !lockTxt);
     $('p3PlanSet').disabled = !!lockTxt;
+    $('p3JoinedWrap').classList.toggle('d-none', !input.p3Has);
 
     // Pensioniiga: edasilükkamine
     // Edasilükkamine käib kõigi väljamakse viisidega: vahepeal elad samba või hoiuse rahast.

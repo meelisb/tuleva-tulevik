@@ -294,7 +294,9 @@
     const base = statTotal(input.household);
     const max = Math.max.apply(null, PACKAGES.map((p) => packageTotal(p, input.household)));
     const current = radio('pkg') || 'survive';
-    $('packages').innerHTML = PACKAGES.map((p) => {
+    // Legend enne kaarte, et värvide tähendus oleks teada enne ribade lugemist.
+    $('packages').innerHTML = '<p class="pkg-legend small-muted mb-0" aria-hidden="true"><span class="dot base"></span>põhikulud (Statistikaamet) <span class="dot joy"></span>elamused <span class="dot future"></span>tulevik ja investeerimine <span class="dot rest"></span>kalleima paketini</p>' +
+      PACKAGES.map((p) => {
       const total = packageTotal(p, input.household);
       const joy = p.extras.filter((e) => e[3] === 'joy').reduce((s, e) => s + e[2], 0);
       const fut = p.extras.filter((e) => e[3] === 'future').reduce((s, e) => s + e[2], 0);
@@ -304,12 +306,13 @@
         '<span class="pkg-top"><span class="choice-emoji" aria-hidden="true">' + p.emoji + '</span><strong>' + p.name + '</strong><span class="pkg-price">' + eur(total) + '<small> /kuus</small></span></span>' +
         '<small>' + p.tagline + '</small>' +
         (isEdited(p) ? '<small class="pkg-edited">Sinu muudetud summa: <strong>' + eur(customTotal(p, input.household)) + '</strong></small>' : '') +
-        '<span class="pkg-bar" aria-hidden="true"><span class="seg base" style="width:' + w(base) + '"></span><span class="seg joy" style="width:' + w(joy) + '"></span><span class="seg future" style="width:' + w(fut) + '"></span></span>' +
+        '<span class="pkg-bar" aria-hidden="true">' + [['base', base], ['joy', joy], ['future', fut]].filter((x) => x[1] > 0).map((x) => '<span class="seg ' + x[0] + '" style="width:' + w(x[1]) + '"></span>').join('') + '</span>' +
+        // Riba sisu ka tekstina (mitte ainult värv): ekraanilugejale.
+        '<span class="visually-hidden">Põhikulud ' + eur(base) + (joy ? ', elamused ' + eur(joy) : '') + (fut ? ', tulevik ja investeerimine ' + eur(fut) : '') + '.</span>' +
         '<ul class="pkg-facts">' + funFacts(p, input.household).map((f) => '<li><span aria-hidden="true">' + f[0] + '</span> ' + f[1] + '</li>').join('') + '</ul>' +
         (p.alt ? '<span class="pkg-or" aria-hidden="true"><span>või</span></span><span class="pkg-alt"><span aria-hidden="true">🏡</span> <span><span class="visually-hidden">Või: </span>' + p.alt(total) + '</span></span>' : '') +
         '</span></label>';
-    }).join('') +
-      '<p class="pkg-legend small-muted mb-0"><span class="dot base"></span>põhikulud (Statistikaamet) <span class="dot joy"></span>elamused <span class="dot future"></span>tulevik ja investeerimine</p>';
+    }).join('');
     $('packages').querySelectorAll('input').forEach((el) => el.addEventListener('change', update));
   }
 

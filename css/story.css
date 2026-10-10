@@ -156,3 +156,9 @@ main.container { padding-bottom: 1rem; }
 .chart-table caption { caption-side: top; color: var(--text-secondary); font-size: 0.875rem; }
 .chart-table thead th { position: sticky; top: 0; background: #fff; }
 .chart-table:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+/* Kulupaketi riba: tühi osa nähtav, segmentide vahel valge vahe */
+.pkg-bar { height: 0.75rem; background: #dfe5eb; border: 1px solid var(--gray-border-3); gap: 2px; }
+.pkg-bar .seg { height: 100%; }
+.dot.rest { background: #dfe5eb; border: 1px solid var(--gray-border-3); }
+.pkg-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0; margin-bottom: 0.25rem !important; }
+.pkg-legend .dot { width: 0.75rem; height: 0.75rem; }

@@ -3,6 +3,7 @@
 Tiimi „Tulevane Mina“ töö Tuleva häkatonil (9.–11.10.2026). Küsimus, millele prototüüp vastab: **kas su pensionisissetulek kestab elu lõpuni?**
 
 - [Tööleht ja pitch'i taust](tulevane_mina_tooleht_ja_pitch_2026-10-10.md)
+- [Tuleva reporting engine: mis andmed seal on ja mis meile kasulik](reporting_engine_andmed_2026-10-10.md)
 - **Prototüüp 1, kalkulaator** (`index.html`): https://meelisb.github.io/tuleva-tulevik/ . Sinu andmed, kulud, otsused (riiklik pension varem või hiljem, II ja III samba viis ja algus, töötamine), tulemus koos valmisstrateegiatega.
 - **Prototüüp 2, põhimõtted** (`printsiibid/`): https://meelisb.github.io/tuleva-tulevik/printsiibid/ . Kuus põhimõtet ja otsustuspuu, arvutusi ei tehta.
 

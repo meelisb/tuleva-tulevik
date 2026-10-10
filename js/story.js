@@ -393,7 +393,7 @@
     $('p3At60Note').classList.toggle('d-none', input.p3Has && !p3Done);
     $('p3At60Note').innerHTML = !input.p3Has
       ? 'Sul ei ole III sammast. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="0">Muuda<span class="visually-hidden"> III samba summat sinu andmetes</span></button>'
-      : p3Done ? 'III samba kohta tegid valiku juba ' + input.p3Age + '-aastaselt: <strong>' + (input.p3Plan === 'lump' ? 'võtsid selle korraga välja' : 'täiendav fondipension') + '</strong>. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="4">Muuda<span class="visually-hidden"> III samba valikut ' + input.p3Age + '-aastaselt</span></button>' : '';
+      : p3Done ? 'III samba kohta tegid valiku juba ' + input.p3Age + '-aastaselt: <strong>' + (input.p3Plan === 'lump' ? 'võtsid selle korraga välja' : 'fondipension') + '</strong>. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="4">Muuda<span class="visually-hidden"> III samba valikut ' + input.p3Age + '-aastaselt</span></button>' : '';
     $('p60Txt').innerHTML = (pa - 5) + '-aastaselt (5 aastat enne pensioniiga, ' + (input.birthYear + pa - 5) + ') avaneb II sammas. Väljamakse algab selles loos pensionieas. Kui hakkad raha välja võtma, lõpevad II samba sissemaksed igaveseks.';
     chapters[7].dataset.label = (pa + 1) + '+ a';
 
@@ -451,11 +451,11 @@
     const basic = input.p3Before2021 ? 55 : 60;
     $('p3Info').innerHTML = !input.p3Has ? '' : '<p class="mb-2">' + (input.p3Kind === 'have' ? 'Liitusid III sambaga ' + (input.p3Before2021 ? 'enne 2021' : '2021 või hiljem') : 'Avad III samba ' + input.p3OpenAge + '-aastaselt (' + (input.birthYear + input.p3OpenAge) + ')') + ', seega kehtib soodusmaks alates <strong>' + input.p3Open + '-aastaselt (' + (input.birthYear + input.p3Open) + ')</strong>.' +
       (input.p3Open > basic ? ' Põhjus: kogumist peab olema vähemalt 5 aastat.' : '') + (input.p3Open > 55 ? ' Enne seda läheb väljavõetud rahast 22% tulumaksuks.' : '') + '</p>' +
-      '<ul class="mb-0 small"><li>Korraga: ' + (input.p3Open <= 55 ? '10%' : '22% (alates ' + input.p3Open + ': 10%)') + ' tulumaks</li><li>Jupiti, täiendava fondipensionina: ' + (input.p3Open <= 55 ? '0%' : 'alates ' + input.p3Open + '-aastaselt, 0%') + ' tulumaks</li></ul>';
+      '<ul class="mb-0 small"><li>Korraga: ' + (input.p3Open <= 55 ? '10%' : '22% (alates ' + input.p3Open + ': 10%)') + ' tulumaks</li><li>Fondipensionina: ' + (input.p3Open <= 55 ? '0%' : 'alates ' + input.p3Open + '-aastaselt, 0%') + ' tulumaks</li></ul>';
     $('p3LumpTxt').textContent = 'Kogu III sammas ühe korraga, ' + (soon ? '10%' : '22%') + ' tulumaksuks.';
     $('p3FundTxt').textContent = soon
       ? 'Igakuine maksuvaba väljamakse elada jäänud aastate peale. Ülejäänud raha kasvab edasi.'
-      : 'Pole veel võimalik: täiendava fondipensioni saad alles ' + input.p3Open + '-aastaselt' + (P.retirementYears(input) - 5 >= input.p3Open ? ' (vali see järgmises sammus).' : '.');
+      : 'Pole veel võimalik: fondipensioni saad alles ' + input.p3Open + '-aastaselt' + (P.retirementYears(input) - 5 >= input.p3Open ? ' (vali see järgmises sammus).' : '.');
     // Kui täiendav fondipension pole veel lubatud, keela see valik (ja vali „Jätan kasvama“).
     const fundRadio = document.querySelector('input[name="p3plan"][value="fund"]');
     fundRadio.disabled = !soon;
@@ -479,8 +479,8 @@
     $('p3PaSet').classList.toggle('d-none', !(p3Open && input.p3At60 === 'grow'));
     $('paIIINote').classList.toggle('d-none', p3Open && input.p3At60 === 'grow');
     $('paIIINote').innerHTML = '<strong>III sammas:</strong> ' + (!input.p3Has ? 'sul ei ole III sammast.'
-      : !p3Open ? 'valiku tegid ' + input.p3Age + '-aastaselt: ' + (input.p3Plan === 'lump' ? 'võtsid korraga välja' : 'täiendav fondipension') + '. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="4">Muuda<span class="visually-hidden"> III samba valikut ' + input.p3Age + '-aastaselt</span></button>'
-      : 'valiku tegid ' + (pa - 5) + '-aastaselt: ' + { lump: 'võtad pensionieas korraga välja', fund: 'täiendav fondipension' }[input.p3At60] + '. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="5">Muuda<span class="visually-hidden"> III samba valikut ' + (pa - 5) + '-aastaselt</span></button>');
+      : !p3Open ? 'valiku tegid ' + input.p3Age + '-aastaselt: ' + (input.p3Plan === 'lump' ? 'võtsid korraga välja' : 'fondipension') + '. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="4">Muuda<span class="visually-hidden"> III samba valikut ' + input.p3Age + '-aastaselt</span></button>'
+      : 'valiku tegid ' + (pa - 5) + '-aastaselt: ' + { lump: 'võtad pensionieas korraga välja', fund: 'fondipension' }[input.p3At60] + '. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="5">Muuda<span class="visually-hidden"> III samba valikut ' + (pa - 5) + '-aastaselt</span></button>');
     $('paPillarsHint').classList.toggle('d-none', !(input.payout === 'grow' && p3Open && input.p3At60 === 'grow'));
     const curDef = input.deferral;
     $('deferChoices').innerHTML = [0, 1, 2, 3, 4, 5].map((d) => {
@@ -608,11 +608,11 @@
     const pa = P.retirementYears(input);
     const items = [
       [0, '🙂', 'Sündinud ' + input.birthYear + ', II sammas ' + eur(input.p2) + ', III sammas ' + eur(input.p3Base)],
-      [4, '🔓', !input.p3Has ? 'III sammast ei ole' : input.p3Plan === 'keep' ? 'III sammas jääb kasvama' : (input.p3Plan === 'lump' ? 'Võtan III samba ' + input.p3Age + '-aastaselt korraga välja: ' + eur(input.p3Net) : 'Täiendav fondipension III sambast alates ' + input.p3Age + '-aastaselt: ' + eur(input.p3Net)) + (input.p3Plan === 'keep' ? '' : input.p3Use === 'save' ? ', hoiusele' : ', kasutan kohe')],
+      [4, '🔓', !input.p3Has ? 'III sammast ei ole' : input.p3Plan === 'keep' ? 'III sammas jääb kasvama' : (input.p3Plan === 'lump' ? 'Võtan III samba ' + input.p3Age + '-aastaselt korraga välja: ' + eur(input.p3Net) : 'Fondipension III sambast alates ' + input.p3Age + '-aastaselt: ' + eur(input.p3Net)) + (input.p3Plan === 'keep' ? '' : input.p3Use === 'save' ? ', hoiusele' : ', kasutan kohe')],
       [5, '🧳', 'II sammas: ' + { grow: 'jätkan kasvatamist', lump: 'võtan korraga välja', fund: 'fondipension' }[input.payout] +
-        (input.p3Has && input.p3Plan === 'keep' ? '. III sammas: ' + { grow: 'jätkan kasvatamist', lump: 'võtan pensionieas korraga välja', fund: 'täiendav fondipension' }[input.p3At60] : '')],
+        (input.p3Has && input.p3Plan === 'keep' ? '. III sammas: ' + { grow: 'jätkan kasvatamist', lump: 'võtan pensionieas korraga välja', fund: 'fondipension' }[input.p3At60] : '')],
       [6, '🏛️', (input.payout === 'grow' ? 'Pensionieas II sammas: ' + { grow: 'kasvatan edasi', lump: 'võtan korraga välja', fund: 'fondipension' }[input.method] + '. ' : '') +
-        (input.p3Has && input.p3Plan === 'keep' && input.p3At60 === 'grow' ? 'III sammas: ' + { grow: 'kasvatan edasi', lump: 'võtan korraga välja', fund: 'täiendav fondipension' }[input.p3pa] + '. ' : '') + (!input.deferral ? 'Riiklik pension ' + pa + '-aastaselt' : 'Riiklik pension ' + (pa + input.deferral) + '-aastaselt (' + input.deferral + ' a hiljem)')],
+        (input.p3Has && input.p3Plan === 'keep' && input.p3At60 === 'grow' ? 'III sammas: ' + { grow: 'kasvatan edasi', lump: 'võtan korraga välja', fund: 'fondipension' }[input.p3pa] + '. ' : '') + (!input.deferral ? 'Riiklik pension ' + pa + '-aastaselt' : 'Riiklik pension ' + (pa + input.deferral) + '-aastaselt (' + input.deferral + ' a hiljem)')],
       [7, '🌳', 'Väljamakse viis: ' + scenario.name.toLowerCase()],
       [8, '🛒', input.pkg.name + (input.edited ? ' (muudetud)' : '') + ': ' + eur(input.needMonthly) + ' kuus'],
     ];
@@ -632,9 +632,9 @@
         null],
     ];
     if (input.p3Has) items.push([when(input.p3Open, 0), 'III sammas soodusmaksuga',
-      'Korraga või lühem väljamakse 10%, eluaegne või elada jäänud aastate pikkune väljamakse (täiendav fondipension) 0%. Tingimus: kogumist on vähemalt 5 aastat. ' +
+      'Korraga või lühem väljamakse 10%, eluaegne või elada jäänud aastate pikkune väljamakse (fondipension) 0%. Tingimus: kogumist on vähemalt 5 aastat. ' +
       (input.p3Before2021 ? 'Alates 55, sest liitusid enne 2021.' : 'Alates 60, sest liitusid 2021 või hiljem.'),
-      { keep: 'Jätan kasvama', lump: 'Võtan korraga välja', fund: 'Täiendav fondipension' }[input.p3Plan]]);
+      { keep: 'Jätan kasvama', lump: 'Võtan korraga välja', fund: 'Fondipension' }[input.p3Plan]]);
     items.push([when(pa - 5, m), 'II sammas ja paindlik riiklik pension',
       'II sammas: korraga 10%, fondipension soovitusliku perioodi peale (vähemalt 4 makset aastas) 0%, lühem periood 10%. Kui hakkad raha välja võtma, lõpevad II samba sissemaksed. ' +
       'Riiklikku pensioni saab võtta kuni 5 aastat varem, eluks ajaks väiksemana: −7,17% (1 a), −13,78% (2 a), −19,88% (3 a), −25,50% (4 a), −30,67% (5 a). Selleks on vaja 20–40 aastat staaži.',

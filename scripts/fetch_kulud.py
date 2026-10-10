@@ -70,16 +70,40 @@ for g, s in series.items():
     base = [v for (y, m), v in s.items() if y == int(survey_year)]
     factor[g] = s[latest] / (sum(base) / len(base))
 
+# Kulutasemed: kokkuhoidlik = tänaste pensionäride keskmine (LE205).
+# Optimaalne ja mugav: sama baas korrutatuna kategooria kaupa suhtega „IV / V tulukvintiil vs kõik leibkonnad“ (LE211, LE205).
+q = post("LE211", [
+    {"code": "Aasta", "selection": {"filter": "item", "values": [last_year]}},
+    {"code": "Näitaja", "selection": {"filter": "item", "values": ["1"]}},
+    {"code": "Kulutuste liik", "selection": {"filter": "item", "values": [c[0] for c in CATEGORIES]}},
+    {"code": "Tulukvintiil", "selection": {"filter": "item", "values": ["4", "5"]}},
+])
+quint = {(c["Kulutuste liik"], c["Tulukvintiil"]): v for c, v in cells(q)}
+allhh = post("LE205", [
+    {"code": "Aasta", "selection": {"filter": "item", "values": [last_year]}},
+    {"code": "Näitaja", "selection": {"filter": "item", "values": ["1"]}},
+    {"code": "Kulutuste liik", "selection": {"filter": "item", "values": [c[0] for c in CATEGORIES]}},
+    {"code": "Leibkonna tüüp", "selection": {"filter": "item", "values": ["1"]}},
+])
+avg = {c["Kulutuste liik"]: v for c, v in cells(allhh)}
+
 out = []
 for le_code, name, group in CATEGORIES:
     row = {"nimi": name}
+    r4 = (quint.get((le_code, "4")) or 0) / avg[le_code] if avg.get(le_code) else 1
+    r5 = (quint.get((le_code, "5")) or 0) / avg[le_code] if avg.get(le_code) else 1
     for hh_code, hh in HOUSEHOLDS.items():
-        v = spend.get((le_code, hh_code))
-        row[hh] = round((v or 0) / 12 * factor[group])
+        base = (spend.get((le_code, hh_code)) or 0) / 12 * factor[group]
+        row[hh] = {"kokkuhoidlik": round(base), "optimaalne": round(base * r4), "mugav": round(base * r5)}
     out.append(row)
 
 data = {
-    "allikas": "Statistikaamet LE205 (leibkonnaliikme kulutused leibkonna tüübi järgi) ja IA002 (tarbijahinnaindeks)",
+    "allikas": "Statistikaamet LE205 (leibkonnaliikme kulutused leibkonna tüübi järgi), LE211 (tulukvintiili järgi) ja IA002 (tarbijahinnaindeks)",
+    "tasemed": {
+        "kokkuhoidlik": "Tänaste pensionäride keskmine kulu",
+        "optimaalne": "Nagu keskmisest jõukamad leibkonnad (IV tulukvintiil)",
+        "mugav": "Nagu jõukaim viiendik (V tulukvintiil)",
+    },
     "uuringuaasta": survey_year,
     "hinnad": f"{latest[0]}-{latest[1]:02d}",
     "kordaja_kokku": round(factor["1"], 3),
@@ -88,4 +112,6 @@ data = {
 }
 target = pathlib.Path(__file__).resolve().parent.parent / "data" / "kulud.js"
 target.write_text("// Genereeritud: scripts/fetch_kulud.py. Ära muuda käsitsi.\nwindow.KULUD = " + json.dumps(data, ensure_ascii=False) + ";\n", encoding="utf-8")
-print("Kirjutatud", target, "uuring", survey_year, "hinnad", data["hinnad"], "kokku üksi", sum(r["uksi"] for r in out), "paar", sum(r["paar"] for r in out))
+print("Kirjutatud", target, "uuring", survey_year, "hinnad", data["hinnad"])
+for lvl in ("kokkuhoidlik", "optimaalne", "mugav"):
+    print(" ", lvl, "üksi", sum(r["uksi"][lvl] for r in out), "paar", sum(r["paar"][lvl] for r in out))

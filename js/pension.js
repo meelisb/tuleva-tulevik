@@ -1,11 +1,9 @@
 // Tulevane Mina: arvutusloogika. Puhtad funktsioonid, töötab brauseris ja Node'is (testid).
-// Kõik summad on tänastes eurodes (reaalväärtus). Mudel on aastapõhine.
+// Kõik summad on tänases rahas (inflatsiooniga korrigeeritud). Mudel on aastapõhine.
 //
-// Ühine kulureegel (kõik stsenaariumid): igal aastal kulutad oma vajaduse.
-// Allikad järjekorras: riiklik pension → samba plaanijärgne väljamakse → hoius (varasemad ülejäägid
-// või ühekordne väljamakse) → lisaväljamakse sambast (10% maks). Ülejääk läheb hoiusele (reaaltootlus 0%).
-// Nii on stsenaariumid võrreldavad: kõik püüavad katta sama vajaduse ja erinevad ainult maksu,
-// tootluse, riikliku pensioni ajastuse ja väljamakse graafiku poolest.
+// Kulureegel: kui töötamine lõpeb, kulutad igal aastal oma vajaduse. Allikad järjekorras (Tuleva otsustuspuu):
+// riiklik pension → II ja III samba plaanijärgsed väljamaksed → hoius → kogumisfond → III samba lisaväljamakse →
+// II samba lisaväljamakse. Ülejääk läheb hoiusele. Töötamise ajal katab vajaduse palk ja kõik väljamaksed lähevad hoiusele.
 (function (root) {
   'use strict';
 
@@ -13,13 +11,17 @@
   const MAX_AGE = 100;
   const HORIZON_SURVIVAL = 0.10; // „elu lõpuni“ = vanus, milleni jõuab elusalt 10% sinuvanustest
 
-  // SKA paindliku vanaduspensioni keskmised muutused 2026 (aastat hiljem).
+  // Riikliku pensioni muutus aastat varem (−) või hiljem (+): SKA 2026 keskmised.
   // https://sotsiaalkindlustusamet.ee/pension-ja-seotud-huvitised/pensioni-liigid/paindlik-pension
-  const DEFERRAL_INCREASE = { 0: 0, 1: 0.0793, 2: 0.1688, 3: 0.2701, 4: 0.385, 5: 0.5157 };
+  const STATE_COEF = { '-5': -0.3067, '-4': -0.255, '-3': -0.1988, '-2': -0.1378, '-1': -0.0717, '0': 0, '1': 0.0793, '2': 0.1688, '3': 0.2701, '4': 0.385, '5': 0.5157 };
 
-  const TAX_SHORT = 0.10; // ühekordne, osaline ja lühike fondipension pensioniea lähedal
+  const TAX_REDUCED = 0.10;   // ühekordne, osaline või lühike väljamakse soodusvanusest
+  const TAX_EARLY = 0.22;     // enne soodusvanust; kogumisfondi kasvutulu
+  const III_REFUND = 0.22;    // III samba sissemakse tulumaksutagastus
+  const II_STATE = 0.04;      // riigi osa II sambasse (sotsiaalmaksust)
+  const II_MIN_AGE = 60;      // II sammas: pensioniiga − 5 (lihtsustatult 60)
 
-  // Pensioniiga kalendriaasta järgi. 2028 ja 2029 on eelnõud; hilisemad on teadmata (ligikaudne).
+  // Pensioniiga kalendriaasta järgi. 2028 ja 2029 on eelnõud; hilisemad on teadmata.
   function pensionAge(birthYear) {
     const y65 = birthYear + 65;
     let months = 0;
@@ -30,7 +32,6 @@
     return { years: 65, months: months, known: known, label: (known ? '' : 'u ') + '65 a' + (months ? ' ' + months + ' k' : '') + (y65 > 2029 ? '+' : '') };
   }
 
-  // Tõenäosus olla elus vanuses `age`, kui praegu ollakse elus vanuses `fromAge`.
   function survival(table, sex, fromAge, age) {
     const s = table.ellujaajad[sex];
     if (age > MAX_AGE) return 0;
@@ -38,158 +39,183 @@
     return s[age] / s[fromAge];
   }
 
-  // Vanus, milleni jõuab elusalt 10% sinuvanustest.
   function horizonAge(table, sex, fromAge) {
     for (let a = fromAge; a <= MAX_AGE; a++) if (survival(table, sex, fromAge, a) <= HORIZON_SURVIVAL) return a;
     return MAX_AGE;
   }
 
-  // Fondipensioni soovituslik (maksuvaba) periood: elada jäänud aastad vanuse ja soo järgi, täisaastateks ümardatud.
+  // Fondipensioni soovituslik (maksuvaba) periood: elada jäänud aastad vanuse ja soo järgi.
   function fundPensionTerm(table, sex, age) {
     return Math.max(1, Math.round(table.elada_jaanud[sex][Math.min(age, MAX_AGE)]));
   }
 
-  // Pensioniiga aastates: kasutaja (või Tuleva konto) antud väärtus või ligikaudne reegel.
-  function retirementYears(input) {
-    return input.pensionAgeYears || pensionAge(input.birthYear).years;
+  function p3ReducedAge(input) { return input.p3Before2021 ? 55 : 60; }
+
+  // Kuuvajadus vanuses `age` (hooldekodu alates määratud vanusest asendab osa tavakuludest).
+  function needAt(input, age, base) {
+    const b = base !== undefined ? base : input.needMonthly;
+    if (input.care && input.care.on && age >= input.care.fromAge) return Math.max(0, b - (input.care.replaces || 0)) + input.care.monthly;
+    return b;
   }
 
-  // Aastane sissemakse sammastesse kuni pensionini (tänastes eurodes, palk reaalselt ei kasva).
-  // II sammas: töötaja 2/4/6% + riik 4% sotsiaalmaksust, kui II sammas on aktiivne. III sammas: oma kuumakse.
-  function yearlyContribution(input) {
-    const rate = input.p2Rate || 0;
-    return (input.grossMonthly || 0) * 12 * (rate > 0 ? rate + 0.04 : 0) + (input.p3Monthly || 0) * 12;
+  // Ühe samba plaanijärgne väljamakse sellel aastal. Muudab samba objekti.
+  function scheduled(pillar, age, table, sex) {
+    const m = pillar.plan.method, start = pillar.plan.start;
+    if (age < start || pillar.bal <= 0) return 0;
+    if (m === 'renew') return pillar.bal / fundPensionTerm(table, sex, age);
+    if (m === 'fund') {
+      if (pillar.term === undefined) pillar.term = fundPensionTerm(table, sex, start);
+      const left = pillar.term - (age - start);
+      return left > 0 ? pillar.bal / left : 0;
+    }
+    return 0; // 'keep' ja 'lump' (lump käsitletakse eraldi)
   }
 
-  function decisionMap(input) {
-    const pa = Object.assign({}, pensionAge(input.birthYear));
-    if (input.pensionAgeYears) { pa.years = input.pensionAgeYears; pa.label = input.pensionAgeYears + ' a'; }
-    const at = (age) => input.birthYear + age;
-    const p3Age = input.p3Before2021 ? 55 : 60;
-    return [
-      { age: p3Age, year: at(p3Age), title: 'III sammas soodusmaksuga',
-        text: 'Väljamaksed 10% tulumaksuga (regulaarne pikk väljamakse 0%), kui kogumist on vähemalt 5 aastat.' +
-          (input.p3Before2021 ? ' Alates 55, sest alustasid enne 2021.' : ' Alates 60, sest alustasid 2021 või hiljem.') },
-      { age: 60, year: at(60), title: 'II sammas ja paindlik riiklik pension',
-        text: 'II sammas: ühekordne või lühike fondipension 10%, pikk fondipension 0%. Väljamaksete alustamisel lõpevad II samba sissemaksed igaveseks. Riiklikku pensioni saab võtta kuni 5 aastat varem, vähendatult.' },
-      { age: pa.years, year: at(pa.years), title: 'Riiklik pension täissummas (' + pa.label + ')',
-        text: pa.known ? 'Pensioniiga on kehtestatud.' : 'Pensioniiga arvutatakse igal aastal uuesti Statistikaameti eluea järgi, seega see on ligikaudne.' },
-      { age: pa.years + 1, year: at(pa.years + 1), title: 'Riikliku pensioni edasilükkamine',
-        text: 'Iga edasilükatud aasta tõstab riiklikku pensioni eluks ajaks: +7,93% (1 a) kuni +51,57% (5 a), 2026 keskmised.' },
-      { age: pa.years, year: at(pa.years), title: 'Fondipensioni leping: üks kord või igal aastal uuesti',
-        text: 'Ühe lepinguga lõpeb väljamakse perioodi lõpus. Kui sõlmid lepingu igal aastal uuesti vähemalt maksuvaba perioodiga, jääb see maksuvabaks ega saa otsa, aga väga kõrges eas on kuumakse väiksem.' },
-    ].sort((a, b) => a.age - b.age);
-  }
-
-  // Ühe stsenaariumi aastane rahavoog vanusest startAge kuni MAX_AGE.
-  function simulate(input, table, scenario, needOverride) {
-    const need = needOverride !== undefined ? needOverride : input.needMonthly;
+  function simulate(input, table, plan, needOverride) {
     const r = input.realReturn;
-    const pa = retirementYears(input);
+    const rd = input.depositReturn !== undefined ? input.depositReturn : -0.01;
+    const pa = input.pensionAgeYears || pensionAge(input.birthYear).years;
     const currentAge = CURRENT_YEAR - input.birthYear;
-    const startAge = Math.max(currentAge, 55);
-    const deferral = scenario.id === 'C' ? scenario.deferral : 0;
-    const p1Start = pa + deferral;
-    const p1Year = input.p1Monthly * (1 + DEFERRAL_INCREASE[deferral]) * 12;
-    const needYear = need * 12;
+    const workUntil = Math.max(currentAge, input.workUntil || pa);
+    const stateOffset = plan.stateOffset || 0;
+    const stateStart = pa + stateOffset;
+    const stateYear = input.p1Monthly * (1 + STATE_COEF[String(stateOffset)]) * 12;
+    const p3Reduced = p3ReducedAge(input);
+    const gross = (input.grossMonthly || 0) * 12;
 
-    // Samba vara kasvab kuni kasutamiseni ja sinna lisanduvad sissemaksed.
-    let fund = input.p2 + input.p3;
-    const contrib = yearlyContribution(input);
-    for (let a = currentAge; a < pa; a++) fund = fund * (1 + r) + contrib;
-
-    let deposit = 0;
-    if (scenario.id === 'A') { deposit = fund * (1 - TAX_SHORT); fund = 0; }
-    // Ühe lepingu fondipension: periood määratakse lepingu sõlmimisel.
-    const contractStart = scenario.id === 'B' ? pa : scenario.id === 'C' ? p1Start : null;
-    const contractTerm = contractStart !== null ? fundPensionTerm(table, input.sex, contractStart) : 0;
+    const ii = { bal: input.p2, plan: plan.p2 };
+    const iii = { bal: input.p3, plan: plan.p3 };
+    let tkf = input.tkf || 0, tkfBasis = tkf, dep = input.savings || 0;
+    let iiStopped = false, iiStoppedAge = null;
+    let taxTotal = 0, stateSupport = 0, refundTotal = 0;
 
     const rows = [];
-    for (let age = startAge; age <= MAX_AGE; age++) {
-      const fundStart = fund, depositStart = deposit;
-      const i1 = age >= p1Start ? p1Year : 0;
-      let sched = 0, extraNet = 0, fromDeposit = 0, saved = 0;
-      if (age >= pa) {
-        // 1) plaanijärgne maksuvaba väljamakse
-        if (scenario.id === 'D') {
-          sched = fund / fundPensionTerm(table, input.sex, age); // uus leping igal aastal lühima maksuvaba perioodiga
-        } else if (contractStart !== null && age >= contractStart) {
-          const left = contractTerm - (age - contractStart);
-          sched = left > 0 ? fund / left : 0;
+    for (let age = currentAge; age <= MAX_AGE; age++) {
+      const working = age < workUntil;
+      const moneyStart = ii.bal + iii.bal + tkf + dep;
+      // 1) sissemaksed töötamise ajal
+      if (working) {
+        if (!iiStopped && input.p2Rate > 0) {
+          ii.bal += gross * (input.p2Rate + II_STATE);
+          stateSupport += gross * II_STATE;
         }
-        fund -= sched;
-        // 2) vajaduse katmine: hoius, siis lisaväljamakse sambast (10%)
-        let gap = needYear - i1 - sched;
-        if (gap > 0) {
-          fromDeposit = Math.min(deposit, gap); deposit -= fromDeposit; gap -= fromDeposit;
-          if (gap > 0 && fund > 0) {
-            const gross = Math.min(fund, gap / (1 - TAX_SHORT));
-            fund -= gross; extraNet = gross * (1 - TAX_SHORT); gap -= extraNet;
-          }
-        } else {
-          saved = -gap; deposit += saved;
+        const c3 = (input.p3Monthly || 0) * 12;
+        iii.bal += c3;
+        const refund = Math.min(c3, 0.15 * gross, 6000) * III_REFUND;
+        dep += refund; refundTotal += refund; stateSupport += refund;
+        tkf += (input.tkfMonthly || 0) * 12; tkfBasis += (input.tkfMonthly || 0) * 12;
+      }
+      // 2) ühekordne väljamakse alguses
+      for (const [p, name] of [[ii, 'ii'], [iii, 'iii']]) {
+        if (p.plan.method === 'lump' && age === Math.max(p.plan.start, currentAge) && p.bal > 0) {
+          const t = name === 'iii' && age < p3Reduced ? TAX_EARLY : TAX_REDUCED;
+          taxTotal += p.bal * t; dep += p.bal * (1 - t); p.bal = 0;
+          if (name === 'ii' && !iiStopped) { iiStopped = true; iiStoppedAge = age; }
         }
       }
-      fund *= 1 + r;
-      const income = i1 + sched + extraNet;
-      const spend = income + fromDeposit - saved;
+      // 3) plaanijärgsed (maksuvabad) väljamaksed
+      const s2 = scheduled(ii, age, table, input.sex); ii.bal -= s2;
+      const s3 = scheduled(iii, age, table, input.sex); iii.bal -= s3;
+      if (s2 > 0 && !iiStopped) { iiStopped = true; iiStoppedAge = age; }
+      const i1 = age >= stateStart ? stateYear : 0;
+      const income = i1 + s2 + s3;
+
+      let fromDep = 0, fromTkf = 0, extra2 = 0, extra3 = 0, shortfall = 0, need = 0;
+      if (working) {
+        dep += income; // palk katab vajaduse, väljamaksed kogunevad hoiusele
+      } else {
+        need = needAt(input, age, needOverride) * 12;
+        let gap = need - income;
+        if (gap > 0) {
+          fromDep = Math.min(Math.max(dep, 0), gap); dep -= fromDep; gap -= fromDep;
+          if (gap > 0 && tkf > 0) {
+            const gainShare = Math.max(0, 1 - tkfBasis / tkf);
+            const netPerGross = 1 - gainShare * TAX_EARLY;
+            const g = Math.min(tkf, gap / netPerGross);
+            taxTotal += g * gainShare * TAX_EARLY; tkfBasis -= g * (tkfBasis / tkf); tkf -= g;
+            fromTkf = g * netPerGross; gap -= fromTkf;
+          }
+          if (gap > 0 && iii.bal > 0) {
+            const t = age < p3Reduced ? TAX_EARLY : TAX_REDUCED;
+            const g = Math.min(iii.bal, gap / (1 - t));
+            iii.bal -= g; taxTotal += g * t; extra3 = g * (1 - t); gap -= extra3;
+          }
+          if (gap > 0 && ii.bal > 0 && age >= II_MIN_AGE) {
+            const g = Math.min(ii.bal, gap / (1 - TAX_REDUCED));
+            ii.bal -= g; taxTotal += g * TAX_REDUCED; extra2 = g * (1 - TAX_REDUCED); gap -= extra2;
+            if (!iiStopped) { iiStopped = true; iiStoppedAge = age; }
+          }
+          shortfall = Math.max(0, gap);
+        } else {
+          dep += -gap;
+        }
+      }
+      // 4) kasv
+      ii.bal *= 1 + r; iii.bal *= 1 + r; tkf *= 1 + r; dep *= 1 + rd;
       rows.push({
         age: age,
         year: input.birthYear + age,
+        working: working,
+        need: need / 12,
         i1: i1 / 12,
-        i23: (sched + extraNet) / 12,
-        dep: fromDeposit / 12,
-        spend: spend / 12,
-        shortfall: age >= pa ? Math.max(0, needYear - spend) / 12 : 0,
-        moneyLeft: fundStart + depositStart,
+        i23: (s2 + s3 + extra2 + extra3) / 12,
+        sav: (fromDep + fromTkf) / 12,
+        shortfall: shortfall / 12,
+        moneyLeft: moneyStart,
         alive: survival(table, input.sex, currentAge, age),
+        taxToDate: taxTotal,
       });
     }
-    return summarize(rows, input, table, pa, p1Start, currentAge);
-  }
-
-  function summarize(rows, input, table, pa, p1Start, currentAge) {
-    const fromPa = rows.filter((x) => x.age >= pa);
-    const short = fromPa.find((x) => x.shortfall > 0.5);
-    const empty = fromPa.find((x) => x.moneyLeft < 1 && x.age >= p1Start);
-    const at = (age) => rows.find((x) => x.age === age);
-    const startRow = at(pa) || rows[0];
+    const needStart = workUntil;
+    const fromStart = rows.filter((x) => x.age >= needStart);
+    const short = fromStart.find((x) => x.shortfall > 0.5);
+    const at = (a) => rows.find((x) => x.age === a);
     const horizon = horizonAge(table, input.sex, currentAge);
+    const r90 = at(90) || rows[rows.length - 1];
     return {
       rows: rows,
-      pensionStartAge: pa,
-      p1StartAge: p1Start,
+      pensionAge: pa,
+      stateStart: stateStart,
+      workUntil: workUntil,
       horizonAge: horizon,
-      startSpend: startRow.spend,
-      startIncome: startRow.i1 + startRow.i23 + startRow.dep,
-      coversNeedUntil: short ? short.age : null, // null = katab kuni 100
-      aliveAtShortfall: short ? short.alive : 0,
-      moneyEndAge: empty ? empty.age : null, // samba ja hoiuse raha lõpeb; null = ei lõpe enne 100
-      incomeAfterMoney: empty ? empty.i1 : null,
-      spendAt90: (at(90) || { spend: 0 }).spend,
-      expectedLifetime: fromPa.reduce((s, x) => s + x.spend * 12 * x.alive, 0),
+      lastsUntil: short ? short.age : null, // null = jätkub kuni 100
+      aliveBeyond: short ? short.alive : 0,
+      stateAfter: short ? short.i1 : null,
+      needAfter: short ? short.need : null,
+      spendAt90: r90.i1 + r90.i23 + r90.sav,
+      inheritance90: r90.moneyLeft,
+      tax90: r90.taxToDate,
+      stateSupport: stateSupport,
+      refundTotal: refundTotal,
+      iiStoppedAge: iiStoppedAge,
     };
   }
 
-  // Suurim kuuvajadus, mille stsenaarium katab „elu lõpuni“ (10% ellujäämise vanuseni).
-  function sustainableNeed(input, table, scenario) {
+  // Suurim ühtlane kuuvajadus, mille plaan katab „elu lõpuni“ (10% ellujäämise vanuseni).
+  function sustainableNeed(input, table, plan) {
     let lo = 0, hi = 10000;
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 28; i++) {
       const m = (lo + hi) / 2;
-      const s = simulate(input, table, scenario, m);
-      if (s.coversNeedUntil === null || s.coversNeedUntil > s.horizonAge) lo = m; else hi = m;
+      const s = simulate(input, table, plan, m);
+      if (s.lastsUntil === null || s.lastsUntil > s.horizonAge) lo = m; else hi = m;
     }
     return Math.floor(lo / 10) * 10;
   }
 
-  const SCENARIOS = [
-    { id: 'A', name: 'Kõik korraga', short: 'II ja III sammas ühekordselt välja (10% maks), raha hoiusel, kasutad vajaduse järgi.' },
-    { id: 'B', name: 'Üks fondipensioni leping', short: 'Maksuvaba fondipension elada jäänud aastate peale. Leping lõpeb perioodi lõpus.' },
-    { id: 'C', name: 'Sild ja riiklik pension hiljem', short: 'Esimesed aastad elad samba rahast, riiklik pension algab hiljem ja on eluks ajaks suurem.' },
-    { id: 'D', name: 'Leping igal aastal uuesti', short: 'Maksuvaba fondipension, mille lepingu sõlmid igal aastal uuesti. Ei saa otsa, aga väheneb vanas eas.' },
-  ];
+  // Valmisstrateegiad võrdluseks. Sinu oma plaan tuleb kasutajaliidesest.
+  function presets(input) {
+    const pa = input.pensionAgeYears || pensionAge(input.birthYear).years;
+    const p3s = Math.max(p3ReducedAge(input), pa);
+    const both = (method, start2, start3) => ({ p2: { method: method, start: start2 }, p3: { method: method, start: start3 } });
+    return [
+      Object.assign({ id: 'A', name: 'Kõik korraga', short: 'II ja III sammas pensionieas korraga välja (10% maks), raha hoiusel.', stateOffset: 0 }, both('lump', pa, p3s)),
+      Object.assign({ id: 'B', name: 'Üks fondipensioni leping', short: 'Maksuvaba igakuine väljamakse elada jäänud aastate peale. Lõpeb perioodi lõpus.', stateOffset: 0 }, both('fund', pa, p3s)),
+      Object.assign({ id: 'C', name: 'Leping igal aastal uuesti', short: 'Maksuvaba igakuine väljamakse, leping uueneb igal aastal. Ei saa otsa, väheneb vanas eas.', stateOffset: 0 }, both('renew', pa, p3s)),
+      Object.assign({ id: 'D', name: 'Riiklik pension 2 a hiljem', short: 'Paindlik pension: riiklik pension algab 2 aastat hiljem (+16,88% eluks ajaks), vahepeal elad sammastest.', stateOffset: 2 }, both('renew', pa, p3s)),
+    ];
+  }
 
-  const api = { CURRENT_YEAR, DEFERRAL_INCREASE, SCENARIOS, pensionAge, retirementYears, yearlyContribution, survival, horizonAge, fundPensionTerm, decisionMap, simulate, sustainableNeed };
+  const api = { CURRENT_YEAR, STATE_COEF, pensionAge, survival, horizonAge, fundPensionTerm, p3ReducedAge, needAt, simulate, sustainableNeed, presets };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Pension = api;
 })(typeof window !== 'undefined' ? window : globalThis);

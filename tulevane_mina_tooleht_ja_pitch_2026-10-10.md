@@ -133,7 +133,8 @@ Prototüübi osad:
 2. „Tavaline fondipensioni leping on arvutatud keskmise eluea järgi. Keskmisest kauem elab aga üle poole inimestest. Lepingut saab igal aastal uuendada, aga seda ei tea peaaegu keegi. Ja ka siis on 95-aastaselt kuumakse vaid murdosa algsest.“
 3. „Ükski kalkulaator Eestis ei näita inimesele tema kogu sissetulekut (riiklik pension ja sambad) tema vajaduse ja eluea tõenäosuse vastu.“
 4. „Pooled Tuleva liikmetest muretsevad oma tuleviku elustandardi pärast. See on küsitluse suurim lahendamata mure ja nad ütlevad: me ei oska.“
-5. „Me ei vaja paindlikkust ega kindlust eraldi. Me vajame elukestvat sissetulekut. Paindlikud võtted on lihtsalt viisid selleni jõuda.“
+5. „Eelmisel aastal võttis 12 inimest 13-st kogu II samba raha korraga välja ja maksis 10% tulumaksu, kuigi igakuisena oleks see olnud maksuvaba.“ (2024: 4 324 ühekordse ja 356 fondipensioni avaldust, Pensionikeskuse andmed LHV kaudu, 21.03.2025. Arvestab ainult need kaks avalduse liiki.)
+6. „Me ei vaja paindlikkust ega kindlust eraldi. Me vajame elukestvat sissetulekut. Paindlikud võtted on lihtsalt viisid selleni jõuda.“
 
 ### 2.2 Miks süsteem on nii keeruline: reeglite kaart
 

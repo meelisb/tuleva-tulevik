@@ -290,8 +290,20 @@
       <p class="text-secondary">Iga edasilükatud aasta tõstab riiklikku pensioni eluks ajaks. Vahepealsed aastad elad samba rahast (sild).</p>
       <div id="deferLocked" class="note mb-3 d-none"><span id="deferLockedTxt"></span> <button type="button" class="btn btn-link p-0 align-baseline" data-goto="5">Muuda väljamakse viisi</button></div>
       <fieldset id="deferSet">
-        <legend class="visually-hidden">Riikliku pensioni algus</legend>
+        <legend class="form-label">Millal hakkad riiklikku pensioni saama?</legend>
         <div class="choices choices-sm" id="deferChoices"></div>
+      </fieldset>
+      <fieldset id="payoutPaSet" class="mt-4 d-none">
+        <legend class="form-label">Kuidas hakkad samba raha kasutama?</legend>
+        <p class="small-muted mb-2">Jätkasid 60-aastaselt kasvatamist. Nüüd, pensionieas, otsustad.</p>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="payoutPa" value="grow" checked>
+            <span class="choice-body"><span class="choice-emoji" aria-hidden="true">🌱</span><strong>Kasvatan edasi</strong><small>Raha jääb fondi. Võtad välja ainult nii palju, kui vaja (10% tulumaks).</small></span></label>
+          <label class="choice"><input type="radio" name="payoutPa" value="lump">
+            <span class="choice-body"><span class="choice-emoji" aria-hidden="true">💰</span><strong>Kõik korraga</strong><small>Ühekordne väljamakse, 10% tulumaks. Raha on hoiusel.</small></span></label>
+          <label class="choice"><input type="radio" name="payoutPa" value="fund">
+            <span class="choice-body"><span class="choice-emoji" aria-hidden="true">🗓️</span><strong>Fondipension</strong><small>Igakuine maksuvaba väljamakse. Ülejäänud raha kasvab fondis edasi.</small></span></label>
+        </div>
       </fieldset>
     </section>
 

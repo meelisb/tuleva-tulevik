@@ -88,7 +88,7 @@
     const pa = retirementYears(input);
     const currentAge = CURRENT_YEAR - input.birthYear;
     const startAge = Math.max(currentAge, 55);
-    const deferral = scenario.id === 'C' ? scenario.deferral : 0;
+    const deferral = scenario.deferral || 0; // C: sild fondipensioniga; teised stsenaariumid võivad samuti edasi lükata
     const p1Start = pa + deferral;
     const p1Year = input.p1Monthly * (1 + DEFERRAL_INCREASE[deferral]) * 12;
     const needYear = need * 12;

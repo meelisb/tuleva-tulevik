@@ -77,4 +77,9 @@ for (const s of [A, B, Cx, D]) {
   assert.ok(r1.expectedLifetime >= r0.expectedLifetime);
 }
 
+// Edasilükkamine töötab ka teiste stsenaariumitega (vaikimisi 0, senised tulemused samad).
+const a2 = P.simulate(base, table, { ...A, deferral: 2 });
+assert.strictEqual(a2.rows.find((x) => x.age === 66).i1, 0);
+assert.ok(Math.abs(a2.rows.find((x) => x.age === 70).i1 - 900 * 1.1688) < 0.01);
+
 console.log('OK');

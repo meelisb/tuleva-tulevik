@@ -82,4 +82,19 @@ const a2 = P.simulate(base, table, { ...A, deferral: 2 });
 assert.strictEqual(a2.rows.find((x) => x.age === 66).i1, 0);
 assert.ok(Math.abs(a2.rows.find((x) => x.age === 70).i1 - 900 * 1.1688) < 0.01);
 
+// Eraldi III sammas: sama väljamakse viis kui II sambal annab sama tulemuse kui ühine pott.
+{
+  const sepBase = { ...base, p3: 0, p3Sep: { amount: base.p3, mode: 'grow' } };
+  const E = { id: 'E' };
+  const r0 = P.simulate(base, table, E), r1 = P.simulate(sepBase, table, E);
+  assert.ok(Math.abs(r0.expectedLifetime - r1.expectedLifetime) < 1);
+  // III korraga välja (10%) läheb hoiusele: pensioni alguses on raha alles sama palju miinus maks.
+  const lump = P.simulate({ ...base, p3: 0, p3Sep: { amount: base.p3, mode: 'lump' } }, table, B);
+  const startB = P.simulate(base, table, B).rows.find((x) => x.age === 65).moneyLeft;
+  assert.ok(lump.rows.find((x) => x.age === 65).moneyLeft < startB);
+  // III fondipensionina toob igal aastal sissetulekut.
+  const f = P.simulate({ ...base, p3: 0, p3Sep: { amount: base.p3, mode: 'fund' } }, table, A);
+  assert.ok(f.rows.find((x) => x.age === 66).i23 > 0);
+}
+
 console.log('OK');

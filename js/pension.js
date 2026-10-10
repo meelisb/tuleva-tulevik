@@ -94,22 +94,28 @@
     const needYear = need * 12;
 
     // Samba vara kasvab kuni kasutamiseni ja sinna lisanduvad sissemaksed.
+    // Valikuline eraldi III sammas (input.p3Sep = { amount, mode: 'grow' | 'lump' | 'fund' }): oma pott, oma väljamakse viis.
+    // Ilma selleta on III sammas II sambaga ühes potis (senine käitumine).
+    const sep = input.p3Sep || null;
+    const c3 = sep ? (input.p3Monthly || 0) * 12 : 0;
     let fund = input.p2 + input.p3;
-    const contrib = yearlyContribution(input);
-    for (let a = currentAge; a < pa; a++) fund = fund * (1 + r) + contrib;
+    let fund3 = sep ? sep.amount : 0;
+    const contrib = yearlyContribution(input) - c3;
+    for (let a = currentAge; a < pa; a++) { fund = fund * (1 + r) + contrib; fund3 = fund3 * (1 + r) + c3; }
 
     // Hoius pensioni alguses: varem sambast välja võetud ja kõrvale pandud raha (valikuline, vaikimisi 0).
     let deposit = input.extraDeposit || 0;
     if (scenario.id === 'A') { deposit += fund * (1 - TAX_SHORT); fund = 0; }
+    if (sep && sep.mode === 'lump') { deposit += fund3 * (1 - TAX_SHORT); fund3 = 0; }
     // Ühe lepingu fondipension: periood määratakse lepingu sõlmimisel.
     const contractStart = scenario.id === 'B' ? pa : scenario.id === 'C' ? p1Start : null;
     const contractTerm = contractStart !== null ? fundPensionTerm(table, input.sex, contractStart) : 0;
 
     const rows = [];
     for (let age = startAge; age <= MAX_AGE; age++) {
-      const fundStart = fund, depositStart = deposit;
+      const fundStart = fund + fund3, depositStart = deposit;
       const i1 = age >= p1Start ? p1Year : 0;
-      let sched = 0, extraNet = 0, fromDeposit = 0, saved = 0;
+      let sched = 0, extraNet = 0, fromDeposit = 0, saved = 0, sched3 = 0, extra3 = 0;
       if (age >= pa) {
         // 1) plaanijärgne maksuvaba väljamakse
         if (scenario.id === 'D') {
@@ -119,26 +125,33 @@
           sched = left > 0 ? fund / left : 0;
         }
         fund -= sched;
-        // 2) vajaduse katmine: hoius, siis lisaväljamakse sambast (10%)
-        let gap = needYear - i1 - sched;
+        // Eraldi III sammas fondipensionina: uus leping igal aastal (maksuvaba).
+        if (sep && sep.mode === 'fund') { sched3 = fund3 / fundPensionTerm(table, input.sex, age); fund3 -= sched3; }
+        // 2) vajaduse katmine: hoius, siis lisaväljamakse sambast (10%), viimasena eraldi III sambast (10%)
+        let gap = needYear - i1 - sched - sched3;
         if (gap > 0) {
           fromDeposit = Math.min(deposit, gap); deposit -= fromDeposit; gap -= fromDeposit;
           if (gap > 0 && fund > 0) {
             const gross = Math.min(fund, gap / (1 - TAX_SHORT));
             fund -= gross; extraNet = gross * (1 - TAX_SHORT); gap -= extraNet;
           }
+          if (gap > 0 && fund3 > 0) {
+            const gross3 = Math.min(fund3, gap / (1 - TAX_SHORT));
+            fund3 -= gross3; extra3 = gross3 * (1 - TAX_SHORT); gap -= extra3;
+          }
         } else {
           saved = -gap; deposit += saved;
         }
       }
       fund *= 1 + r;
-      const income = i1 + sched + extraNet;
+      fund3 *= 1 + r;
+      const income = i1 + sched + extraNet + sched3 + extra3;
       const spend = income + fromDeposit - saved;
       rows.push({
         age: age,
         year: input.birthYear + age,
         i1: i1 / 12,
-        i23: (sched + extraNet) / 12,
+        i23: (sched + extraNet + sched3 + extra3) / 12,
         dep: fromDeposit / 12,
         spend: spend / 12,
         shortfall: age >= pa ? Math.max(0, needYear - spend) / 12 : 0,

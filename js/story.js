@@ -190,7 +190,7 @@
     const household = $('household').value;
     const pkgTotal = packageTotal(pkg, household);
 
-    return {
+    return withP3({
       birthYear: birthYear,
       currentAge: currentAge,
       sex: sex,
@@ -218,13 +218,16 @@
       payout: radio('payout'),
       // Tegelik väljamakse viis: kui 60-aastaselt jätkad kasvatamist, otsustad pensionieas.
       method: radio('payout') === 'grow' ? (radio('payoutPa') || 'grow') : radio('payout'),
+      // III samba valik pensionieas (kui 55-aastaselt ei võetud välja).
+      p3pa: radio('p3pa') === 'grow' ? (radio('p3paPa') || 'grow') : (radio('p3pa') || 'grow'),
+      p3At60: radio('p3pa') || 'grow',
       deferral: parseInt(radio('defer') || '0', 10),
       contract: radio('contract'),
       pkg: pkg,
       pkgTotal: pkgTotal,
       edited: isEdited(pkg),
       needMonthly: customTotal(pkg, household),
-    };
+    });
   }
 
   // Lisastsenaarium: raha jääb fondi, lepingut ega ühekordset väljamakset pole. pension.js katab siis vajaduse
@@ -235,6 +238,13 @@
   const SCEN = P.SCENARIOS.map((s) => (s.id === 'C'
     ? Object.assign({}, s, { name: 'Paindlik pension', short: 'Riikliku pensioni lükkad edasi ja seni kasutad II ja III sammast fondipensionina.' })
     : s));
+
+  // III sammas eraldi potiks (pension.js p3Sep), kui selle väljamakse viis erineb II samba omast.
+  function withP3(input) {
+    const sepNeeded = input.p3Has && input.p3Plan === 'keep' && input.p3Base > 0 && input.p3pa !== input.method;
+    if (!sepNeeded) return Object.assign(input, { p3Sep: null });
+    return Object.assign(input, { p3: input.p3 - input.p3Base, p3Pre: input.p3Pre, p3Sep: { amount: input.p3Base, mode: input.p3pa } });
+  }
 
   // Valikud → üks stsenaarium failist pension.js.
   function scenarioFor(input) {
@@ -250,7 +260,7 @@
   // fromToday: „mis oleks, kui alates tänasest selles fondis“ (fondivahetuse korrektsioonita).
   function potAtPension(input, r, fromToday) {
     const pa = P.retirementYears(input);
-    let fund = input.p2 + (fromToday ? input.p3Pre : input.p3);
+    let fund = input.p2 + (fromToday ? input.p3Pre : input.p3) + (input.p3Sep && !fromToday ? input.p3Sep.amount : 0);
     const c = P.yearlyContribution(input);
     for (let a = input.currentAge; a < pa; a++) fund = fund * (1 + r) + c;
     return fund;
@@ -368,6 +378,13 @@
     chapters[3].dataset.label = Math.min(input.currentAge, 55) + '–55';
     chapters[5].dataset.label = String(pa - 5); // rajal ainult aastad, kuud on etapi tekstis
     chapters[6].dataset.label = String(pa);
+    // 60: III samba osa
+    const p3Done = input.p3Has && input.p3Plan !== 'keep';
+    $('p3At60Set').classList.toggle('d-none', !input.p3Has || p3Done);
+    $('p3At60Note').classList.toggle('d-none', input.p3Has && !p3Done);
+    $('p3At60Note').innerHTML = !input.p3Has
+      ? 'Sul ei ole III sammast. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="0">Muuda</button>'
+      : p3Done ? 'III samba kohta tegid valiku juba ' + input.p3Age + '-aastaselt: <strong>' + (input.p3Plan === 'lump' ? 'võtsid selle korraga välja' : 'täiendav fondipension') + '</strong>. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="4">Muuda</button>' : '';
     $('p60Txt').innerHTML = (pa - 5) + '-aastaselt (5 aastat enne pensioniiga, ' + (input.birthYear + pa - 5) + ') avaneb II sammas. Väljamakse algab selles loos pensionieas. Väljamaksete alustamisel lõpevad II samba sissemaksed igaveseks.';
     chapters[7].dataset.label = (pa + 1) + '+';
 
@@ -440,7 +457,17 @@
     // Pensioniiga: edasilükkamine
     // Edasilükkamine käib kõigi väljamakse viisidega: vahepeal elad samba või hoiuse rahast.
     $('deferLocked').classList.add('d-none');
+    // Pensionieas: II ja III valik eraldi, ainult kui 60-aastaselt jätkasid kasvatamist. Muidu kast tehtud valikuga.
+    const p3Open = input.p3Has && input.p3Plan === 'keep';
     $('payoutPaSet').classList.toggle('d-none', input.payout !== 'grow');
+    $('paIINote').classList.toggle('d-none', input.payout === 'grow');
+    $('paIINote').innerHTML = '<strong>II sammas:</strong> valiku tegid ' + (pa - 5) + '-aastaselt: ' + { lump: 'võtad korraga välja', fund: 'fondipension' }[input.payout] + '. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="5">Muuda</button>';
+    $('p3PaSet').classList.toggle('d-none', !(p3Open && input.p3At60 === 'grow'));
+    $('paIIINote').classList.toggle('d-none', p3Open && input.p3At60 === 'grow');
+    $('paIIINote').innerHTML = '<strong>III sammas:</strong> ' + (!input.p3Has ? 'sul ei ole III sammast.'
+      : !p3Open ? 'valiku tegid ' + input.p3Age + '-aastaselt: ' + (input.p3Plan === 'lump' ? 'võtsid korraga välja' : 'täiendav fondipension') + '. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="4">Muuda</button>'
+      : 'valiku tegid ' + (pa - 5) + '-aastaselt: ' + { lump: 'võtad pensionieas korraga välja', fund: 'täiendav fondipension' }[input.p3At60] + '. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="5">Muuda</button>');
+    $('paPillarsHint').classList.toggle('d-none', !(input.payout === 'grow' && p3Open && input.p3At60 === 'grow'));
     const curDef = input.deferral;
     $('deferChoices').innerHTML = [0, 1, 2, 3, 4, 5].map((d) => {
       const inc = P.DEFERRAL_INCREASE[d];
@@ -568,8 +595,10 @@
     const items = [
       [0, '🙂', 'Sündinud ' + input.birthYear + ', II sammas ' + eur(input.p2) + ', III sammas ' + eur(input.p3Base)],
       [4, '🔓', !input.p3Has ? 'III sammast ei ole' : input.p3Plan === 'keep' ? 'III sammas jääb kasvama' : (input.p3Plan === 'lump' ? 'Võtan III samba ' + input.p3Age + '-aastaselt korraga välja: ' + eur(input.p3Net) : 'Täiendav fondipension III sambast alates ' + input.p3Age + '-aastaselt: ' + eur(input.p3Net)) + (input.p3Plan === 'keep' ? '' : input.p3Use === 'save' ? ', hoiusele' : ', kasutan kohe')],
-      [5, '🧳', { grow: '60-aastaselt jätkan kasvatamist', lump: 'Võtan samba raha korraga välja', fund: 'Võtan samba raha välja fondipensionina' }[input.payout]],
-      [6, '🏛️', (input.payout === 'grow' ? { grow: 'Pensionieas kasvatan edasi, võtan välja vajaduse järgi', lump: 'Pensionieas võtan kõik korraga', fund: 'Pensionieas fondipension' }[input.method] + '. ' : '') + (!input.deferral ? 'Riiklik pension ' + pa + '-aastaselt' : 'Riiklik pension ' + (pa + input.deferral) + '-aastaselt (' + input.deferral + ' a hiljem)')],
+      [5, '🧳', 'II sammas: ' + { grow: 'jätkan kasvatamist', lump: 'võtan korraga välja', fund: 'fondipension' }[input.payout] +
+        (input.p3Has && input.p3Plan === 'keep' ? '. III sammas: ' + { grow: 'jätkan kasvatamist', lump: 'võtan pensionieas korraga välja', fund: 'täiendav fondipension' }[input.p3At60] : '')],
+      [6, '🏛️', (input.payout === 'grow' ? 'Pensionieas II sammas: ' + { grow: 'kasvatan edasi', lump: 'võtan korraga välja', fund: 'fondipension' }[input.method] + '. ' : '') +
+        (input.p3Has && input.p3Plan === 'keep' && input.p3At60 === 'grow' ? 'III sammas: ' + { grow: 'kasvatan edasi', lump: 'võtan korraga välja', fund: 'täiendav fondipension' }[input.p3pa] + '. ' : '') + (!input.deferral ? 'Riiklik pension ' + pa + '-aastaselt' : 'Riiklik pension ' + (pa + input.deferral) + '-aastaselt (' + input.deferral + ' a hiljem)')],
       [7, '🌳', scenario.id + '. ' + scenario.name],
       [8, '🛒', input.pkg.name + (input.edited ? ' (muudetud)' : '') + ': ' + eur(input.needMonthly) + ' kuus'],
     ];

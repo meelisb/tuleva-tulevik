@@ -34,7 +34,16 @@
 
   // Etappide vanusevahemikud (pensioniiga lisandub arvutuses).
   function stageAges(pa) {
-    return [null, [0, 18], [18, 18], [18, 55], [55, 55], [60, 60], [pa, pa], [pa + 1, 100], null, null];
+    return [null, [0, 18], [18, 18], [18, 55], [55, 55], [pa - 5, pa - 5], [pa, pa], [pa + 1, 100], null, null];
+  }
+
+  // Vanus koos kuudega: „65 a 4 k“ ja „65 a 4 k vanuselt“ / „55-aastaselt“.
+  const ageTxt = (y, m) => y + ' a' + (m ? ' ' + m + ' k' : '');
+  const ageAt = (y, m) => (m ? y + ' a ' + m + ' k vanuselt' : y + '-aastaselt');
+  // Pensioniea reegel kuudega. Alates 2029 on see teadmata (seotud elueaga); prototüüp kasutab 65 a 4 k.
+  function ruleAge(birthYear) {
+    const r = P.pensionAge(birthYear);
+    return { years: r.years, months: r.months };
   }
 
   // ---------- Olek ----------
@@ -87,7 +96,10 @@
     // Väljavõtt 55-aastaselt (või kohe, kui oled juba vanem). Soodusmaks alates 55 (avatud enne 2021) või 60,
     // ja kogumist peab olema vähemalt 5 aastat. Enne seda 22% tulumaks.
     // Täiendav fondipension: maksuvaba alates soodusest, uus leping igal aastal (elada jäänud aastad).
-    const p3Open = Math.max(p3Before2021 ? 55 : 60, p3OpenAge + 5);
+    // Olemasolev sammas: enne 2021 liitunul eeldame, et 5 aastat on täis. Hiljem liitunul vähemalt 2021 + 5 aastat.
+    const p3Open = p3Kind === 'have'
+      ? (p3Before2021 ? 55 : Math.max(60, 2026 - birthYear))
+      : Math.max(p3Before2021 ? 55 : 60, p3OpenAge + 5);
     const p3Age = Math.max(55, currentAge);
     const p3Allowed = p3Has && p3Age < pa && p3OpenAge < p3Age;
     const p3Plan = p3Allowed ? (radio('p3plan') || 'keep') : 'keep';
@@ -148,6 +160,7 @@
       p3Gross: p3Gross, p3Net: p3Net, p3Tax: p3Tax, p3Rem: p3Rem,
       extraDeposit: p3Plan !== 'keep' && p3Use === 'save' ? p3Net : 0,
       pensionAgeYears: parseInt($('pensionAgeYears').value, 10),
+      paMonths: parseInt($('pensionAgeYears').value, 10) === ruleAge(birthYear).years ? ruleAge(birthYear).months : 0,
       grossMonthly: num('grossMonthly'),
       p2Rate: parseFloat($('p2Rate').value),
       p3Monthly: p3Monthly,
@@ -293,7 +306,8 @@
     if (idx === 3) a = Math.max(a, Math.min(input.currentAge, b)); // tööaastad: alates tänasest
     const tense = b < input.currentAge ? 'Sinu minevik' : a > input.currentAge ? 'Sinu tulevik' : 'Sinu praegune elu';
     const years = a === b ? String(input.birthYear + a) : (input.birthYear + a) + '–' + (b >= 100 ? '…' : input.birthYear + b);
-    const label = a === b ? a + '-aastane' : a + '–' + (b >= 100 ? '' : b) + (b >= 100 ? '+' : '') + ' a';
+    const m = (idx === 5 || idx === 6) ? input.paMonths : 0;
+    const label = a === b ? (m ? ageTxt(a, m) : a + '-aastane') : a + '–' + (b >= 100 ? '' : b) + (b >= 100 ? '+' : '') + ' a';
     return label + ' · ' + years + ' · ' + tense;
   }
 
@@ -301,7 +315,10 @@
     const pa = P.retirementYears(input);
     for (let i = 1; i <= 7; i++) { const k = $('k' + i); if (k) k.textContent = kicker(input, i); }
     chapters[3].dataset.label = Math.min(input.currentAge, 55) + '–55';
-    chapters[6].dataset.label = String(pa);
+    const mk = input.paMonths ? ' a ' + input.paMonths + ' k' : '';
+    chapters[5].dataset.label = (pa - 5) + mk;
+    chapters[6].dataset.label = pa + mk;
+    $('p60Txt').innerHTML = ageAt(pa - 5, input.paMonths) + ' (5 aastat enne pensioniiga, ' + (input.birthYear + pa - 5) + ') avaneb II sammas. Väljamakse algab selles loos pensionieas. Väljamaksete alustamisel lõpevad II samba sissemaksed igaveseks.';
     chapters[7].dataset.label = (pa + 1) + '+';
 
     // 0–18
@@ -491,6 +508,44 @@
     $('recap').innerHTML = items.map((x) => '<li><span aria-hidden="true">' + x[1] + '</span><span class="flex-grow-1">' + x[2] + '</span><button type="button" class="btn btn-link btn-sm p-0" data-goto="' + x[0] + '">Muuda<span class="visually-hidden">: ' + chapters[x[0]].dataset.label + '</span></button></li>').join('');
   }
 
+  // Otsuste kaart: reeglid ja maksud (Pensionikeskus, SKA 2026) koos kasutaja valikuga.
+  function renderMap(input, scenario) {
+    const pa = P.retirementYears(input), m = input.paMonths, by = input.birthYear;
+    const when = (y, mm) => ageAt(y, mm) + ' · ' + (by + y);
+    const items = [
+      [when(input.currentAge, 0).replace(/-aastaselt/, '-aastaselt, täna'), 'Igal ajal enne pensioniiga',
+        'II samba raha saab välja võtta 22% tulumaksuga. Siis lõpevad sissemaksed ja uuesti saab liituda alles 10 aasta pärast. III sammas enne soodusiga: 22%. III samba sissemaksetelt saad 22% tulumaksu tagasi (kuni 15% brutotulust, max 6000 € aastas).',
+        null],
+    ];
+    if (input.p3Has) items.push([when(input.p3Open, 0), 'III sammas soodusmaksuga',
+      'Korraga või lühem väljamakse 10%, eluaegne või elada jäänud aastate pikkune väljamakse (täiendav fondipension) 0%. Tingimus: kogumist on vähemalt 5 aastat. ' +
+      (input.p3Before2021 ? 'Alates 55, sest liitusid enne 2021.' : 'Alates 60, sest liitusid 2021 või hiljem.'),
+      { keep: 'Jätan kasvama', lump: 'Võtan korraga välja', fund: 'Täiendav fondipension' }[input.p3Plan]]);
+    items.push([when(pa - 5, m), 'II sammas ja paindlik riiklik pension',
+      'II sammas: korraga 10%, fondipension soovitusliku perioodi peale (vähemalt 4 makset aastas) 0%, lühem periood 10%. Väljamaksete alustamisel lõpevad II samba sissemaksed. ' +
+      'Riiklikku pensioni saab võtta kuni 5 aastat varem, eluks ajaks väiksemana: −7,17% (1 a), −13,78% (2 a), −19,88% (3 a), −25,50% (4 a), −30,67% (5 a). Selleks on vaja 20–40 aastat staaži.',
+      { grow: 'Jätkan kasvatamist', lump: 'Võtan korraga välja', fund: 'Fondipension' }[input.payout]]);
+    items.push([when(pa, m), 'Riiklik pension täissummas (' + ageTxt(pa, m) + ')',
+      'Vähemalt 15 aastat Eesti staaži. Pensionieas on maksuvaba tulu 776 € kuus (2026). Kindlustusseltsi eluaegne pension on maksuvaba. ' +
+      (by + 65 >= 2029 ? 'Alates 2029 seotakse pensioniiga oodatava elueaga, seega see on ligikaudne.' : ''),
+      input.payout === 'grow' ? { grow: 'Kasvatan edasi', lump: 'Kõik korraga', fund: 'Fondipension' }[input.method] : null]);
+    if (input.method === 'fund' && !input.deferral) items.push([when(pa, m), 'Fondipensioni leping: üks kord või igal aastal uuesti',
+      'Ühe lepinguga lõpeb väljamakse perioodi lõpus. Kui sõlmid lepingu igal aastal uuesti vähemalt soovitusliku perioodiga, jääb see maksuvabaks ega saa otsa, aga väga kõrges eas on kuumakse väiksem.',
+      scenario.name]);
+    items.push([when(pa + 1, m) + '…' + (by + pa + 5), 'Riikliku pensioni edasilükkamine',
+      'Iga edasilükatud aasta tõstab riiklikku pensioni eluks ajaks: +7,93% (1 a), +16,88% (2 a), +27,01% (3 a), +38,50% (4 a), +51,57% (5 a), 2026 keskmised.',
+      input.deferral ? 'Lükkan ' + input.deferral + ' aastat edasi: ' + eur(input.p1Monthly * (1 + P.DEFERRAL_INCREASE[input.deferral])) + ' kuus' : 'Võtan kohe']);
+    items.push(['Elu lõpus', 'Pärimine',
+      'Fondis olev raha (ka fondipension) läheb pärijatele. Kui pärija võtab II samba osakud rahana välja, on maks 22%. Eluaegne kindlustuspension pärandada ei saa (v.a garantiiperiood).',
+      legacyChoice ? { heirs: 'Pärandan lähedastele', donate: 'Annetan', spend: 'Kulutan ise rohkem', care: 'Puhver hoolduseks' }[legacyChoice] : null]);
+    $('decisionMap').innerHTML = items.map((x) => {
+      const yr = parseInt((x[0].match(/· (\d{4})/) || [])[1], 10);
+      const past = yr && yr < P.CURRENT_YEAR ? ' <span class="badge text-bg-light">avanenud</span>' : '';
+      return '<li><div class="when">' + x[0] + past + '</div><div class="fw-medium">' + x[1] + '</div><div class="text-secondary small">' + x[2] + '</div>' +
+        (x[3] ? '<div class="map-choice">Sinu valik: <strong>' + x[3] + '</strong></div>' : '') + '</li>';
+    }).join('');
+  }
+
   function renderCompare(defs, results, activeId) {
     const rows = [
       ['Kulud kaetud kuni', (r) => (r.coversNeedUntil === null ? 101 : r.coversNeedUntil), (v) => (v > 100 ? '100+' : v + ' a'), 'max'],
@@ -552,6 +607,7 @@
     renderMetrics(mine);
     renderChart(mine, input);
     renderLegacy(mine, input);
+    renderMap(input, scenario);
     renderRecap(input, scenario);
     renderCompare(defs, results, scenario.id);
   }
@@ -613,7 +669,9 @@
   function syncPensionAge() {
     const rule = P.pensionAge(parseInt($('birthYear').value, 10) || 1980);
     if (!paTouched) $('pensionAgeYears').value = String(rule.years);
-    $('paHint').textContent = 'Reegli järgi ' + rule.label;
+    const opt = $('pensionAgeYears').querySelector('option[value="' + rule.years + '"]');
+    if (opt) opt.textContent = ageTxt(rule.years, rule.months);
+    $('paHint').textContent = 'Reegel: ' + ageTxt(rule.years, rule.months) + (rule.months === 4 ? ', alates 2029 seotud elueaga' : '');
   }
   $('pensionAgeYears').addEventListener('change', () => { paTouched = true; });
   $('birthYear').addEventListener('input', syncPensionAge);

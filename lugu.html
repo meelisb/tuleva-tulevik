@@ -264,7 +264,7 @@
           <h2 id="h5" tabindex="-1">Mida teed II samba rahaga?</h2>
         </div>
       </div>
-      <p class="text-secondary">60-aastaselt avaneb II sammas. Väljamakse algab selles loos pensionieas. Väljamaksete alustamisel lõpevad II samba sissemaksed igaveseks.</p>
+      <p class="text-secondary" id="p60Txt"></p>
       <fieldset>
         <legend class="visually-hidden">Väljamakse viis</legend>
         <div class="choices">
@@ -368,6 +368,10 @@
 
       <div id="legacy" class="mt-4"></div>
 
+      <h3 class="h5 mt-4">Sinu otsuste kaart</h3>
+      <p class="small-muted">Millal mis otsus sinu jaoks avaneb ja mis maksuga. Reeglid: Pensionikeskus ja Sotsiaalkindlustusamet, 2026.</p>
+      <ul class="timeline mb-2" id="decisionMap"></ul>
+
       <h3 class="h5 mt-4">Sinu lugu lühidalt</h3>
       <p class="small-muted">Muuda ükskõik millist valikut ja tulemus arvutatakse uuesti.</p>
       <ul class="recap" id="recap"></ul>
@@ -400,6 +404,8 @@
         <li>Arvutus on sama mis <a href="index.html">kalkulaatori vaates</a> (js/pension.js). Summad on tänastes eurodes, palk reaalselt ei kasva.</li>
         <li>Sammaste kasv pensionieani: II sambasse 2% palgast ja riigi 4%, fondi tootlus 2% aastas pärast inflatsiooni ja tasusid, III sambasse uusi sissemakseid ei tehta. Need on eeldused, mitte lubadus.</li>
         <li>„Jään ellu“: Statistikaamet LE205 (<span id="kuludMeta"></span>). „Optimaalne“ ja „Mugav“ lisavad sellele näidissummad. Hinnad ostukorvis on ligikaudsed.</li>
+        <li>Pensioniiga: 65 a 4 k (alates 2029 seotakse oodatava elueaga). Arvutus on aastapõhine, kuud on näidatud kuupäevades, mitte rahavoos.</li>
+        <li>Maksud ja vanused: <a href="https://www.pensionikeskus.ee/ii-sammas/valjamaksed/valjamaksete-maksustamine/" target="_blank" rel="noopener">II samba väljamaksete maksustamine</a>, <a href="https://www.pensionikeskus.ee/iii-sammas/valjamaksed/" target="_blank" rel="noopener">III samba väljamaksed</a>, <a href="https://www.sotsiaalkindlustusamet.ee/pension-ja-seotud-huvitised/pensioni-liigid/paindlik-pension" target="_blank" rel="noopener">paindlik vanaduspension</a>.</li>
         <li>Ellujäämine: Statistikaamet RV046, <span id="lifeYear"></span>. „Elu lõpuni“ on vanus, milleni jõuab elusalt 10% sinuvanustest.</li>
       </ul>
     </footer>

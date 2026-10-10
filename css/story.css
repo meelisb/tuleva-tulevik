@@ -146,3 +146,6 @@ main.container { padding-bottom: 1rem; }
 .tip-body { margin: 0 0 0.875rem; color: var(--text-primary); line-height: 1.55; }
 .legacy-hint { margin-top: 1.25rem; }
 .legacy-card .btn .ico { width: 1.1em; height: 1.1em; }
+/* Vaadatud samm: linnuke (mitte ainult värv) */
+.path-check { position: absolute; top: -0.2rem; left: calc(50% + 0.6rem); z-index: 2; display: grid; place-items: center; width: 1.05rem; height: 1.05rem; border-radius: 50%; background: var(--navy); color: #fff; border: 2px solid #fff; }
+.path-check .ico { width: 0.65rem; height: 0.65rem; stroke-width: 3.5; vertical-align: 0; }

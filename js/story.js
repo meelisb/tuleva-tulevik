@@ -52,6 +52,7 @@
 
   // ---------- Ikoonid: SVG (Lucide stiilis, MIT) emoji asemel. Värv tuleb ümbrusest (currentColor). ----------
   const SVG = {
+    check: '<path d="M20 6 9 17l-5-5"/>',
     user: '<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
     users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
     lockOpen: '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
@@ -724,7 +725,11 @@
       const now = ages && ages[0] <= input.currentAge && ages[1] >= input.currentAge;
       const cls = [i === step ? 'current' : '', visited.has(i) ? 'visited' : '', past ? 'past' : '', now ? 'now' : ''].join(' ');
       return '<li class="' + cls + '"><button type="button" data-goto="' + i + '"' + (i === step ? ' aria-current="step"' : '') + '>' +
-        '<span class="path-dot" aria-hidden="true">' + c.dataset.icon + '</span><span class="path-label">' + c.dataset.label + '</span>' +
+        '<span class="path-dot" aria-hidden="true">' + c.dataset.icon + '</span>' +
+        // Vaadatud olek ka ilma värvita (WCAG 1.4.1): linnuke ja ekraanilugejale tekst.
+        (visited.has(i) && i !== step ? '<span class="path-check" aria-hidden="true">' + ico('check') + '</span>' : '') +
+        '<span class="path-label">' + c.dataset.label + '</span>' +
+        '<span class="visually-hidden">' + (i === step ? ', praegune samm' : visited.has(i) ? ', vaadatud' : ', vaatamata') + '</span>' +
         (now ? '<span class="path-now">täna</span>' : '') + '</button></li>';
     }).join('');
   }

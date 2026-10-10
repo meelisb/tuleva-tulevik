@@ -16,7 +16,9 @@ python3 -m http.server 8000
 
 Seejärel ava http://localhost:8000. Build-sammu ei ole. Kõik arvutused tehakse brauseris.
 
-Avalik versioon: https://meelisb.github.io/tuleva-tulevik/ (haru `main`). Iga teine haru avaldub aadressil `https://meelisb.github.io/tuleva-tulevik/<haru-nimi>/`, näiteks [kadi-branch](https://meelisb.github.io/tuleva-tulevik/kadi-branch/). Kõik eelvaated: [harud.html](https://meelisb.github.io/tuleva-tulevik/harud.html). Avaldamise töövoog: `.github/workflows/pages.yml`.
+Avalik versioon: https://meelisb.github.io/tuleva-tulevik/
+
+Failide URL-idel on versioon (`?v=…`). Muuda see `index.html`-is ja `printsiibid/index.html`-is iga avaldamisega, muidu võib brauser kasutada vana ja uue koodi segu (GitHub Pages: `cache-control: max-age=600`). (haru `main`). Iga teine haru avaldub aadressil `https://meelisb.github.io/tuleva-tulevik/<haru-nimi>/`, näiteks [kadi-branch](https://meelisb.github.io/tuleva-tulevik/kadi-branch/). Kõik eelvaated: [harud.html](https://meelisb.github.io/tuleva-tulevik/harud.html). Avaldamise töövoog: `.github/workflows/pages.yml`.
 
 Nupp „Täida Tuleva konto andmetega (näidis)“ näitab väljamõeldud liikme andmetel, mida Tuleva saaks sisselogitud kasutajale eeltäita ja millisest API-st iga väärtus tuleb. Kulud on vaikimisi täidetud Statistikaameti andmetega.
 
@@ -34,6 +36,7 @@ Nupp „Täida Tuleva konto andmetega (näidis)“ näitab väljamõeldud liikme
 | `data/kulud.js` | Pensionäride kulud kategooriate kaupa (Statistikaamet LE205, hinnad IA002 järgi tänasesse rahasse). Genereeritud |
 | `scripts/fetch_kulud.py` | Uuendab kulusid ja kolme taset (kokkuhoidlik, optimaalne, mugav): `python3 scripts/fetch_kulud.py` |
 | `tests/pension.test.js` | Arvutuste testid: `node tests/pension.test.js` |
+| `tests/e2e.mjs` | Brauseritest (lauaarvuti ja mobiil, kõik põhifunktsioonid): `npm install` ja `node tests/e2e.mjs http://localhost:8000` |
 
 ## Eeldused (v1)
 

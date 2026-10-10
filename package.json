@@ -1,0 +1,12 @@
+{
+  "name": "tuleva-tulevik",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "test": "node tests/pension.test.js",
+    "e2e": "node tests/e2e.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.56.0"
+  }
+}

@@ -112,7 +112,7 @@
       if (r.shortfall > 0.5) parts.push(', puudu ' + eur(r.shortfall));
       parts.push(r.working ? ' · töötad' : ' · vajadus ' + eur(r.need));
       parts.push(' · tõenäosus olla elus ' + Math.round(r.alive * 100) + '%');
-      opts.readoutEl.textContent = parts.join(' ').replace(/ ,/g, ',');
+      opts.readoutEl.textContent = parts.join(' ').replace(/ ,/g, ',').replace(/\s+·/g, ' ·').replace(/\s{2,}/g, ' ');
     }
     const idxAt = (clientX) => Math.floor((clientX - svg.getBoundingClientRect().left - m.l) / bw);
     svg.addEventListener('pointermove', (e) => select(idxAt(e.clientX)));

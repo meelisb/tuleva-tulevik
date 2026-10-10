@@ -160,3 +160,4 @@ details summary { cursor: pointer; }
   .stepper button:not(.active)::before { font-size: 0.875rem; content: counter(s); }
   .stepper li:has(button.active) { flex: 3 1 0; }
 }
+.app-error { position: sticky; top: 0; z-index: 50; background: #fdecea; border-bottom: 2px solid var(--red); color: var(--text-primary); padding: 0.75rem 1rem; }

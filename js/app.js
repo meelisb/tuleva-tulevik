@@ -6,6 +6,12 @@
   const T = window.ELUTABEL;
   const K = window.KULUD;
   const $ = (id) => document.getElementById(id);
+  // Kaitse vana ja uue koodi segu vastu (brauseri vahemälu).
+  if (!P || !P.presets || !window.PensionChart || !K || !K.tasemed || !$('stepper')) {
+    const el = $('appError');
+    if (el) { el.innerHTML = '<strong>Leht on poolikult uuenenud.</strong> Laadi leht uuesti (Ctrl+Shift+R või Cmd+Shift+R).'; el.classList.remove('d-none'); }
+    return;
+  }
   const eur = (v) => Math.round(v).toLocaleString('et-EE') + ' €';
   const pct = (v) => Math.round(v * 100) + '%';
   const sgnPct = (v) => (v > 0 ? '+' : v < 0 ? '−' : '±') + (Math.abs(v) * 100).toFixed(2).replace('.', ',').replace(/,00$/, '') + '%';
@@ -45,10 +51,11 @@
   options($('pensionAgeYears'), 65, 68, (a) => a + ' a');
   options($('careFrom'), 70, 95, (a) => a + '-aastaselt', 85);
 
-  const currentAge = () => P.CURRENT_YEAR - (parseInt($('birthYear').value, 10) || 1966);
+  const birthYearValue = () => Math.min(1990, Math.max(1950, parseInt($('birthYear').value, 10) || 1966));
+  const currentAge = () => P.CURRENT_YEAR - birthYearValue();
   function readInput() {
     const num = (id) => Math.max(0, parseFloat($(id).value) || 0);
-    const birthYear = Math.min(1990, Math.max(1950, parseInt($('birthYear').value, 10) || 1966));
+    const birthYear = birthYearValue();
     return {
       birthYear: birthYear,
       sex: $('sex').value,
@@ -66,7 +73,7 @@
 
   // ---------- pensioniiga ja töötamine ----------
   function syncAges() {
-    const by = parseInt($('birthYear').value, 10) || 1966;
+    const by = birthYearValue();
     const rule = P.pensionAge(by);
     if (!state.paTouched) $('pensionAgeYears').value = String(rule.years);
     $('paHint').textContent = 'Reegli järgi ' + rule.label + '. See võib muutuda: 2027. aastast arvutatakse pensioniiga igal aastal uuesti Statistikaameti eluea järgi ja täpne iga selgub umbes kaks aastat ette.';
@@ -270,10 +277,11 @@
     document.body.classList.toggle('show-results', state.step === 5);
   }
   const toTop = () => document.querySelector('.stepper').scrollIntoView({ block: 'nearest' });
+  const toResults = () => window.scrollTo({ top: $('resultsCol').getBoundingClientRect().top + window.scrollY - 8, behavior: 'smooth' });
   document.querySelectorAll('#stepper button').forEach((b) => b.addEventListener('click', () => { goStep(Number(b.dataset.step)); if (state.step === 5) update(); }));
   $('prevBtn').addEventListener('click', () => { goStep(state.step - 1); toTop(); });
-  $('nextBtn').addEventListener('click', () => { goStep(state.step + 1); if (state.step === 5) { update(); $('resultsCol').scrollIntoView({ block: 'start' }); } else toTop(); });
-  $('mobileResultBtn').addEventListener('click', () => { goStep(5); update(); $('resultsCol').scrollIntoView({ block: 'start' }); });
+  $('nextBtn').addEventListener('click', () => { goStep(state.step + 1); if (state.step === 5) { update(); toResults(); } else toTop(); });
+  $('mobileResultBtn').addEventListener('click', () => { goStep(5); update(); toResults(); });
   let lastLg = isLg();
   window.addEventListener('resize', () => {
     clearTimeout(window._rt);

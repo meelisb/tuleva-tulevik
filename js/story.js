@@ -698,7 +698,7 @@
     if (r.coversNeedUntil === null) parts.push('Kulud on kaetud kuni 100. eluaastani.');
     else parts.push('Kulud on kaetud kuni ' + r.coversNeedUntil + '. eluaastani.');
     if (r.moneyEndAge !== null) parts.push('Samba ja hoiuse raha lõpeb ' + r.moneyEndAge + '-aastaselt, siis jääb ainult riiklik pension ' + eur(r.incomeAfterMoney) + ' kuus.');
-    return parts.join(' ');
+    return parts;
   }
   function chartTable(r, input) {
     const rows = r.rows.filter((x) => x.age >= r.pensionStartAge);
@@ -745,7 +745,7 @@
     $('chartExplain').innerHTML = chartExplain(r, input, mobile);
     // Mobiilis: kihiline pindgraafik pensioniea algusest (tulpade asemel), elus-% ilma eraldi teljeta.
     const rows = mobile ? r.rows.filter((x) => x.age >= r.pensionStartAge) : r.rows;
-    $('chartSummary').textContent = chartSummary(r, input);
+    $('chartSummary').innerHTML = chartSummary(r, input).map((s) => '<li>' + s + '</li>').join(''); // iga lause eraldi real
     $('chartTableWrap').innerHTML = chartTable(r, input);
     const font = { family: 'Roboto', size: 14 };
     // Mobiilis tulbad → kihid (sama värv ja muster), tühjad aastad ei teki rägastikuks.
@@ -961,7 +961,7 @@
     return [
       '# Tulevane Mina: minu pensionilugu', '', '_Koostatud ' + today + '. Prototüüp, mitte finants- ega maksunõu. Summad on tänastes eurodes._', '',
       '## Tulemus', '', txt($('answer')), '', warn + metrics.join('\n'), '',
-      '## Graafiku kokkuvõte', '', txt($('chartSummary')), '',
+      '## Graafiku kokkuvõte', '', [...$('chartSummary').querySelectorAll('li')].map((li) => '- ' + txt(li)).join('\n'), '',
       '## Sinu andmed', '',
       '- Sünniaasta: ' + input.birthYear + ', sugu: ' + (input.sex === 'N' ? 'naine' : 'mees') + ', pensioniiga: ' + pa + ' a',
       '- Riiklik pension: ' + eur(input.p1Monthly) + ' kuus',

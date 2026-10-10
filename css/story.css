@@ -236,3 +236,4 @@ main.container { padding-bottom: 1rem; }
 .chart-explain ul { padding-left: 1.1rem; }
 .chart-explain li { margin-bottom: 0.25rem; }
 @media (max-width: 575px) { .chart-wrap { height: 300px; } }
+.chart-summary li { margin-bottom: 0.2rem; }

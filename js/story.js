@@ -703,6 +703,12 @@
     $('nextBtn').textContent = step === shown[shown.length - 2] ? 'Näita tulemust →' : 'Edasi →';
     $('stepCount').textContent = 'Samm ' + (pos + 1) + ' / ' + shown.length;
     update();
+    // Mobiilis võib rada olla laiem kui ekraan: keri aktiivne samm nähtavale.
+    const cur = $('path').querySelector('[aria-current="step"]');
+    if (cur) {
+      const li = cur.parentElement, path = $('path');
+      path.scrollTo({ left: li.offsetLeft - (path.clientWidth - li.offsetWidth) / 2, behavior: focus === false ? 'auto' : 'smooth' });
+    }
     if (focus !== false) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       const h = chapters[step].querySelector('h2'); if (h) h.focus({ preventScroll: true });

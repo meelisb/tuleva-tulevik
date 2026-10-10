@@ -60,20 +60,16 @@
           <div class="form-text"><a href="https://iseteenindus.sotsiaalkindlustusamet.ee/self-service/pension-calculator" target="_blank" rel="noopener">SKA kalkulaatorist</a></div>
         </div>
         <div class="col-6 col-md-3">
-          <label class="form-label" for="p2">II sammas, €</label>
+          <label class="form-label" for="p2">II sammas praegu, €</label>
           <input class="form-control" id="p2" type="number" min="0" step="1000" value="25000">
         </div>
         <div class="col-6 col-md-3">
-          <label class="form-label" for="p3">III sammas, €</label>
+          <label class="form-label" for="p3">III sammas praegu, €</label>
           <input class="form-control" id="p3" type="number" min="0" step="1000" value="5000">
         </div>
-        <div class="col-6 col-md-3" id="p3JoinedWrap">
+        <div class="col-12 col-md-6" id="p3JoinedWrap">
           <label class="form-label" for="p3Joined">III sambaga liitusin</label>
           <select class="form-select" id="p3Joined"><option value="before">enne 2021</option><option value="after">2021 või hiljem</option></select>
-        </div>
-        <div class="col-6 col-md-3">
-          <label class="form-label" for="household">Pensionil elan</label>
-          <select class="form-select" id="household"><option value="uksi">üksi</option><option value="paar">paaris</option></select>
         </div>
         <div class="col-6 col-md-3">
           <label class="form-label" for="grossMonthly">Brutopalk, €/kuus</label>
@@ -331,7 +327,13 @@
           <h2 id="h8" tabindex="-1">Mis elu sa pensionil elada tahad?</h2>
         </div>
       </div>
-      <div class="household-note mb-3" id="hhNote" aria-live="polite"></div>
+      <div class="household-row mb-3">
+        <div>
+          <label class="form-label" for="household">Pensionil elan</label>
+          <select class="form-select w-auto" id="household"><option value="uksi">üksi</option><option value="paar">paaris</option></select>
+        </div>
+        <div class="household-note flex-grow-1" id="hhNote" aria-live="polite"></div>
+      </div>
       <p class="text-secondary">Vali pakett. Summad on tänastes eurodes kuus. „Jään ellu“ on Statistikaameti andmed: nii palju pensionärid päriselt keskmiselt kulutavad.</p>
       <fieldset>
         <legend class="visually-hidden">Kulupakett</legend>

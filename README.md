@@ -1,47 +1,73 @@
 # tuleva-tulevik
 
-Tiimi „Tulevane Mina“ töö Tuleva häkatonil (9.–11.10.2026). Küsimus, millele prototüüp vastab: **kas su pensionisissetulek kestab elu lõpuni?**
+Tiimi „Tulevane Mina“ töö Tuleva häkatonil (9.–11.10.2026). Küsimus, millele prototüübid vastavad: **kas su pensionisissetulek kestab elu lõpuni?**
 
 - [Tööleht ja pitch'i taust](tulevane_mina_tooleht_ja_pitch_2026-10-10.md)
 - [Tuleva reporting engine: mis andmed seal on ja mis meile kasulik](reporting_engine_andmed_2026-10-10.md)
-- **Prototüüp 1, kalkulaator** (`index.html`): https://meelisb.github.io/tuleva-tulevik/ . Sinu andmed, kulud, otsused (riiklik pension varem või hiljem, II ja III samba viis ja algus, töötamine), tulemus koos valmisstrateegiatega.
-- **Prototüüp 2, põhimõtted** (`printsiibid/`): https://meelisb.github.io/tuleva-tulevik/printsiibid/ . Kuus põhimõtet ja otsustuspuu, arvutusi ei tehta.
 
-## Prototüübi käivitamine
+## Prototüübid
 
-Ava `index.html` brauseris või käivita kohalik server:
+| Prototüüp | Kaust | Sisu | Mootor |
+|---|---|---|---|
+| Avaleht | `index.html` | Lingid kolmele prototüübile | – |
+| 1. **Kalkulaator** | `kalkulaator/` | Sinu andmed, kulud, otsused (riiklik pension varem või hiljem, II ja III samba viis ja algus, töötamine), tulemus koos valmisstrateegiatega | `kalkulaator/pension.js` |
+| 2. **Printsiibid** | `printsiibid/` | Kuus põhimõtet ja otsustuspuu, arvutusi ei tehta | – |
+| 3. **Elukaar** (Kadi) | `elukaar/` | Pensionilugu eluetappide kaupa: valikud 55-, 60- ja pensionieas, kulutase, tulemus ja allalaadimine | `elukaar/pension.js` |
+
+Igal arvutaval prototüübil on oma mootor. Elukaare mootor on kalkulaatori varasema mootori edasiarendus. Samade sisenditega (ilma sissemakseteta, hoius 0%) annavad mõlemad sama tulemuse; seda kontrollib `tests/elukaar.scenarios.test.js`.
+
+Ühised failid: `css/tuleva.css` (Tuleva disainisüsteemi tokenid ja põhistiilid, prototüübi omad stiilid on prototüübi kaustas) ja `data/` (Statistikaameti andmed).
+
+## Käivitamine
+
+Build-sammu ei ole. Kõik arvutused tehakse brauseris.
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Seejärel ava http://localhost:8000. Build-sammu ei ole. Kõik arvutused tehakse brauseris.
+Seejärel ava http://localhost:8000.
 
-Avalik versioon: https://meelisb.github.io/tuleva-tulevik/
+Failide URL-idel on versioon (`?v=…`). Muuda see kõigis `index.html` failides iga avaldamisega, muidu võib brauser kasutada vana ja uue koodi segu (GitHub Pages: `cache-control: max-age=600`).
 
-Failide URL-idel on versioon (`?v=…`). Muuda see `index.html`-is ja `printsiibid/index.html`-is iga avaldamisega, muidu võib brauser kasutada vana ja uue koodi segu (GitHub Pages: `cache-control: max-age=600`). (haru `main`). Iga teine haru avaldub aadressil `https://meelisb.github.io/tuleva-tulevik/<haru-nimi>/`, näiteks [kadi-branch](https://meelisb.github.io/tuleva-tulevik/kadi-branch/). Kõik eelvaated: [harud.html](https://meelisb.github.io/tuleva-tulevik/harud.html). Avaldamise töövoog: `.github/workflows/pages.yml`.
+Avaldamine: `.github/workflows/pages.yml` avaldab haru `main` juurkausta ja iga teise haru alamkausta `/<haru-nimi>/`.
 
-Nupp „Täida Tuleva konto andmetega (näidis)“ näitab väljamõeldud liikme andmetel, mida Tuleva saaks sisselogitud kasutajale eeltäita ja millisest API-st iga väärtus tuleb. Kulud on vaikimisi täidetud Statistikaameti andmetega.
+## Kulutasemed (mõlemas prototüübis samad)
+
+| Tase | Mis see on | Üksi | Paaris (inimese kohta) |
+|---|---|---|---|
+| Kokkuhoidlik | Tänaste pensionäride keskmine kulu (Statistikaamet LE205: üksik 65+ ja lasteta üle 64-aastaste paar) | 791 € | 667 € |
+| Optimaalne | Sama, korrutatud kategooria kaupa IV tulukvintiili kulude suhtega keskmisesse (LE211) | 891 € | 764 € |
+| Mugav | Sama, V tulukvintiili suhtega | 1 261 € | 1 083 € |
+
+Summad on kuus, tänases rahas (uuring 2020, hinnad 09/2026 kaubagrupi tarbijahinnaindeksiga, IA002).
+
+- Kategooriad katavad kogu kulu: tarbimiskulud ja Statistikaameti „muud kulutused“, mida näitame nimega **Kingitused, annetused jm** (raha kinkimine, annetused, alimendid ja ülalpidamisraha väljapoole leibkonda, trahvid). Pensionäridel 20 € kuus (üksi) ehk 2,6% kogukulust.
+- Haridust pensionäride kohta ei avaldata (liiga vähe vastajaid). See on arvutatud kui kogukulu miinus ülejäänud kategooriad (u 1 € kuus).
+- **Piirang:** IV ja V kvintiili suhe on kõigi leibkondade andmetest. Pensionäride kohta tulukvintiilide kaupa avalikku tabelit ei ole (LE205, LE212 ja LE214 annavad pensionäride kohta ainult keskmise). Täpsema taseme jaoks saab Statistikaametilt tellida eritabeli.
 
 ## Struktuur
 
 | Fail | Sisu |
 |---|---|
-| `js/pension.js` | Arvutusloogika: pensioniiga, ellujäämine, fondipension, stsenaariumid A/B/C. Puhtad funktsioonid |
-| `js/app.js` | Kasutajaliides: sammud, otsused, võrdlus |
-| `js/chart.js` | Ligipääsetav SVG-graafik (tabel, klaviatuur, puude) |
-| `printsiibid/` | Prototüüp 2: põhimõtted ja otsustuspuu |
-| `css/tuleva.css` | Tuleva disainisüsteemi tokenid ([TulevaEE/onboarding-client](https://github.com/TulevaEE/onboarding-client)), Bootstrap 5, Roboto |
-| `data/elutabel.js` | Statistikaameti elutabel (RV045, RV046). Genereeritud, ära muuda käsitsi |
-| `scripts/fetch_elutabel.py` | Uuendab elutabelit Statistikaameti API-st: `python3 scripts/fetch_elutabel.py` |
-| `data/kulud.js` | Pensionäride kulud kategooriate kaupa (Statistikaamet LE205, hinnad IA002 järgi tänasesse rahasse). Genereeritud |
-| `scripts/fetch_kulud.py` | Uuendab kulusid ja kolme taset (kokkuhoidlik, optimaalne, mugav): `python3 scripts/fetch_kulud.py` |
-| `tests/pension.test.js` | Arvutuste põhitestid: `node tests/pension.test.js` |
-| `tests/scenarios.test.js` | Stsenaariumitestid (~9 600 kontrolli): käsitsi arvutatud juhtumid, rahavoogude tasakaal ja loogikakontrollid 162 persona peal (sissetulek, sugu, vanus, töötamine, kulud × strateegiad). Tabel: `node tests/scenarios.test.js --table` |
-| `tests/e2e.mjs` | Brauseritest (lauaarvuti ja mobiil, kõik põhifunktsioonid): `npm install` ja `node tests/e2e.mjs http://localhost:8000` |
+| `kalkulaator/pension.js` | Kalkulaatori mootor: pensioniiga, ellujäämine, fondipension, sissemaksed, maksud, stsenaariumid. Puhtad funktsioonid |
+| `kalkulaator/app.js`, `chart.js`, `kalkulaator.css` | Kalkulaatori liides, ligipääsetav SVG-graafik ja stiilid |
+| `elukaar/pension.js` | Elukaare mootor (stsenaariumid A–E) |
+| `elukaar/story.js`, `story.css` | Elukaare liides |
+| `printsiibid/` | Prototüüp 2 |
+| `data/elutabel.js`, `scripts/fetch_elutabel.py` | Statistikaameti elutabel (RV045, RV046). Genereeritud: `python3 scripts/fetch_elutabel.py` |
+| `data/kulud.js`, `scripts/fetch_kulud.py` | Kulutasemed (LE205, LE211, IA002). Genereeritud: `python3 scripts/fetch_kulud.py` |
+| `tests/pension.test.js`, `tests/scenarios.test.js` | Kalkulaatori testid (~9 600 kontrolli, tabel: `node tests/scenarios.test.js --table`) |
+| `tests/elukaar.test.js`, `tests/elukaar.scenarios.test.js` | Elukaare testid (~6 800 kontrolli): kasv ühe korra, rahavoogude tasakaal, loogika, ristkontroll kalkulaatoriga |
+| `tests/e2e.mjs` | Brauseritest kõigile prototüüpidele (lauaarvuti ja mobiil): `npm install` ja `node tests/e2e.mjs http://localhost:8000` |
 
-## Eeldused (v1)
+Kõik arvutustestid: `npm test`.
 
-Summad on tänases rahas. Sissemaksed jätkuvad töötamise lõpuni, palk reaalselt ei kasva, hoiuse intress jääb vaikimisi inflatsioonist 1% maha. Väljamaksed algavad pensionieas. Edasilükkamise tõusud on SKA 2026 keskmised. Pensionäri maksuvaba tulu ja kindlustuslepingut ei arvestata. Täpsem loetelu on lehe jaluses.
+## Eeldused
+
+Summad on tänases rahas. Palk ja riiklik pension reaalselt ei kasva. Edasilükkamise tõusud on SKA 2026 keskmised. Pensionäri maksuvaba tulu ja kindlustuslepingut ei arvestata.
+
+- Kalkulaator: sissemaksed jätkuvad töötamise lõpuni, hoiuse intress jääb vaikimisi inflatsioonist 1% maha, III samba tulumaksutagastus on arvestatud.
+- Elukaar: väljamaksed algavad pensionieas, hoius 0% pärast inflatsiooni, III samba tulumaksutagastust ei arvestata.
 
 Tööversioon. Ei ole finants-, maksu- ega õigusnõu.

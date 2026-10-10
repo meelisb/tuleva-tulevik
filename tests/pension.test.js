@@ -2,7 +2,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const P = require('../js/pension.js');
+const P = require('../kalkulaator/pension.js');
 const load = (f) => { const s = fs.readFileSync(path.join(__dirname, '../data/' + f), 'utf-8'); return JSON.parse(s.slice(s.indexOf('{'), s.lastIndexOf('}') + 1)); };
 const table = load('elutabel.js');
 const kulud = load('kulud.js');

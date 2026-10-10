@@ -30,7 +30,8 @@
     'Alkohol ja tubakas': 'Alkohoolsed joogid ja tubakatooted.',
     'Kohvikud ja reisimajutus': 'Söömine väljaspool kodu, hotellid ja muu majutus.',
     'Muud kaubad ja teenused': 'Isikuhooldus (juuksur, hügieen), sotsiaalhoolekanne (nt koduhooldus, päevakeskus), kindlustus, pangateenused, isiklikud esemed.',
-    'Muud kulutused': 'Kulud, mis ei ole tarbimine: nt rahalised kingitused ja toetused teistele, liikmemaksud.',
+    'Haridus': 'Kursused ja koolitused. Pensionäride kohta Statistikaamet eraldi ei avalda, see on kogukulu ja teiste kategooriate vahe.',
+    'Kingitused, annetused jm': 'Raha kinkimine (nt lastelastele), annetused, alimendid ja ülalpidamisraha väljapoole leibkonda, trahvid. Statistikaameti „muud kulutused“.',
   };
   const CARE_CATS = ['Eluase ja kommunaalkulud', 'Toit ja joogid', 'Transport'];
 
@@ -107,7 +108,8 @@
       ? '<span class="src-chip stat">Statistikaamet</span> ' + K.tasemed[level()] + ', ' + K.leibkonnad[$('household').value].toLowerCase() + '. Uuring ' + K.uuringuaasta + ', hinnad ' + kuu(K.hinnad) + '.'
       : 'Sinu enda sisestatud kulud.';
     $('needMonthly').classList.toggle('is-prefilled', kind === 'stat');
-    $('levelHint').textContent = K.tasemed[level()] + '.';
+    $('levelHint').textContent = K.tasemed[level()] + '.' + (level() === 'kokkuhoidlik' ? ''
+      : ' Pensionäride keskmine korrutatud kategooria kaupa selle kvintiili kulude suhtega. Suhe on kõigi leibkondade andmetest, sest pensionäride kohta tulukvintiilide kaupa avalikke andmeid pole.');
   }
   function fillNeedFromStats() {
     const hh = $('household').value, lv = level();

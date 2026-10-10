@@ -3,7 +3,13 @@
 
 Kulud: leibkonnaliikme kulutused aastas leibkonna tüübi järgi, viimane uuringuaasta (2020).
 Leibkonnad: „Üksik 65-aastane ja vanem“ ja „Lasteta üle 64-aastaste paar“ (liikme kohta).
+Kategooriad katavad kõik kulutused („Kulutused kokku“ = tarbimiskulud + muud kulutused), ka kingitused ja annetused.
+Haridust pensionäride kohta ei avaldata (liiga vähe vastajaid), see on „Kulutused kokku“ miinus ülejäänud kategooriad.
 Iga kategooria korrigeeritakse sama kaubagrupi tarbijahinnaindeksiga (uuringuaasta keskmine → viimane kuu).
+
+Tasemed: kokkuhoidlik on pensionäride endi keskmine. Optimaalne ja mugav korrutavad seda kategooria kaupa suhtega
+„IV / V tulukvintiil vs kõik leibkonnad“ (LE211). Pensionäride kohta tulukvintiilide kaupa avalikku tabelit ei ole
+(LE205, LE212 ja LE214 annavad pensionäride kohta ainult keskmise), seega suhe on kõigi leibkondade oma.
 
 Kasutus: python3 scripts/fetch_kulud.py
 """
@@ -27,8 +33,10 @@ CATEGORIES = [
     ("27", "Alkohol ja tubakas", "3"),
     ("45", "Kohvikud ja reisimajutus", "12"),
     ("48", "Muud kaubad ja teenused", "14"),
-    ("49", "Muud kulutused", "1"),
+    ("44", "Haridus", "11"),
+    ("49", "Kingitused, annetused jm", "1"),  # Statistikaamet: „muud kulutused“
 ]
+TOTAL = "1"  # Kulutused kokku
 HOUSEHOLDS = {"4": "uksi", "6": "paar"}
 
 
@@ -51,11 +59,20 @@ last_year = [v for v in meta["variables"] if v["code"] == "Aasta"][0]["values"][
 le = post("LE205", [
     {"code": "Aasta", "selection": {"filter": "item", "values": [last_year]}},
     {"code": "Näitaja", "selection": {"filter": "item", "values": ["1"]}},
-    {"code": "Kulutuste liik", "selection": {"filter": "item", "values": [c[0] for c in CATEGORIES]}},
+    {"code": "Kulutuste liik", "selection": {"filter": "item", "values": [c[0] for c in CATEGORIES] + [TOTAL]}},
     {"code": "Leibkonna tüüp", "selection": {"filter": "item", "values": list(HOUSEHOLDS)}},
 ])
 survey_year = list(le["dimension"]["Aasta"]["category"]["label"].values())[0]
 spend = {(c["Kulutuste liik"], c["Leibkonna tüüp"]): v for c, v in cells(le)}
+# Avaldamata kategooria (pensionäridel haridus) = kokku miinus ülejäänud. Nii summeeruvad kategooriad kogukuluks.
+for hh_code in HOUSEHOLDS:
+    missing = [c[0] for c in CATEGORIES if spend.get((c[0], hh_code)) is None]
+    assert len(missing) <= 1, ("rohkem kui üks avaldamata kategooria", hh_code, missing)
+    if missing:
+        known = sum(spend[(c[0], hh_code)] for c in CATEGORIES if c[0] not in missing)
+        spend[(missing[0], hh_code)] = max(0.0, spend[(TOTAL, hh_code)] - known)
+    total = sum(spend[(c[0], hh_code)] for c in CATEGORIES)
+    assert abs(total - spend[(TOTAL, hh_code)]) < 0.5, ("kategooriad ei summeeru kogukuluks", hh_code, total)
 
 groups = sorted({c[2] for c in CATEGORIES})
 series = {}
@@ -104,6 +121,8 @@ data = {
         "optimaalne": "Nagu keskmisest jõukamad leibkonnad (IV tulukvintiil)",
         "mugav": "Nagu jõukaim viiendik (V tulukvintiil)",
     },
+    "tasemete_markus": "Kokkuhoidlik on pensionäride endi keskmine. Optimaalse ja mugava taseme kordaja (IV ja V tulukvintiil keskmise suhtes) on kõigi leibkondade andmetest, sest pensionäride kohta tulukvintiilide kaupa avalikku tabelit ei ole.",
+    "kingitused": "Kingitused, annetused jm = Statistikaameti „muud kulutused“: annetused, raha kinkimine, alimentide ja ülalpidamisraha maksmine väljapoole leibkonda, trahvid jms.",
     "uuringuaasta": survey_year,
     "hinnad": f"{latest[0]}-{latest[1]:02d}",
     "kordaja_kokku": round(factor["1"], 3),

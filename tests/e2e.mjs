@@ -17,7 +17,7 @@ async function run(label, viewport) {
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) errors.push(m.text()); });
   page.on('response', (r) => { if (r.status() >= 400 && !r.url().endsWith('/favicon.ico')) errors.push(r.status() + ' ' + r.url()); });
-  await page.goto(base + '/', { waitUntil: 'networkidle' });
+  await page.goto(base + '/kalkulaator/', { waitUntil: 'networkidle' });
   const mobile = viewport.width < 992;
   const text = (sel) => page.textContent(sel);
   const summary = () => (mobile ? text('#mobileSummaryText') : text('#metrics .metric .value'));
@@ -96,7 +96,7 @@ console.log('\nPrototüüp 1 · ajutine auk');
   const page = await browser.newPage({ viewport: { width: 1366, height: 900 } });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto(base + '/', { waitUntil: 'networkidle' });
+  await page.goto(base + '/kalkulaator/', { waitUntil: 'networkidle' });
   await page.selectOption('#workUntil', '60');
   await page.click('#stepper button[data-step="4"]');
   check((await page.inputValue('#s2')) === '60', 'II samba vaikimisi algus = töö lõpp (60)');
@@ -104,6 +104,46 @@ console.log('\nPrototüüp 1 · ajutine auk');
   const ans = await page.textContent('#answer');
   check(/Sul jääb raha puudu \d+(–\d+)?-aastaselt/.test(ans) && ans.includes('Riiklik pension algab alles 67'), 'vastus nimetab ajutise augu: ' + ans.slice(0, 80));
   check((await page.textContent('#metrics')).includes('riiklik pension kuus alates 67'), 'plaat näitab riiklikku pensioni alates 67, mitte 0 €');
+  check(errors.length === 0, 'JavaScripti vigu pole' + (errors.length ? ': ' + errors.join(' | ') : ''));
+  await page.close();
+}
+
+console.log('\nAvaleht');
+{
+  const page = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+  await page.goto(base + '/', { waitUntil: 'networkidle' });
+  const links = await page.$$eval('a.proto', (as) => as.map((a) => a.getAttribute('href')));
+  check(links.join(',') === 'kalkulaator/,printsiibid/,elukaar/', 'kolm prototüüpi: ' + links.join(', '));
+  for (const l of links) { const r = await page.request.get(base + '/' + l); check(r.ok(), l + ' avaneb'); }
+  await page.close();
+}
+
+for (const [label, viewport] of [['lauaarvuti', { width: 1366, height: 900 }], ['mobiil', { width: 375, height: 812 }]]) {
+  console.log('\nPrototüüp 3 (Elukaar) · ' + label);
+  const page = await browser.newPage({ viewport });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) errors.push(m.text()); });
+  page.on('response', (r) => { if (r.status() >= 400 && !r.url().endsWith('/favicon.ico')) errors.push(r.status() + ' ' + r.url()); });
+  await page.goto(base + '/elukaar/', { waitUntil: 'networkidle' });
+  // Kulutasemed: samad nimed ja summad mis kalkulaatoris (Statistikaamet, üksi elav).
+  const K = await page.evaluate(() => window.KULUD);
+  const tot = (l) => K.kategooriad.reduce((a, c) => a + c.uksi[l], 0);
+  let guard = 0;
+  while (!(await page.isVisible('#packages .pkg')) && guard++ < 15) await page.click('#nextBtn');
+  const names = await page.$$eval('#packages .pkg strong', (els) => els.map((e) => e.textContent));
+  check(names.join(',') === 'Kokkuhoidlik,Optimaalne,Mugav', 'kulutasemete nimed: ' + names.join(', '));
+  const prices = await page.$$eval('#packages .pkg-price', (els) => els.map((e) => parseInt(e.textContent.replace(/\D/g, ''), 10)));
+  check(prices.join(',') === [tot('kokkuhoidlik'), tot('optimaalne'), tot('mugav')].join(','), 'tasemete summad = Statistikaamet: ' + prices.join(', '));
+  check((await page.textContent('#packages')).includes('kingitusteks'), 'kingitused on näha');
+  await page.click('#packages label.pkg:nth-of-type(3)');
+  guard = 0;
+  while (!(await page.isVisible('#answer')) && guard++ < 15) await page.click('#nextBtn');
+  const ans = await page.textContent('#answer');
+  check(/kaetud|katmata/.test(ans) && ans.replace(/\s/g, '').includes(String(tot('mugav')) + '€'), 'tulemus mugava tasemega: ' + ans.slice(0, 70));
+  check((await page.$$('#compare tbody tr')).length >= 3, 'võrdlustabel');
+  const w = await page.evaluate(() => [document.documentElement.scrollWidth, innerWidth]);
+  check(w[0] <= w[1], 'horisontaalset kerimist pole (' + w.join('/') + ')');
   check(errors.length === 0, 'JavaScripti vigu pole' + (errors.length ? ': ' + errors.join(' | ') : ''));
   await page.close();
 }

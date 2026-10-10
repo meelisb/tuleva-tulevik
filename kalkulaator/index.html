@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="et">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tulevane Mina</title>
+  <meta name="description" content="Kas su pensionisissetulek kestab elu lõpuni? Tuleva häkatoni prototüüp.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="../css/tuleva.css?v=20261010e" rel="stylesheet">
+  <link href="kalkulaator.css?v=20261010e" rel="stylesheet">
+</head>
+<body>
+  <div id="appError" class="app-error d-none" role="alert"></div>
+  <main class="container container-wide py-4">
+    <header class="mb-3">
+      <p class="small-muted mb-1">Tuleva häkaton 2026 · prototüüp</p>
+      <h1 class="mb-1">Tulevane Mina</h1>
+      <p class="lead text-secondary mb-2">Kas su pensionisissetulek kestab elu lõpuni?</p>
+      <p class="today-money mb-0"><strong>Kõik summad on tänases rahas.</strong> Inflatsioon on maha arvatud: 1 000 € tähendab ka 20 aasta pärast sama ostujõudu kui täna.</p>
+    </header>
+
+    <div class="row g-4">
+      <!-- Vasak: sammud -->
+      <div class="col-lg-5">
+        <section class="card card-calculator p-3 p-md-4" aria-label="Sinu andmed ja otsused">
+          <nav aria-label="Sammud">
+            <ol class="stepper" id="stepper">
+              <li><button type="button" data-step="1">Sina</button></li>
+              <li><button type="button" data-step="2">Sinu raha</button></li>
+              <li><button type="button" data-step="3">Kulud</button></li>
+              <li><button type="button" data-step="4">Otsused</button></li>
+              <li class="d-lg-none"><button type="button" data-step="5">Tulemus</button></li>
+            </ol>
+          </nav>
+
+          <!-- Samm 1 -->
+          <div class="step" data-step="1">
+            <h2 class="h4 mb-2">Sina</h2>
+            <div class="d-grid gap-2 mb-2">
+              <button type="button" class="btn btn-primary" id="prefillBtn">Täida Tuleva konto andmetega (näidis)</button>
+              <button type="button" class="btn btn-outline-primary d-none" id="clearBtn">Tühjenda näidisandmed</button>
+            </div>
+            <p class="small-muted">Prototüübis on need väljamõeldud liikme näidisandmed. Päris tootes tulevad need sinu Tuleva kontolt pärast sisselogimist.</p>
+            <div id="prefillPanel" class="prefill-panel d-none mb-3"></div>
+            <div class="field">
+              <label class="form-label" for="birthYear">Sünniaasta</label>
+              <input class="form-control" id="birthYear" type="number" inputmode="numeric" min="1950" max="1990" value="1966">
+            </div>
+            <div class="field">
+              <label class="form-label" for="sex">Sugu</label>
+              <select class="form-select" id="sex"><option value="N">Naine</option><option value="M">Mees</option></select>
+              <div class="form-text">Ainult eluea statistika jaoks: naised elavad keskmiselt kauem.</div>
+            </div>
+            <div class="field">
+              <label class="form-label" for="pensionAgeYears">Vanaduspensioniiga</label>
+              <select class="form-select" id="pensionAgeYears"></select>
+              <div class="form-text" id="paHint"></div>
+            </div>
+            <div class="field">
+              <label class="form-label" for="workUntil">Töötan ja kogun kuni</label>
+              <select class="form-select" id="workUntil"></select>
+              <div class="form-text">Kuni selle vanuseni katab sinu igapäevased kulud palk ja sissemaksed sammastesse jätkuvad.</div>
+            </div>
+          </div>
+
+          <!-- Samm 2 -->
+          <div class="step" data-step="2">
+            <h2 class="h4 mb-2">Sinu raha</h2>
+            <div class="field">
+              <label class="form-label" for="p1Monthly">Riiklik pension (I sammas) vanaduspensionieas, €/kuus</label>
+              <input class="form-control" id="p1Monthly" type="number" inputmode="numeric" min="0" step="10" value="900">
+              <details class="howto mt-1">
+                <summary>Kust ma selle numbri saan?</summary>
+                <ol class="small mb-0 mt-2">
+                  <li>Ava Sotsiaalkindlustusameti <a href="https://iseteenindus.sotsiaalkindlustusamet.ee/self-service/pension-calculator" target="_blank" rel="noopener">pensionikalkulaator<span class="ext" aria-hidden="true">↗</span><span class="visually-hidden"> (avaneb uuel lehel)</span></a> ja logi sisse. Kogunenud pension on seal juba olemas.</li>
+                  <li>Jaotises „Prognoosimine“ sisesta brutopalk ning II ja III samba sissemaksed.</li>
+                  <li>Jaotises „Pensionile jäämine“ vali <strong>Vanaduspension</strong>, mitte paindlik pension. Varem või hiljem minekut arvestame siin ise.</li>
+                  <li>Vajuta „Prognoosi“ ja ava detailandmed.</li>
+                  <li>I samba osa = „I, II ja III sammas“ miinus „II ja III sammas“. Näide: 1 886 € − 868 € = 1 018 €. SKA näitab samuti tänases rahas.</li>
+                </ol>
+              </details>
+            </div>
+            <div class="field">
+              <label class="form-label" for="p2">II sammas, €</label>
+              <input class="form-control" id="p2" type="number" inputmode="numeric" min="0" step="1000" value="30000">
+            </div>
+            <div class="field">
+              <label class="form-label" for="p3">III sammas, €</label>
+              <input class="form-control" id="p3" type="number" inputmode="numeric" min="0" step="1000" value="20000">
+            </div>
+            <div class="field">
+              <label class="form-label" for="p3Before2021">III sambaga liitusin</label>
+              <select class="form-select" id="p3Before2021"><option value="1">enne 2021</option><option value="0">2021 või hiljem</option></select>
+              <div class="form-text">Määrab, kas III sambast saab soodsa maksuga raha alates 55. või 60. eluaastast.</div>
+            </div>
+            <div class="field">
+              <label class="form-label" for="tkf">Tuleva Täiendav Kogumisfond, €</label>
+              <input class="form-control" id="tkf" type="number" inputmode="numeric" min="0" step="500" value="0">
+              <div class="form-text">Väljavõtmisel maksad 22% ainult kasvult.</div>
+            </div>
+            <div class="field">
+              <label class="form-label" for="savings">Hoiused ja muud säästud, €</label>
+              <input class="form-control" id="savings" type="number" inputmode="numeric" min="0" step="500" value="0">
+            </div>
+            <h3 class="h6 mt-3 mb-2">Sissemaksed, kuni töötad</h3>
+            <div class="field">
+              <label class="form-label" for="grossMonthly">Brutopalk, €/kuus</label>
+              <input class="form-control" id="grossMonthly" type="number" inputmode="numeric" min="0" step="100" value="2000">
+            </div>
+            <div class="field">
+              <label class="form-label" for="p2Rate">II samba makse palgast</label>
+              <select class="form-select" id="p2Rate"><option value="0">puudub</option><option value="0.02" selected>2%</option><option value="0.04">4%</option><option value="0.06">6%</option></select>
+              <div class="form-text">Lisaks maksab riik II sambasse 4% sinu palgast (sotsiaalmaksust).</div>
+            </div>
+            <div class="field">
+              <label class="form-label" for="p3Monthly">III sambasse, €/kuus</label>
+              <input class="form-control" id="p3Monthly" type="number" inputmode="numeric" min="0" step="10" value="0">
+              <div class="form-text">Saad 22% tulumaksu tagasi (kuni 15% brutotulust, kuni 6 000 € aastas).</div>
+            </div>
+            <div class="field">
+              <label class="form-label" for="tkfMonthly">Kogumisfondi, €/kuus</label>
+              <input class="form-control" id="tkfMonthly" type="number" inputmode="numeric" min="0" step="10" value="0">
+            </div>
+            <h3 class="h6 mt-3 mb-2">Tootlus</h3>
+            <div class="field">
+              <label class="form-label" for="realReturn">Pensionifondi tootlus üle inflatsiooni</label>
+              <select class="form-select" id="realReturn">
+                <option value="0">0% aastas: fond ainult hoiab väärtust</option>
+                <option value="0.02" selected>2% aastas: ettevaatlik eeldus</option>
+                <option value="0.04">4% aastas: aktsiaindeksifondi pikaajaline keskmine</option>
+              </select>
+              <div class="form-text">See on tavaline pensionifondi tootlus, millest on maha arvatud inflatsioon ja tasud. Näide: fond teenib 6%, hinnad tõusevad 2,5% ja tasu on 0,3%, siis on tootlus üle inflatsiooni umbes 3%. Eesti Panga andmetel on aktsiate reaaltootlus olnud 5–7% aastas.</div>
+            </div>
+            <div class="field">
+              <label class="form-label" for="depositReturn">Hoiuse intress üle inflatsiooni</label>
+              <select class="form-select" id="depositReturn">
+                <option value="-0.02">−2% aastas</option>
+                <option value="-0.01" selected>−1% aastas: hoiuse intress jääb tavaliselt inflatsioonist maha</option>
+                <option value="0">0% aastas</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Samm 3 -->
+          <div class="step" data-step="3">
+            <h2 class="h4 mb-2">Kulud pensionil</h2>
+            <p class="small text-secondary">Kulud on täidetud Statistikaameti leibkonna eelarve uuringu järgi. Vali tase ja muuda kategooriaid oma elu järgi.</p>
+            <fieldset class="field">
+              <legend class="form-label">Elatustase</legend>
+              <div class="btn-group w-100" role="group" id="levelGroup">
+                <input type="radio" class="btn-check" name="level" id="lvl-k" value="kokkuhoidlik"><label class="btn btn-outline-primary" for="lvl-k">Kokkuhoidlik</label>
+                <input type="radio" class="btn-check" name="level" id="lvl-o" value="optimaalne" checked><label class="btn btn-outline-primary" for="lvl-o">Optimaalne</label>
+                <input type="radio" class="btn-check" name="level" id="lvl-m" value="mugav"><label class="btn btn-outline-primary" for="lvl-m">Mugav</label>
+              </div>
+              <div class="form-text" id="levelHint"></div>
+            </fieldset>
+            <div class="field">
+              <label class="form-label" for="household">Leibkond</label>
+              <select class="form-select" id="household"><option value="uksi">Elan üksi</option><option value="paar">Elan paaris (minu osa)</option></select>
+            </div>
+            <div class="field">
+              <label class="form-label" for="needMonthly">Vajan kokku, €/kuus</label>
+              <input class="form-control" id="needMonthly" type="number" inputmode="numeric" min="0" step="10" value="900">
+              <div class="form-text" id="needSource"></div>
+            </div>
+            <details id="needDetails" class="mb-3">
+              <summary>Kulud kategooriate kaupa</summary>
+              <div id="needCats" class="mt-2"></div>
+            </details>
+            <div class="field care-box">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="careOn">
+                <label class="form-check-label fw-medium" for="careOn">Arvesta hooldekodu kuludega</label>
+              </div>
+              <div id="careFields" class="mt-2 d-none">
+                <label class="form-label" for="careFrom">Alates vanusest</label>
+                <select class="form-select mb-2" id="careFrom"></select>
+                <label class="form-label" for="careMonthly">Hooldekodu omaosalus, €/kuus</label>
+                <input class="form-control" id="careMonthly" type="number" inputmode="numeric" min="0" step="50" value="1000">
+                <div class="form-text">Hooldekodu keskmine kohatasu oli novembris 2024 1 603 € kuus; hoolduse osa maksab omavalitsus, keskmiselt umbes 600 €. Hooldekodus asendab omaosalus sinu eluaseme, toidu ja transpordi kulu (<span id="careReplaces"></span>).</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Samm 4 -->
+          <div class="step" data-step="4">
+            <h2 class="h4 mb-1">Sinu otsused</h2>
+            <p class="small text-secondary">Need otsused on sul ees. Iga otsuse saad teha selle ajaakna sees ükskõik millal. Tulemus muutub kohe.</p>
+            <div id="decisions"></div>
+          </div>
+
+          <!-- Samm 5 (mobiil): tulemus kuvatakse paremas veerus -->
+          <div class="step" data-step="5"><p class="small text-secondary mb-0">Sinu tulemus on all.</p></div>
+
+          <div class="d-flex justify-content-between mt-3 step-nav">
+            <button type="button" class="btn btn-outline-primary" id="prevBtn">← Tagasi</button>
+            <button type="button" class="btn btn-primary" id="nextBtn">Edasi →</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- Parem: tulemus -->
+      <div class="col-lg-7" id="resultsCol">
+        <div class="results-sticky">
+          <section class="card card-calculator p-3 p-md-4 mb-4" aria-labelledby="h-result">
+            <h2 id="h-result" class="h4 mb-2">Sinu plaan</h2>
+            <div class="answer mb-3" id="answer" aria-live="polite"></div>
+            <div class="row g-2 mb-3" id="metrics"></div>
+            <figure class="mb-2">
+              <div id="chart" class="chart" tabindex="0" role="group" aria-label="Graafik: kuine sissetulek ja vajadus vanuse järgi. Nooleklahvidega saad vanust valida."></div>
+              <p class="chart-readout small mb-1" id="chartReadout" aria-live="polite"></p>
+              <ul class="legend" id="legend"></ul>
+              <details class="mt-1"><summary class="small">Näita arve tabelina</summary><div class="table-responsive"><table class="table table-sm small mt-2" id="chartTable"></table></div></details>
+            </figure>
+          </section>
+
+          <section class="card p-3 p-md-4 mb-4" aria-labelledby="h-compare">
+            <h2 id="h-compare" class="h5 mb-1">Sinu plaan ja valmisstrateegiad</h2>
+            <p class="small text-secondary mb-2">Kõigis variantides kulutad sama palju: oma vajaduse. Erinevad maksud, pärand ja see, kui kaua raha jätkub.</p>
+            <div class="table-responsive"><table class="table table-compare align-middle mb-2" id="compare"></table></div>
+          </section>
+
+          <section class="card p-3 p-md-4 mb-4" aria-labelledby="h-act">
+            <h2 id="h-act" class="h5 mb-2">Vii otsus ellu</h2>
+            <ul class="mb-0">
+              <li><a href="https://pension.tuleva.ee/withdrawals" target="_blank" rel="noopener">II ja III samba väljamakse avaldus<span class="ext" aria-hidden="true">↗</span><span class="visually-hidden"> (avaneb uuel lehel)</span></a> · Tuleva</li>
+              <li><a href="https://iseteenindus.sotsiaalkindlustusamet.ee/" target="_blank" rel="noopener">Riikliku pensioni avaldus<span class="ext" aria-hidden="true">↗</span><span class="visually-hidden"> (avaneb uuel lehel)</span></a> · Sotsiaalkindlustusamet</li>
+              <li><a href="https://www.pensionikeskus.ee/kalkulaatorid/kindlustusseltside-ii-samba-valjamakse-kalkulaator/" target="_blank" rel="noopener">Kindlustusseltside pensionilepingu pakkumised<span class="ext" aria-hidden="true">↗</span><span class="visually-hidden"> (avaneb uuel lehel)</span></a> · Pensionikeskus</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobiili kokkuvõte -->
+    <div class="mobile-summary d-lg-none" id="mobileSummary">
+      <span id="mobileSummaryText"></span>
+      <button type="button" class="btn btn-sm btn-light" id="mobileResultBtn">Vaata tulemust</button>
+    </div>
+
+    <footer class="mt-4">
+      <div class="note mb-3"><strong>See on prototüüp, mitte finants- ega maksunõu.</strong> Kõik arvutused tehakse sinu brauseris ja midagi ei salvestata.</div>
+      <p class="mb-1"><strong>Eeldused</strong></p>
+      <ul>
+        <li>Summad on tänases rahas. Riiklik pension on indekseeritud. Pensionifond ja kogumisfond kasvavad valitud tootlusega üle inflatsiooni, hoius valitud intressiga üle inflatsiooni. Palk reaalselt ei kasva.</li>
+        <li>Kulureegel: kui töötamine lõpeb, kulutad igal aastal oma vajaduse. Esmalt riiklik pension, siis samba igakuised väljamaksed, siis hoius, kogumisfond, III samba lisaväljamakse ja viimasena II samba lisaväljamakse (Tuleva soovitatud järjekord). Ülejääk läheb hoiusele. Töötamise ajal katab kulud palk.</li>
+        <li>Maksud: igakuine väljamakse vähemalt elada jäänud aastate jooksul 0%, korraga või osaliselt 10%, III sammas enne 55/60 22%, kogumisfondi kasvult 22%. Riikliku pensioni tulumaksu ja pensionäri maksuvaba tulu ei arvestata.</li>
+        <li>II samba esimese väljamaksega lõpevad II samba sissemaksed (ka riigi 4%). Riikliku pensioni muutus varem või hiljem minnes: Sotsiaalkindlustusameti 2026. aasta keskmised.</li>
+        <li>Eluiga: Statistikaameti <span id="lifeYear"></span>. aasta elutabel (RV045, RV046). „Elu lõpuni“ on vanus, milleni jõuab elusalt 10% sinuvanustest. Perioodi elutabel pigem alahindab tegelikku eluiga.</li>
+        <li>Kulud: Statistikaameti leibkonna eelarve uuring (LE205, LE211; <span id="kuludMeta"></span>), iga kategooria korrigeeritud oma tarbijahinnaindeksiga (IA002). Uuring põhineb leibkondade kuluandmetel. Pensionärid kulutavad nii palju, kui sissetulek lubab, seega „kokkuhoidlik“ tase võib tähendada väga tagasihoidlikku elu.</li>
+        <li>Pensioniiga: 2027. aastast arvutatakse igal aastal uuesti Statistikaameti eluea järgi; täpne iga selgub umbes kaks aastat ette.</li>
+      </ul>
+      <p class="mb-0">Kood ja allikad: <a href="https://github.com/meelisb/tuleva-tulevik">github.com/meelisb/tuleva-tulevik</a></p>
+    </footer>
+  </main>
+
+  <script>
+    // Nähtav veateade: kui midagi läheb katki (nt brauser kasutab vana ja uue koodi segu), ütle seda kasutajale.
+    window.addEventListener('error', function (e) {
+      var el = document.getElementById('appError');
+      if (!el) return;
+      el.innerHTML = '<strong>Leht ei laadinud korralikult.</strong> Laadi leht uuesti (Ctrl+Shift+R või Cmd+Shift+R). <span class="small">Viga: ' + String(e.message).replace(/</g, '&lt;') + '</span>';
+      el.classList.remove('d-none');
+    });
+  </script>
+  <script src="../data/elutabel.js?v=20261010e"></script>
+  <script src="../data/kulud.js?v=20261010e"></script>
+  <script src="pension.js?v=20261010e"></script>
+  <script src="chart.js?v=20261010e"></script>
+  <script src="app.js?v=20261010e"></script>
+</body>
+</html>

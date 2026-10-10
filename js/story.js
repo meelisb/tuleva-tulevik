@@ -639,6 +639,41 @@
     renderActions(input);
     renderRecap(input, scenario);
     renderCompare(defs, results, scenario.id);
+    renderWarn(mine, scenario, defs, results);
+  }
+
+  // Kui valitud plaan ei kanna elu lõpuni, ütle see otse välja ja paku parimat väljamakse viisi.
+  function renderWarn(mine, scenario, defs, results) {
+    const box = $('actionWarn');
+    const short = mine.coversNeedUntil !== null && mine.coversNeedUntil <= mine.horizonAge;
+    if (!short) { box.classList.add('d-none'); return; }
+    let bi = 0;
+    results.forEach((r, i) => { if (r.sustainable > results[bi].sustainable) bi = i; });
+    const best = defs[bi], br = results[bi];
+    let html = '<strong>Hoiatus: sinu valitud plaan ei kanna kulusid elu lõpuni</strong> (kaetud kuni ' + mine.coversNeedUntil + '. eluaastani). ';
+    if (br.sustainable > mine.sustainable && best.id !== scenario.id) {
+      html += 'Parem oleks <strong>' + best.id + '. ' + best.name + '</strong>: see kannab elu lõpuni ' + eur(br.sustainable) + ' kuus (sinu valik ' + eur(mine.sustainable) + ').' +
+        ' <button type="button" class="btn btn-sm btn-primary ms-1" id="tryBest">Proovi seda</button>';
+    } else {
+      html += 'Ükski väljamakse viis ei kanna neid kulusid elu lõpuni: kõige rohkem kannab ' + eur(Math.max(br.sustainable, mine.sustainable)) + ' kuus. Vali väiksem kulupakett või muuda kulusid.' +
+        ' <button type="button" class="btn btn-link p-0 align-baseline" data-goto="8">Muuda kulusid</button>';
+    }
+    box.innerHTML = html;
+    box.classList.remove('d-none');
+    const t = $('tryBest');
+    if (t) t.addEventListener('click', () => applyScenario(best));
+  }
+
+  // Sea valikud nii, et tulemuseks oleks antud stsenaarium.
+  function applyScenario(s) {
+    const check = (name, value) => { const el = document.querySelector('input[name="' + name + '"][value="' + value + '"]'); if (el) el.checked = true; };
+    const payout = { A: 'lump', B: 'fund', C: 'fund', D: 'fund', E: 'grow' }[s.id];
+    check('payout', payout);
+    if (payout === 'grow') check('payoutPa', 'grow');
+    check('defer', String(s.id === 'C' ? s.deferral : 0));
+    if (s.id === 'B' || s.id === 'D') check('contract', s.id === 'D' ? 'yearly' : 'once');
+    update();
+    $('answer').scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   // ---------- Navigeerimine ----------

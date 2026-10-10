@@ -80,3 +80,8 @@ fieldset:disabled .choice { cursor: not-allowed; }
   .chapter-art { flex-basis: 3.25rem; height: 3.25rem; font-size: 1.75rem; }
   .pot-bar { gap: 0.5rem 1rem; font-size: 0.875rem; }
 }
+
+/* Kulud ükshaaval */
+.cost-table .cost-input { width: 6.5rem; margin-left: auto; text-align: right; }
+.cost-input.is-edited { border-color: var(--blue); background: var(--blue-bg-1); font-weight: 700; }
+.pkg-edited { color: var(--blue) !important; }

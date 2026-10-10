@@ -269,14 +269,10 @@
         <div class="packages" id="packages"></div>
       </fieldset>
       <details class="mt-3" id="pkgDetails">
-        <summary class="small-muted">Vaata ja muuda paketi sisu</summary>
-        <div id="pkgBreakdown" class="mt-2"></div>
-        <div class="row g-2 align-items-end mt-1">
-          <div class="col-6 col-md-4">
-            <label class="form-label" for="ownNeed">Või sisesta oma summa, €/kuus</label>
-            <input class="form-control" id="ownNeed" type="number" min="0" step="10" placeholder="paketi järgi">
-          </div>
-        </div>
+        <summary class="fw-medium">Muuda kulusid ükshaaval</summary>
+        <p class="small-muted mt-2 mb-2">Kirjuta igale reale oma summa. Muudatused jäävad selle paketi juurde alles ka siis, kui vahepeal teise paketi valid.</p>
+        <div id="pkgBreakdown"></div>
+        <button type="button" class="btn btn-outline-primary btn-sm mt-2 d-none" id="resetPkg">Taasta paketi summad</button>
         <p class="small-muted mt-2 mb-0" id="pkgSource"></p>
       </details>
     </section>

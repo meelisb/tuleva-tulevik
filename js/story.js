@@ -40,6 +40,9 @@
   // ---------- Olek ----------
   const chapters = Array.from(document.querySelectorAll('.chapter'));
   const LAST = chapters.length - 1;
+  // Minevikuetapid (0–18 ja 18) jäävad loost välja: tänane sambasumma tuleb esimesest vaatest.
+  const SKIP = new Set([1, 2]);
+  const shown = chapters.map((c, i) => i).filter((i) => !SKIP.has(i));
   let step = 0;
   let visited = new Set([0]);
   let legacyChoice = null;
@@ -49,7 +52,7 @@
     const num = (id) => Math.max(0, parseFloat($(id).value) || 0);
     const birthYear = Math.min(1990, Math.max(1950, parseInt($('birthYear').value, 10) || 1980));
     const currentAge = P.CURRENT_YEAR - birthYear;
-    const fund18 = radio('fund18') === 'self' ? $('fund18Fund').value : 'mix';
+    const fund18 = $('fundCur').value; // praegune fond (muutuja nimi ajalooline)
     const fundNow = radio('fundChange') === 'switch' ? $('fundNew').value : fund18;
 
     const child = radio('child');
@@ -57,20 +60,25 @@
     const rc = CHILD_R[child];
     let child18 = 0;
     for (let a = 0; a < 18; a++) child18 = child18 * (1 + rc) + childMonthly * 12;
-    const childNow = radio('childKept') === '1' ? child18 * Math.pow(1 + rc, Math.max(0, currentAge - 18)) : 0;
+    const childNow = SKIP.has(1) ? 0 : radio('childKept') === '1' ? child18 * Math.pow(1 + rc, Math.max(0, currentAge - 18)) : 0;
 
     // Fondivahetus: minevikus vahetus on juba tänases summas. Tulevikus vahetus: seni kasvab raha vanas fondis.
     // pension.js kasutab ühte tootlust, seega teisendame vahetuseni kasvu samaväärseks tänaseks summaks (mudel on lineaarne).
     const switching = radio('fundChange') === 'switch';
     const pa = P.retirementYears({ birthYear: birthYear, pensionAgeYears: parseInt($('pensionAgeYears').value, 10) });
-    const switchAge = Math.min(pa - 1, Math.max(18, parseInt($('switchAge').value, 10) || currentAge));
+    const switchAge = Math.min(pa - 1, Math.max(currentAge, parseInt($('switchAge').value, 10) || currentAge));
     const sex = $('sex').value;
     const rateAt = (a) => (switching && a >= switchAge ? FUNDS[fundNow].r : FUNDS[fund18].r);
     const rFinal = FUNDS[fundNow].r;
 
     // III sammas: kas on, mis vanuses avati, sissemakse. Avamise aasta määrab maksureeglid (enne 2021 või hiljem).
-    const p3Has = radio('p3has') !== 'no';
-    const p3OpenAge = Math.min(pa - 1, Math.max(18, parseInt($('p3OpenAge').value, 10) || Math.min(currentAge, 35)));
+    // have: sammas on olemas (liitumise aeg enne/pärast 2021); future: avan hiljem; no: ei ava.
+    const p3Kind = radio('p3has') || 'have';
+    const p3Has = p3Kind !== 'no';
+    const joinedBefore = $('p3Joined').value === 'before';
+    const p3OpenAge = p3Kind === 'have'
+      ? (joinedBefore ? Math.min(currentAge, 2020 - birthYear) : Math.min(currentAge, 2021 - birthYear))
+      : Math.min(pa - 1, Math.max(currentAge + 1, parseInt($('p3OpenAge').value, 10) || currentAge + 1));
     const p3Before2021 = birthYear + p3OpenAge < 2021;
     const p3Monthly = p3Has ? num('p3Monthly') : 0;
     const c3 = p3Monthly * 12;
@@ -135,7 +143,7 @@
       p3: (p3Plan === 'keep' ? p3Base : 0) + childNow + switchAdj + p3RemNow + c3Adj,
       p3Pre: (p3Plan === 'keep' ? p3Base : 0) + childNow + p3RemNow + c3Adj,
       p3Before2021: p3Before2021,
-      p3Has: p3Has, p3OpenAge: p3OpenAge, p3Allowed: p3Allowed,
+      p3Has: p3Has, p3Kind: p3Kind, p3OpenAge: p3OpenAge, p3Allowed: p3Allowed,
       p3Open: p3Open, p3Age: p3Age, p3Plan: p3Plan, p3Use: p3Use,
       p3Gross: p3Gross, p3Net: p3Net, p3Tax: p3Tax, p3Rem: p3Rem,
       extraDeposit: p3Plan !== 'keep' && p3Use === 'save' ? p3Net : 0,
@@ -273,7 +281,8 @@
   function kicker(input, idx) {
     const ages = stageAges(P.retirementYears(input))[idx];
     if (!ages) return '';
-    const [a, b] = ages;
+    let [a, b] = ages;
+    if (idx === 3) a = Math.max(a, Math.min(input.currentAge, b)); // tööaastad: alates tänasest
     const tense = b < input.currentAge ? 'Sinu minevik' : a > input.currentAge ? 'Sinu tulevik' : 'Sinu praegune elu';
     const years = a === b ? String(input.birthYear + a) : (input.birthYear + a) + '–' + (b >= 100 ? '…' : input.birthYear + b);
     const label = a === b ? a + '-aastane' : a + '–' + (b >= 100 ? '' : b) + (b >= 100 ? '+' : '') + ' a';
@@ -283,6 +292,7 @@
   function renderTexts(input) {
     const pa = P.retirementYears(input);
     for (let i = 1; i <= 7; i++) { const k = $('k' + i); if (k) k.textContent = kicker(input, i); }
+    chapters[3].dataset.label = Math.min(input.currentAge, 55) + '–55';
     chapters[6].dataset.label = String(pa);
     chapters[7].dataset.label = (pa + 1) + '+';
 
@@ -308,7 +318,7 @@
     const potIndex = potAtPension(input, FUNDS.index.r, true);
     $('switchYear').textContent = 'aastal ' + (input.birthYear + input.switchAge);
     $('switchNote').textContent = input.switchAge <= input.currentAge
-      ? 'Vahetasid ' + input.switchAge + '-aastaselt. Varasem tootlus on juba sinu tänases sambasummas, edasi arvestame uue fondiga.'
+      ? 'Vahetad kohe. Edasi kasvab raha uues fondis (' + pct(FUNDS[input.fundNow].r) + ').'
       : 'Vahetad ' + input.switchAge + '-aastaselt. Seni (' + (input.switchAge - input.currentAge) + ' a) kasvab raha praeguses fondis (' + pct(FUNDS[input.fund18].r) + '), pärast seda uues fondis (' + pct(FUNDS[input.fundNow].r) + ').';
     $('workNote').innerHTML = 'Pensionieaks (' + pa + ') kasvab sinu sammaste vara umbes <strong>' + eur(pot) + '</strong>.' +
       (potIndex - pot > 1 ? ' Kui oleksid alates tänasest madala tasuga indeksfondis, oleks see umbes <strong>' + eur(potIndex) + '</strong> (' + eur(potIndex - pot) + ' rohkem).' : '');
@@ -320,6 +330,10 @@
 
     // 18–55: III sammas
     $('p3HasMore').classList.toggle('d-none', !input.p3Has);
+    $('p3JoinedWrap').classList.toggle('d-none', input.p3Kind !== 'have');
+    $('p3OpenWrap').classList.toggle('d-none', input.p3Kind !== 'future');
+    const oe = $('p3OpenAge');
+    if (input.p3Kind === 'future' && document.activeElement !== oe && oe.value !== String(input.p3OpenAge)) oe.value = String(input.p3OpenAge);
     $('p3OpenYear').textContent = 'aastal ' + (input.birthYear + input.p3OpenAge);
     if (input.p3Has) {
       const yearly = input.p3Monthly * 12;
@@ -337,7 +351,7 @@
     const pa0 = P.retirementYears(input);
     const soon = input.p3Age >= input.p3Open; // kas väljavõtu ajal kehtib soodusmaks
     const basic = input.p3Before2021 ? 55 : 60;
-    $('p3Info').innerHTML = !input.p3Has ? '' : '<p class="mb-2">Avasid III samba ' + input.p3OpenAge + '-aastaselt (' + (input.birthYear + input.p3OpenAge) + ', ' + (input.p3Before2021 ? 'enne 2021' : '2021 või hiljem') + '), seega kehtib soodusmaks alates <strong>' + input.p3Open + '-aastaselt (' + (input.birthYear + input.p3Open) + ')</strong>.' +
+    $('p3Info').innerHTML = !input.p3Has ? '' : '<p class="mb-2">' + (input.p3Kind === 'have' ? 'Liitusid III sambaga ' + (input.p3Before2021 ? 'enne 2021' : '2021 või hiljem') : 'Avad III samba ' + input.p3OpenAge + '-aastaselt (' + (input.birthYear + input.p3OpenAge) + ')') + ', seega kehtib soodusmaks alates <strong>' + input.p3Open + '-aastaselt (' + (input.birthYear + input.p3Open) + ')</strong>.' +
       (input.p3Open > basic ? ' Põhjus: kogumist peab olema vähemalt 5 aastat.' : '') + (input.p3Open > 55 ? ' Enne seda läheb väljavõetud rahast 22% tulumaksuks.' : '') + '</p>' +
       '<ul class="mb-0 small"><li>Korraga: ' + (input.p3Open <= 55 ? '10%' : '22% (alates ' + input.p3Open + ': 10%)') + ' tulumaks</li><li>Jupiti, täiendava fondipensionina: ' + (input.p3Open <= 55 ? '0%' : '22% (alates ' + input.p3Open + ': 0%)') + ' tulumaks</li></ul>';
     $('p3LumpTxt').textContent = 'Kogu III sammas ühe korraga, ' + (soon ? '10%' : '22%') + ' tulumaksuks.';
@@ -458,12 +472,9 @@
 
   function renderRecap(input, scenario) {
     const pa = P.retirementYears(input);
-    const childTxt = { none: 'Lapsepõlves raha ei kogunud', parent: 'Vanemad kogusid hoiusele ' + eur(input.childMonthly) + ' kuus', account: 'Lapse investeerimiskonto, ' + eur(input.childMonthly) + ' kuus' }[input.child];
     const items = [
       [0, '🙂', 'Sündinud ' + input.birthYear + ', II sammas ' + eur(input.p2) + ', III sammas ' + eur(input.p3Base)],
-      [1, '👶', childTxt],
-      [2, '🎓', (radio('fund18') === 'self' ? 'Valisin ise: ' : 'Loosiga: ') + FUNDS[input.fund18].name.toLowerCase()],
-      [3, '💼', (input.fundNow === input.fund18 && radio('fundChange') !== 'switch' ? 'Fond jäi samaks' : (input.switchAge > input.currentAge ? 'Vahetan ' : 'Vahetasin ') + input.switchAge + '-aastaselt fondi: ' + FUNDS[input.fundNow].name.toLowerCase()) + ', II sammas ' + pct(input.p2Rate) + (input.p3Has ? ', III sammas ' + input.p3OpenAge + '-aastaselt, ' + eur(input.p3Monthly) + ' kuus' : ', III sammast ei ava')],
+      [3, '💼', (radio('fundChange') !== 'switch' ? 'Jään fondi: ' + FUNDS[input.fund18].name.toLowerCase() : (input.switchAge > input.currentAge ? 'Vahetan ' + input.switchAge + '-aastaselt' : 'Vahetan kohe') + ' fondi: ' + FUNDS[input.fundNow].name.toLowerCase()) + ', II sammas ' + pct(input.p2Rate) + (input.p3Kind === 'have' ? ', III sambasse ' + eur(input.p3Monthly) + ' kuus' : input.p3Kind === 'future' ? ', avan III samba ' + input.p3OpenAge + '-aastaselt, ' + eur(input.p3Monthly) + ' kuus' : ', III sammast ei ava')],
       [4, '🔓', !input.p3Has ? 'III sammast ei ole' : input.p3Plan === 'keep' ? 'III sammas jääb kasvama' : (input.p3Plan === 'lump' ? 'Võtan III samba ' + input.p3Age + '-aastaselt korraga välja: ' + eur(input.p3Net) : 'Täiendav fondipension III sambast alates ' + input.p3Age + '-aastaselt: ' + eur(input.p3Net)) + (input.p3Plan === 'keep' ? '' : input.p3Use === 'save' ? ', hoiusele' : ', kasutan kohe')],
       [5, '🧳', input.payout === 'lump' ? 'Võtan samba raha korraga välja' : 'Võtan samba raha välja fondipensionina'],
       [6, '🏛️', input.payout === 'lump' || !input.deferral ? 'Riiklik pension ' + pa + '-aastaselt' : 'Riiklik pension ' + (pa + input.deferral) + '-aastaselt (' + input.deferral + ' a hiljem)'],
@@ -541,6 +552,7 @@
   // ---------- Navigeerimine ----------
   function renderPath(input) {
     $('path').innerHTML = chapters.map((c, i) => {
+      if (SKIP.has(i)) return '';
       const ages = stageAges(P.retirementYears(input))[i];
       const past = ages && ages[1] < input.currentAge;
       const now = ages && ages[0] <= input.currentAge && ages[1] >= input.currentAge;
@@ -551,14 +563,22 @@
     }).join('');
   }
 
+  // Liigu järgmisele/eelmisele näidatavale etapile (vahelejäetud etapid jäävad vahele).
+  function move(dir) {
+    const k = shown.indexOf(step) + dir;
+    go(shown[Math.max(0, Math.min(shown.length - 1, k))]);
+  }
+
   function go(n, focus) {
     step = Math.max(0, Math.min(LAST, n));
+    if (SKIP.has(step)) step = shown.find((i) => i > step);
     visited.add(step);
     chapters.forEach((c, i) => { c.hidden = i !== step; });
-    $('backBtn').style.visibility = step === 0 ? 'hidden' : 'visible';
+    const pos = shown.indexOf(step);
+    $('backBtn').style.visibility = pos === 0 ? 'hidden' : 'visible';
     $('nextBtn').style.visibility = step === LAST ? 'hidden' : 'visible';
-    $('nextBtn').textContent = step === LAST - 1 ? 'Näita tulemust →' : 'Edasi →';
-    $('stepCount').textContent = 'Samm ' + (step + 1) + ' / ' + chapters.length;
+    $('nextBtn').textContent = step === shown[shown.length - 2] ? 'Näita tulemust →' : 'Edasi →';
+    $('stepCount').textContent = 'Samm ' + (pos + 1) + ' / ' + shown.length;
     update();
     if (focus !== false) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -592,7 +612,7 @@
   $('birthYear').addEventListener('input', syncPensionAge);
 
   // ---------- Tuleva konto eeltäitmine (väljamõeldud näidisliige) ----------
-  const DEMO = { birthYear: 1968, sex: 'N', pensionAgeYears: 66, p2: 38400, p3: 21700, p3OpenAge: 44, grossMonthly: 2900, p2Rate: '0.04', p3Monthly: 150 };
+  const DEMO = { birthYear: 1968, sex: 'N', pensionAgeYears: 66, p2: 38400, p3: 21700, p3Joined: 'before', grossMonthly: 2900, p2Rate: '0.04', p3Monthly: 150 };
   $('prefillBtn').addEventListener('click', () => {
     Object.entries(DEMO).forEach(([id, v]) => { $(id).value = String(v); $(id).classList.add('is-prefilled'); });
     paTouched = true;
@@ -601,10 +621,11 @@
   });
 
   // ---------- Sündmused ----------
-  ['fund18Fund', 'fundNew'].forEach((id) => {
+  ['fund18Fund', 'fundNew', 'fundCur'].forEach((id) => {
     $(id).innerHTML = Object.entries(FUNDS).map(([k, f]) => '<option value="' + k + '">' + f.name + ' (' + pct(f.r) + ' a)</option>').join('');
   });
   $('fund18Fund').value = 'index';
+  $('fundCur').value = 'mix';
   $('fundNew').value = 'index';
 
   document.addEventListener('click', (e) => {
@@ -612,8 +633,8 @@
     if (b) go(parseInt(b.dataset.goto, 10));
   });
   $('resetPkg').addEventListener('click', () => { delete overrides[readInput().pkg.id]; breakdownKey = null; update(); });
-  $('backBtn').addEventListener('click', () => go(step - 1));
-  $('nextBtn').addEventListener('click', () => go(step + 1));
+  $('backBtn').addEventListener('click', () => move(-1));
+  $('nextBtn').addEventListener('click', () => move(1));
   document.querySelectorAll('.chapter input, .chapter select').forEach((el) => {
     if (el.closest('#packages') || el.closest('#legacy') || el.closest('#deferChoices')) return;
     el.addEventListener('input', update);
@@ -623,7 +644,7 @@
 
   // Fondivahetuse vanus: trükkimise ajal ei sega, väljast lahkudes viime lubatud vahemikku (18 kuni pensioniiga − 1).
   const p3OpenEl = $('p3OpenAge');
-  p3OpenEl.value = String(Math.max(18, Math.min(35, P.CURRENT_YEAR - (parseInt($('birthYear').value, 10) || 1980))));
+  p3OpenEl.value = String(P.CURRENT_YEAR - (parseInt($('birthYear').value, 10) || 1980) + 1);
   p3OpenEl.addEventListener('input', () => { p3OpenEl.value = p3OpenEl.value.replace(/\D/g, ''); });
   p3OpenEl.addEventListener('change', () => { p3OpenEl.value = String(readInput().p3OpenAge); update(); });
   const switchEl = $('switchAge');

@@ -150,14 +150,20 @@
           <h2 id="h3" tabindex="-1">Tööaastad: kuidas oma pensioni kogud?</h2>
         </div>
       </div>
+      <p class="text-secondary">Mis on juba kogutud, sisestasid esimeses vaates. Siin valid, kuidas kogud edasi.</p>
       <h3 class="h5 section-title">II sammas</h3>
+      <div class="mb-3">
+        <label class="form-label" for="fundCur">Sinu praegune II samba fond</label>
+        <select class="form-select w-auto fund-select" id="fundCur"></select>
+        <div class="form-text">Kui ei tea, vali keskmine pangafond.</div>
+      </div>
       <fieldset class="mb-3">
         <legend class="form-label">Sinu fond edaspidi</legend>
         <div class="choices">
           <label class="choice"><input type="radio" name="fundChange" value="same" checked>
             <span class="choice-body"><span class="choice-emoji" aria-hidden="true">⚓</span><strong>Jääb samaks</strong><small id="sameFundTxt"></small></span></label>
           <label class="choice"><input type="radio" name="fundChange" value="switch">
-            <span class="choice-body"><span class="choice-emoji" aria-hidden="true">🔄</span><strong>Vahetan fondi</strong><small>Fondivahetus on tasuta ja raha liigub uude fondi.</small></span></label>
+            <span class="choice-body"><span class="choice-emoji" aria-hidden="true">🔄</span><strong>Vahetan fondi</strong><small>Kohe või hiljem. Fondivahetus on tasuta ja raha liigub uude fondi.</small></span></label>
         </div>
       </fieldset>
       <div id="fundNewMore" class="mb-3 d-none">
@@ -188,14 +194,21 @@
       <fieldset class="mb-3">
         <legend class="form-label">Kas avad III samba?</legend>
         <div class="choices">
-          <label class="choice"><input type="radio" name="p3has" value="yes" checked>
-            <span class="choice-body"><span class="choice-emoji" aria-hidden="true">🌱</span><strong>Avan / avasin III samba</strong><small>Vabatahtlik lisakogumine. Sissemaksetelt saad tulumaksu tagasi.</small></span></label>
+          <label class="choice"><input type="radio" name="p3has" value="have" checked>
+            <span class="choice-body"><span class="choice-emoji" aria-hidden="true">🌳</span><strong>Mul on III sammas</strong><small>Tänane summa on esimeses vaates.</small></span></label>
+          <label class="choice"><input type="radio" name="p3has" value="future">
+            <span class="choice-body"><span class="choice-emoji" aria-hidden="true">🌱</span><strong>Avan hiljem</strong><small>Vabatahtlik lisakogumine. Sissemaksetelt saad tulumaksu tagasi.</small></span></label>
           <label class="choice"><input type="radio" name="p3has" value="no">
             <span class="choice-body"><span class="choice-emoji" aria-hidden="true">🚫</span><strong>Ei ava</strong><small>Kogun ainult II sambas.</small></span></label>
         </div>
       </fieldset>
       <div id="p3HasMore" class="row g-3 mb-3">
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-4" id="p3JoinedWrap">
+          <label class="form-label" for="p3Joined">III sambaga liitusin</label>
+          <select class="form-select" id="p3Joined"><option value="before">enne 2021</option><option value="after">2021 või hiljem</option></select>
+          <div class="form-text">Sellest sõltub soodusmaksu vanus.</div>
+        </div>
+        <div class="col-6 col-md-3" id="p3OpenWrap">
           <label class="form-label" for="p3OpenAge">Vanus avamisel</label>
           <input class="form-control" id="p3OpenAge" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-describedby="p3OpenYear">
           <div class="form-text" id="p3OpenYear"></div>
@@ -369,7 +382,6 @@
       <ul>
         <li>Arvutus on sama mis <a href="index.html">kalkulaatori vaates</a> (js/pension.js). Summad on tänastes eurodes, palk reaalselt ei kasva.</li>
         <li>Fondide tootlused (0%, 2%, 4% aastas pärast inflatsiooni ja tasusid) on eeldused, mitte lubadus.</li>
-        <li>Lapsepõlve säästud lisatakse arvutuses samba rahale (maksuerinevusi ei arvestata).</li>
         <li>„Jään ellu“: Statistikaamet LE205 (<span id="kuludMeta"></span>). „Optimaalne“ ja „Mugav“ lisavad sellele näidissummad. Hinnad ostukorvis on ligikaudsed.</li>
         <li>Ellujäämine: Statistikaamet RV046, <span id="lifeYear"></span>. „Elu lõpuni“ on vanus, milleni jõuab elusalt 10% sinuvanustest.</li>
       </ul>

@@ -709,7 +709,7 @@
     const rows = r.rows;
     $('chartSummary').textContent = chartSummary(r, input);
     $('chartTableWrap').innerHTML = chartTable(r, input);
-    const font = { family: 'Roboto', size: 13 };
+    const font = { family: 'Roboto', size: 14 };
     const data = {
       labels: rows.map((x) => x.age),
       datasets: [
@@ -857,7 +857,7 @@
     const fresh = readInput();
     renderPotBar(fresh);
     renderPath(fresh);
-    if (step === LAST) renderResult(fresh);
+    if (step === LAST) { renderResult(fresh); if (chart) chart.resize(); }
     svgify(document);
     if (keep) { const el = document.querySelector('input[name="' + keep + '"]:checked'); if (el) el.focus(); }
   }

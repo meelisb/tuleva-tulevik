@@ -170,3 +170,16 @@ main.container { padding-bottom: 1rem; }
 .choice.is-disabled .choice-body { background: var(--gray-bg-2); border-style: dashed; }
 .choice.is-disabled .choice-body strong, .choice.is-disabled .choice-body small { color: var(--text-secondary); }
 .choice.is-disabled:hover .choice-body { border-color: var(--gray-border-3); }
+
+/* Prindivaade (PDF): ainult tulemus */
+@media print {
+  @page { margin: 14mm; }
+  body { background: #fff; }
+  header .lead, #path, nav[aria-label="Loo etapid"], .story-nav, #potBar, .result-actions, #chartToggle, #legacy button, #actionWarn button, .recap button, footer .note ~ *, .path-check { display: none !important; }
+  .chapter { display: none !important; }
+  .chapter[data-step="9"] { display: block !important; box-shadow: none !important; border: 0 !important; padding: 0 !important; animation: none; }
+  .chart-wrap { height: 300px; break-inside: avoid; }
+  .metric, .legacy-card, .tips li, .timeline li, .chart-figure { break-inside: avoid; }
+  a { color: inherit; text-decoration: none; }
+  .table-compare { font-size: 10pt; }
+}

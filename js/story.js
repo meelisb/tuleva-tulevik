@@ -53,6 +53,7 @@
   // ---------- Ikoonid: SVG (Lucide stiilis, MIT) emoji asemel. Värv tuleb ümbrusest (currentColor). ----------
   const SVG = {
     check: '<path d="M20 6 9 17l-5-5"/>',
+    download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
     user: '<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>',
     users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
     lockOpen: '<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
@@ -894,6 +895,65 @@
     if (b) go(parseInt(b.dataset.goto, 10));
   });
   $('resetPkg').addEventListener('click', () => { delete overrides[readInput().pkg.id]; breakdownKey = null; update(); });
+  // ---------- Tulemuse allalaadimine: Markdown ja PDF (printimine) ----------
+  const txt = (el) => (el ? el.innerText.replace(/\s+\n/g, '\n').replace(/[ \t]+/g, ' ').trim() : '');
+  function mdTable(table) {
+    if (!table) return '';
+    const cell = (c) => { const d = document.createElement('div'); d.innerHTML = c.innerHTML.replace(/<br\s*\/?>/gi, ' (') + (/<br/i.test(c.innerHTML) ? ')' : ''); return d.textContent.replace(/\s+/g, ' ').trim().replace(/\|/g, '/'); };
+    const rows = [...table.querySelectorAll('tr')].map((tr) => [...tr.children].map(cell));
+    if (!rows.length) return '';
+    const head = rows[0], body = rows.slice(1);
+    return '| ' + head.join(' | ') + ' |\n| ' + head.map(() => '---').join(' | ') + ' |\n' + body.map((r) => '| ' + r.join(' | ') + ' |').join('\n') + '\n';
+  }
+  function buildMarkdown() {
+    const input = readInput();
+    const pa = P.retirementYears(input);
+    const today = new Date().toLocaleDateString('et-EE');
+    const metrics = [...document.querySelectorAll('#metrics .metric')].map((m) => '- **' + txt(m.querySelector('.value')) + '** ' + txt(m.querySelector('.label')));
+    const recap = [...document.querySelectorAll('#recap li')].map((li) => '- ' + txt(li.querySelector('.flex-grow-1')));
+    const map = [...document.querySelectorAll('#decisionMap li')].map((li) => '### ' + txt(li.querySelector('.when')) + ': ' + txt(li.querySelector('.fw-medium')) + '\n\n' + txt(li.querySelector('.text-secondary')) +
+      (li.querySelector('.map-choice') ? '\n\n' + txt(li.querySelector('.map-choice')) : ''));
+    const costs = pkgLines(input.pkg, input.household).map((l) => '| ' + l[1] + ' | ' + eur(lineValue(input.pkg, l)) + ' |').join('\n');
+    const warn = $('actionWarn').classList.contains('d-none') ? '' : '> ' + txt($('actionWarn')).replace(/Proovi seda$/, '').trim() + '\n\n';
+    return [
+      '# Tulevane Mina: minu pensionilugu', '', '_Koostatud ' + today + '. Prototüüp, mitte finants- ega maksunõu. Summad on tänastes eurodes._', '',
+      '## Tulemus', '', txt($('answer')), '', warn + metrics.join('\n'), '',
+      '## Graafiku kokkuvõte', '', txt($('chartSummary')), '',
+      '## Sinu andmed', '',
+      '- Sünniaasta: ' + input.birthYear + ', sugu: ' + (input.sex === 'N' ? 'naine' : 'mees') + ', pensioniiga: ' + pa + ' a',
+      '- Riiklik pension: ' + eur(input.p1Monthly) + ' kuus',
+      '- II sammas praegu: ' + eur(input.p2) + ', III sammas praegu: ' + eur(input.p3Base),
+      '- Brutopalk: ' + eur(input.grossMonthly) + ' kuus, II samba makse ' + pct(input.p2Rate) + ', III sambasse ' + eur(input.p3Monthly) + ' kuus',
+      '- Tootlus pärast inflatsiooni: ' + pct(input.realReturn) + ' aastas', '',
+      '## Sinu valikud', '', recap.join('\n'), '',
+      '## Kulud: ' + input.pkg.name + (input.edited ? ' (muudetud)' : '') + ', ' + eur(input.needMonthly) + ' kuus', '',
+      'Pensionil elan: ' + (input.household === 'paar' ? 'paaris (summad ühe inimese kohta)' : 'üksi'), '',
+      '| Kulu | Summa kuus |', '| --- | --- |', costs, '',
+      '## Sissetulek ja kulud vanuse järgi', '', mdTable($('chartTableWrap').querySelector('table')),
+      '## Sinu otsuste kaart', '', map.join('\n\n'), '',
+      '## Väljamakse teed kõrvuti', '', mdTable($('compare')),
+      '---', 'Tulevane Mina · Tuleva häkaton 2026 · reeglid: Pensionikeskus ja Sotsiaalkindlustusamet',
+    ].join('\n') + '\n';
+  }
+  $('dlMd').insertAdjacentHTML('afterbegin', ico('download') + ' ');
+  $('dlPdf').insertAdjacentHTML('afterbegin', ico('download') + ' ');
+  $('dlMd').addEventListener('click', () => {
+    const blob = new Blob([buildMarkdown()], { type: 'text/markdown;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'tulevane-mina-' + new Date().toISOString().slice(0, 10) + '.md';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  $('dlPdf').addEventListener('click', () => {
+    // Prindivaates on avatud võrdlustabel ja otsuste kaart; PDF-i saab salvestada brauseri printimisaknast.
+    document.querySelectorAll('[data-step="9"] details').forEach((d) => { d.dataset.wasOpen = d.open ? '1' : ''; d.open = true; });
+    window.print();
+  });
+  window.addEventListener('afterprint', () => {
+    document.querySelectorAll('[data-step="9"] details').forEach((d) => { d.open = d.dataset.wasOpen === '1'; });
+  });
+
   // Graafik ↔ tabel
   $('chartToggle').addEventListener('click', () => {
     const show = $('chartToggle').getAttribute('aria-expanded') !== 'true';

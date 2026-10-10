@@ -2,6 +2,8 @@
 
 **Tuleva häkaton, 9.–11.10.2026 · tiim „Tulevane Mina“ · koostatud 10.10.2026**
 
+Prototüübid: https://meelisb.github.io/tuleva-tulevik/ (kalkulaator, printsiibid, elukaar). Mudeli eeldused ja struktuur: [README](README.md); hilisemad otsused ja parandused: [otsuste logi](docs/otsuste_logi.md).
+
 > **Hoiatused enne lugemist**
 > - Tööversioon häkatoni jaoks. Ei ole finants-, maksu- ega õigusnõu.
 > - Reeglid on kontrollitud 9.–10.10.2026 Sotsiaalkindlustusameti (SKA), Pensionikeskuse, EMTA ja Tuleva lehtedelt. Osa Pensionikeskuse lehti on aegunud (vt jaotis 3.4).
@@ -242,7 +244,8 @@ Küsimuste õige järjekord: **sisendid ennem, otsused pärast.**
 | II ja III samba saldo | — | Tuleva konto; Pensionikeskus | Käsitsi |
 | III sambaga liitumise aasta | — | Tuleva konto (määrab 55 või 60) | Käsitsi |
 | Fondi tootlus | Reaalne tootlus 2% (Tuleva 50+ kalkulaatori eeldus), vahemik 0–7% | Fond, kus raha on (Pensionikeskuse statistika) | ✅ |
-| Kulud ehk vajadus | Statistikaameti leibkonna eelarve uuring, pensionäride leibkonnad (**tabel valimata, TODO**) | Pangaväljavõte (3.3) või käsitsi | Statistiline või käsitsi |
+| Hoiuse tootlus | Reaalne −1% (hoiuse intress jääb tavaliselt inflatsioonist maha) | Valitav | ✅ |
+| Kulud ehk vajadus | Statistikaamet LE205 (üksik 65+ ja lasteta üle 64-aastaste paar), kolm taset: kokkuhoidlik, optimaalne (IV tulukvintiil, LE211), mugav (V tulukvintiil); hinnad IA002 järgi tänases rahas. Kingitused ja annetused on sees | Pangaväljavõte (3.3) või käsitsi | ✅ Statistiline või käsitsi |
 | Maks | 0 / 10 / 22% ja pensionäri maksuvaba tulu | — | Põhimäärad |
 
 ### 3.3 Kulude tuvastamine pangaandmetest
@@ -299,7 +302,7 @@ Küsimuste õige järjekord: **sisendid ennem, otsused pärast.**
 ## 5. Kontrollida enne lavale minekut
 
 - [ ] Kas paindliku pensioni tõusud arvutatakse kõigile sama elutabeli järgi (RPKS)? Kui jah, võidavad naised edasilükkamisest süstemaatiliselt rohkem.
-- [ ] Statistikaameti leibkonna eelarve uuringust tabel pensionäride kulude vaikeväärtuseks.
+- [x] Statistikaameti leibkonna eelarve uuringust tabel pensionäride kulude vaikeväärtuseks: LE205 (10.10.2026). Avatud: pensionäride kulud tulukvintiilide kaupa avalikult puuduvad, vajaks eritellimust.
 - [ ] Pensionäri maksuvaba tulu 2026. aastal.
 - [ ] Kas III samba piir „alates 60“ on 2021+ liitujate jaoks seotud pensioniea muutumisega (pensioniiga −5)?
 - [ ] Mitu kindlustusseltsi pakub praegu II samba pensionilepingut? Pensionikeskuse leht nimetab ainult Compensat.

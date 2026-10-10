@@ -3,6 +3,8 @@
 Tiimi „Tulevane Mina“ töö Tuleva häkatonil (9.–11.10.2026). Küsimus, millele prototüübid vastavad: **kas su pensionisissetulek kestab elu lõpuni?**
 
 - [Tööleht ja pitch'i taust](tulevane_mina_tooleht_ja_pitch_2026-10-10.md)
+- [Otsuste logi](docs/otsuste_logi.md): kuupäevadega otsused, kontrollitud faktid, parandatud vead
+- [CLAUDE.md](CLAUDE.md): kuidas repot jätkata (reeglid, mudeli konventsioonid, testimine, majutus)
 - [Tuleva reporting engine: mis andmed seal on ja mis meile kasulik](reporting_engine_andmed_2026-10-10.md)
 - [Vaibtöö: ehita oma idee AI-agendiga](https://seppo.ai/tulevahack/) (Indrek Seppo juhend häkatoni osalejatele: prototüüp Claude Code'i või Codexiga)
 
@@ -13,7 +15,7 @@ Tiimi „Tulevane Mina“ töö Tuleva häkatonil (9.–11.10.2026). Küsimus, m
 | Avaleht | `index.html` | Lingid kolmele prototüübile | – |
 | 1. **Kalkulaator** | `kalkulaator/` | Sinu andmed, kulud, otsused (riiklik pension varem või hiljem, II ja III samba viis ja algus, töötamine), tulemus koos valmisstrateegiatega | `kalkulaator/pension.js` |
 | 2. **Printsiibid** | `printsiibid/` | Kuus põhimõtet ja otsustuspuu, arvutusi ei tehta | – |
-| 3. **Elukaar** (Kadi) | `elukaar/` | Pensionilugu eluetappide kaupa: valikud 55-, 60- ja pensionieas, kulutase, tulemus ja allalaadimine | `elukaar/pension.js` |
+| 3. **Elukaar** | `elukaar/` | Pensionilugu eluetappide kaupa: valikud 55-, 60- ja pensionieas, kulutase, tulemus ja allalaadimine | `elukaar/pension.js` |
 
 Igal arvutaval prototüübil on oma mootor. Elukaare mootor on kalkulaatori varasema mootori edasiarendus. Samade sisenditega (ilma sissemakseteta) annavad mõlemad sama tulemuse; seda kontrollib `tests/elukaar.scenarios.test.js`.
 

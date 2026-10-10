@@ -12,7 +12,9 @@ Kuupäevadega otsused, kontrollid ja parandatud vead. Uuemad üleval. Lisa siia 
 ## 10.10.2026
 
 ### Tasuvusmudel
-- Lisatud `docs/kulumudel.md` ja `scripts/kulumudel.js`. Keskmises stsenaariumis (saldo 40 000 €, arendus 50 000 € + 15 000 €/a, 5 a) on tasuvuspunkt umbes 160 ühekordselt väljamakselt fondipensionile suunatud kogujat. Kõige ebakindlam eeldus on tööriista mõju (mitu kasutajat otsust muudab); see tuleb mõõta.
+- Lisatud `docs/kulumudel.md` ja `scripts/kulumudel.js`. Esimene versioon kasutas marginaalina 0,28% × 90% ja andis tasuvuspunktiks u 160 kogujat.
+- Parandatud Tuleva reporting engine'i andmetega: 0,28% on jooksvate tasude määr koos alusfondide kuludega; Tuleva grupi marginaal on u 0,16% mahust (kuuaruanne 09/2026). Tasuvuspunkt keskmises stsenaariumis u 250 kogujat ehk u 2,0 M€ ümbersuunatud ühekordseid väljamakseid aastas.
+- Mahu kontroll: Tuleva kogujad võtavad pensionieas II sambast ühekorraga välja ainult u 1,1 M€ aastas. Elukaar ei tasu end ära ainult tänaste kogujate II samba arvelt; vaja hinnata III sammast, kasvu ja uute kogujate kanalit. Tulevalt küsida väljamaksed inimeste arvu ja vanuse järgi.
 
 ### Repo ja majutus
 - Kolm prototüüpi ühes repos, igaüks oma kaustas: `kalkulaator/` (prototüüp 1), `printsiibid/` (2), `elukaar/` (3). Avaleht juurkaustas.

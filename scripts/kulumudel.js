@@ -1,13 +1,14 @@
 // Tulevane Mina: tasuvusmudel. Mitu kogujat peab Elukaare toel valima ühekordse väljamakse asemel fondipensioni,
-// et tööriista ehitus ja ülalpidamine end ära tasuks?
+// et tööriista ehitus ja ülalpidamine end ära tasuks? Ja kas Tulevas on nii palju otsustajaid?
 //
 // Loogika: ühekordse väljamakse korral lahkub raha fondist kohe. Fondipensioni korral jääb see fondi ja väheneb
-// väljamaksete kaupa aastate jooksul. Iga fondis püsiv euro toob valitsemistasu (vaikimisi 0,28% aastas).
-// Ühistu kulud on enamasti püsikulud, seega lisatulu (miinus muutuvkulu) on ruum tasu alandamiseks.
+// väljamaksete kaupa aastate jooksul. Iga fondis püsiv euro toob Tuleva grupile (fondivalitseja + ühistu litsentsitasu)
+// marginaali. Ühistu lubadus: mida suurem maht, seda väiksem tasu kõigile (siht 0,22% 3 mld € juures).
 //
-// Kasutus: node scripts/kulumudel.js [--saldo 40000] [--tasu 0.0028] [--muutuv 0.1] [--diskont 0.03] [--tootlus 0.02]
-//          [--vanus 65] [--naisi 0.5] [--korraga-jaab 0] [--ehitus 50000] [--hooldus 15000] [--aastad 5] [--mojus 0.1]
+// Kasutus: node scripts/kulumudel.js [--saldo 40000] [--marginaal 0.0016] [--diskont 0.03] [--tootlus 0.02] [--vanus 65]
+//          [--naisi 0.5] [--korraga-jaab 0] [--ehitus 50000] [--hooldus 15000] [--aastad 5] [--mojus 0.1]
 // Kõik summad tänases rahas (reaalväärtus). Statistikaameti elutabel: data/elutabel.js.
+// Vaikeväärtuste allikad: docs/kulumudel.md.
 const fs = require('fs');
 const path = require('path');
 
@@ -16,18 +17,20 @@ const T = JSON.parse(src.slice(src.indexOf('{'), src.lastIndexOf('}') + 1));
 
 const arg = (name, def) => { const i = process.argv.indexOf('--' + name); return i > 0 ? Number(process.argv[i + 1]) : def; };
 const P = {
-  saldo: arg('saldo', 40000),        // II + III samba raha väljamakse alguses, €
-  tasu: arg('tasu', 0.0028),         // valitsemistasu aastas
-  muutuv: arg('muutuv', 0.10),       // muutuvkulu osa tasutulust (nt depootasu), eeldus
-  diskont: arg('diskont', 0.03),     // reaalne diskontomäär
-  tootlus: arg('tootlus', 0.02),     // fondi reaaltootlus pärast tasusid
-  vanus: arg('vanus', 65),           // väljamakse algus
-  naisi: arg('naisi', 0.5),          // naiste osa pensionile minejatest
+  saldo: arg('saldo', 40000),          // II + III samba raha väljamakse alguses, €
+  // Tuleva grupi marginaal fondimahu euro kohta aastas: (brutomarginaal pärast litsentsitasu + litsentsitasu ühistule) / maht.
+  // 09/2026: (158 809 + 74 636) € × 12 / 1 786 M€ ≈ 0,157%. Liikme makstav jooksvate tasude määr 0,28% sisaldab ka
+  // alusfondide kulusid, mida Tuleva ei teeni, seega 0,28% ei ole õige marginaal.
+  marginaal: arg('marginaal', 0.0016),
+  diskont: arg('diskont', 0.03),       // reaalne diskontomäär
+  tootlus: arg('tootlus', 0.02),       // fondi reaaltootlus pärast tasusid
+  vanus: arg('vanus', 65),             // väljamakse algus
+  naisi: arg('naisi', 0.5),            // naiste osa pensionile minejatest
   korragaJaab: arg('korraga-jaab', 0), // osa ühekordsest väljamaksest, mis jääb Tuleva fondi (nt Täiendav Kogumisfond)
-  ehitus: arg('ehitus', 50000),      // ühekordne arendus, €
-  hooldus: arg('hooldus', 15000),    // ülalpidamine aastas, €
-  aastad: arg('aastad', 5),          // kui mitu aastat kulusid arvestame
-  mojus: arg('mojus', 0.10),         // tööriista kasutajate osa, kes muudab otsuse ühekordselt väljamakselt fondipensionile
+  ehitus: arg('ehitus', 50000),        // ühekordne arendus, €
+  hooldus: arg('hooldus', 15000),      // ülalpidamine aastas, €
+  aastad: arg('aastad', 5),            // kui mitu aastat kulusid arvestame
+  mojus: arg('mojus', 0.10),           // tööriista kasutajate osa, kes muudab otsuse ühekordselt väljamakselt fondipensionile
 };
 
 const term = (sex, age) => Math.max(1, Math.round(T.elada_jaanud[sex][Math.min(age, 100)]));
@@ -49,13 +52,12 @@ function flows(sex, viis, p) {
   return out;
 }
 
-// Väärtus ühe ümber suunatud koguja kohta: fondimahu-aastad, tasutulu ja selle nüüdisväärtus (marginaalina).
+// Väärtus ühe ümber suunatud koguja kohta: fondimahu-aastad ja marginaali nüüdisväärtus.
 function value(viis, p) {
-  const mix = [['N', p.naisi], ['M', 1 - p.naisi]];
   let aumYears = 0, pv = 0;
-  for (const [sex, w] of mix) for (const f of flows(sex, viis, p)) {
+  for (const [sex, w] of [['N', p.naisi], ['M', 1 - p.naisi]]) for (const f of flows(sex, viis, p)) {
     aumYears += w * f.aum;
-    pv += w * f.aum * p.tasu * (1 - p.muutuv) / Math.pow(1 + p.diskont, f.t);
+    pv += w * f.aum * p.marginaal / Math.pow(1 + p.diskont, f.t);
   }
   // Kui osa ühekordsest väljamaksest jääks niikuinii Tuleva fondi, on tööriista lisaväärtus selle võrra väiksem.
   return { aumYears: aumYears * (1 - p.korragaJaab), pvMargin: pv * (1 - p.korragaJaab) };
@@ -68,15 +70,17 @@ if (require.main === module) {
   const c = costPV(P);
   console.log('Eeldused:', JSON.stringify(P));
   console.log('Kulud (nüüdisväärtus, ' + P.aastad + ' a): ' + eur(c) + '\n');
-  console.log('Väljamakse viis'.padEnd(34) + 'fondimahu-aastad'.padStart(18) + '  tasu marginaal NV'.padStart(20) + '  tasuvuspunkt (kogujat)'.padStart(25) + '  vajalik kasutajaid'.padStart(20));
+  console.log('Väljamakse viis'.padEnd(34) + 'fondimahu-aastad'.padStart(18) + '  marginaal NV'.padStart(16) + '  tasuvuspunkt (kogujat)'.padStart(25) + '  vajalik kasutajaid'.padStart(20));
   for (const [viis, nimi] of [['fund', 'Fondipension, üks leping'], ['renew', 'Fondipension, leping igal aastal'], ['n10', 'Fondipension 10 aastat (10% maks)']]) {
     const v = value(viis, P);
     const n = Math.ceil(c / v.pvMargin);
-    console.log(nimi.padEnd(34) + (v.aumYears / P.saldo).toFixed(1).padStart(16) + '×  ' + eur(v.pvMargin).padStart(16) + String(n).padStart(25) + String(Math.ceil(n / P.mojus)).padStart(20));
+    console.log(nimi.padEnd(34) + (v.aumYears / P.saldo).toFixed(1).padStart(16) + '×  ' + eur(v.pvMargin).padStart(14) + String(n).padStart(25) + String(Math.ceil(n / P.mojus)).padStart(20));
   }
+  const perEuro = value('fund', P).pvMargin / P.saldo;
+  console.log('\nÜmber suunatud ühekordse väljamakse euro väärtus: ' + (perEuro * 100).toFixed(2) + ' senti.');
+  console.log('Tasuvuseks tuleb ' + P.aastad + ' aasta jooksul ümber suunata ' + eur(c / perEuro) + ' ühekordseid väljamakseid (' + eur(c / perEuro / P.aastad) + ' aastas).');
   console.log('\nFondimahu-aastad × saldo = fondis püsiv raha aastate peale kokku (ellujäämisega kaalutud, ilma diskontota).');
-  console.log('Tasuvuspunkt = kulude nüüdisväärtus / ühe ümber suunatud koguja tasu marginaali nüüdisväärtus.');
-  console.log('Vajalik kasutajaid = tasuvuspunkt / osa kasutajatest, kes muudab otsuse (--mojus).');
+  console.log('Tasuvuspunkt = kulude nüüdisväärtus / ühe ümber suunatud koguja marginaali nüüdisväärtus.');
 }
 
 module.exports = { value, costPV, flows, term };

@@ -84,6 +84,24 @@ Allikas on savers analysis (kaart 2324, ~04/2026).
 
 **Kasutus:** näidisisikud kahes variandis, Tuleva liige (umbes 60 000 €) ja tavaline koguja (umbes 20 000 €).
 
+## 5. Tasuvusmudeli jaoks (lisatud 10.10.2026 õhtul)
+
+Kontrollitud repost (commit 56a9754, 09.10.2026) `[verified, repo]`:
+
+| Näitaja | Väärtus | Allikas |
+|---|---|---|
+| Tuleva fondide maht | 1 786 M€ (09/2026), 12 kuu kasv 41% | Kuuaruanne 09/2026 |
+| Jooksvate tasude määr | 0,28%, siht 0,22% 3 mld € juures („mida rohkem meid koos kogub, seda soodsamaks läheb kogumine“) | Kuuaruanne 09/2026, missiooni KPI 2.1 |
+| Valitsemistasu (II samba aktsiafond) | 0,215% | Tasude analüüs, 02/2026 |
+| Brutomarginaal pärast litsentsitasu / litsentsitasu ühistule | 158 809 € / 74 636 € (09/2026) ehk koos u 0,16% mahust aastas | Kuuaruanne 09/2026 |
+| Kogujate arv | 86 787 (kuuaruanne 09/2026); savers analysis 04/2026 annab 97 302 (teine definitsioon, sh lahkunud) | – |
+| Keskmine vara (kõik vanused) | liikmed 46 604 €, mitteliikmed 10 516 € | Savers analysis 04/2026 |
+| Keskmine vanus | liikmed 44, mitteliikmed 37 | Savers analysis |
+| II samba raha pärast pensioniiga võtnud | 406 inimest kokku (60 liiget, 346 mitteliiget) | Savers analysis, väljavõtmise grupid |
+| III sambast väljavõetud (RED) | 3,5 / 6,8 / 9,0 M€ (2023 / 2024 / 2025) | Fund flow analysis |
+
+Kasutus: [tasuvusmudel](docs/kulumudel.md). Peamine järeldus: Tuleva kogujad on noored ja pensionieas tehtud ühekordseid väljamakseid on vähe (II sambast u 1,1 M€ aastas), seega Elukaare tasuvus sõltub III sambast, kasvust ja uutest kogujatest.
+
 ## Mida repos ei ole
 
 - Väljamakseid vanuse ja inimeste arvu järgi tekstina (ainult graafikutena või üldse mitte).

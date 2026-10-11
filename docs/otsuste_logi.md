@@ -2,6 +2,16 @@
 
 Kuupäevadega otsused, kontrollid ja parandatud vead. Uuemad üleval. Lisa siia iga sisuline otsus, et see ei jääks ainult vestlusesse.
 
+## 11.10.2026 (päev): töötamine Elukaares, ülevaade tiimi teise repo muudatustest
+
+- Elukaar: „Töötan pärast pensioniiga“ (0–5 aastat). Palk katab kulud, sissemaksed jätkuvad, samba väljamaksed (ka korraga väljavõtt) algavad töö lõppedes, iga tööaasta tõstab riiklikku pensioni (sama valem mis kalkulaatoris). Ristkontroll kalkulaatoriga laiendatud töötamisele: identne.
+- Leitud ja parandatud: korraga väljavõetud raha oleks töötamise ajal hoiusel juba väärtust kaotanud (väljavõtt tehti mootoris enne tsüklit). Nüüd tehakse see väljamaksete alguse aastal.
+- Tiimi teise repo (`tulevane-mina`) muudatused alates `elukaar-automaattestid` (PR #16–#18, 28c03e0) üle vaadatud:
+  - **Ei võta üle:** ühe fondipensioni lepingu „tasane reaalne makse“ (`annuityDue`, PR #16). Pensionikeskus: periood jagatakse osakute arvu järgi, iga makse euro summa järgib osakuhinda, seega kasvab tootlusega. Meie mudel (jääk / järelejäänud aastad) vastab sellele.
+  - **Ei võta üle:** serveripõhine mõõtmine ja privaatsusleht (Cloudflare Worker + andmebaas; GitHub Pages on staatiline), profiilid `?p=` ja maandumisleht.
+  - **Kaalume:** reeglite fail (konstandid + allikas + kontrollimise kuupäev, test kontrollib, et mootor kasutab neid), golden master (tulemuste hetktõmmis regressiooni jaoks), ligipääsetavuse automaatkontroll (axe) graafikule, testid enne avaldamist (CI).
+  - **Elukaare uuendused** (II/III leping eraldi, C ühe lepinguga, lukus valikud puuduva samba korral, mobiiliparandused) tegi Elukaare autor 11.10 hommikul teise repo koopiasse; meie repos neid veel ei ole. Tema kirjelduse järgi on kehtiv versioon meie repos, seega need tuleks siia push'ida.
+
 ## 11.10.2026: tulumaks ja töötamine pärast pensioniiga
 
 - Mõlemas mootoris riiklikult pensionilt tulumaks 22% maksuvaba tulu ületavalt osalt; kasutamata maksuvaba tulu vähendab 10% väljamaksete maksu. Loogika on üle võetud tiimi teise repo commit'ist be68ea0 (Elukaare koopia) ja lisatud ka kalkulaatorisse; ristkontroll on jätkuvalt identne.

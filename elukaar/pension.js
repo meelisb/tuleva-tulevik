@@ -24,6 +24,16 @@
   // Sama loogika on kalkulaatori mootoris (ristkontroll: tests/elukaar.scenarios.test.js).
   const INCOME_TAX = 0.22;
   const PENSIONER_ALLOWANCE = 776 * 12;
+  // Töötamine pärast pensioniiga tõstab riiklikku pensioni (RPKS § 25: ümberarvutus igal aastal 1. aprillist).
+  // Iga tööaasta: (kindlustusosak + solidaarosak) / 2 × aastahinne (RPKS § 12, § 13¹). Sama mis kalkulaatoris.
+  const AASTAHINNE = 10.477;  // SKA, alates 1.04.2026
+  const AVG_WAGE = 2092;      // keskmine brutokuupalk 2025, Statistikaamet PA103
+  const MIN_WAGE = 946;       // töötasu alammäär alates 1.04.2026
+  function workAccrual(grossMonthly, iiContributing, iiJoined) {
+    if (!(grossMonthly > 0)) return 0;
+    const share = iiContributing ? 0.8 : 1; // II sambaga liitunul läheb riiklikku kindlustusse 16% palgast (mitte 20%)
+    return AASTAHINNE * (share * grossMonthly / AVG_WAGE + Math.min(iiJoined ? 0.8 : 1, share * grossMonthly / MIN_WAGE)) / 2;
+  }
   const netTenPercent = (gross, allow) => gross - TAX_SHORT * Math.max(0, gross - allow);
   const grossForNet = (net, allow) => (net <= allow ? net : (net - TAX_SHORT * allow) / (1 - TAX_SHORT));
 
@@ -103,6 +113,13 @@
     const taxOn = input.incomeTax !== false;
     const allowance = taxOn ? PENSIONER_ALLOWANCE : 0;
     const needYear = need * 12;
+    // Töötamine pärast pensioniiga (input.workUntil > pa): palk katab kulud, sissemaksed jätkuvad ja samba väljamaksed
+    // algavad töö lõppedes (ps). Iga tööaasta tõstab riiklikku pensioni järgmisest aastast; edasilükkamise kordaja rakendub ka sellele.
+    const ps = Math.max(pa, input.workUntil || pa);
+    const iiJoined = (input.p2Rate || 0) > 0;
+    const accrualYear = input.workAccrual === false ? 0 : 12 * workAccrual(input.grossMonthly || 0, iiJoined, iiJoined);
+    const workedBefore = (age) => Math.max(0, Math.min(age, ps) - Math.max(pa, currentAge));
+    const p1GrossAt = (age) => (age >= p1Start ? (input.p1Monthly * 12 + accrualYear * workedBefore(age)) * (1 + DEFERRAL_INCREASE[deferral]) : 0);
 
     // Samba vara kasvab kuni kasutamiseni ja sinna lisanduvad sissemaksed.
     // Valikuline eraldi III sammas (input.p3Sep = { amount, mode: 'grow' | 'lump' | 'fund' }): oma pott, oma väljamakse viis.
@@ -112,32 +129,40 @@
     let fund = input.p2 + input.p3;
     let fund3 = sep ? sep.amount : 0;
     const contrib = yearlyContribution(input) - c3;
-    for (let a = currentAge; a < pa; a++) { fund = fund * (1 + r) + contrib; fund3 = fund3 * (1 + r) + c3; }
+    for (let a = currentAge; a < ps; a++) { fund = fund * (1 + r) + contrib; fund3 = fund3 * (1 + r) + c3; }
 
     // Hoius pensioni alguses: varem sambast välja võetud ja kõrvale pandud raha (valikuline, vaikimisi 0).
     let deposit = input.extraDeposit || 0;
-    // Ühekordne väljavõtt pensioniea aastal: 10% tulumaks, millest saab maha arvata selle aasta kasutamata maksuvaba tulu.
-    const firstRetAge = Math.max(pa, startAge);
-    let allowAtPa = Math.max(0, allowance - (firstRetAge >= p1Start ? p1Year : 0));
+    // Ühekordne väljavõtt väljamaksete alguse aastal: 10% tulumaks, millest saab maha arvata selle aasta kasutamata maksuvaba tulu.
+    const firstRetAge = Math.max(ps, startAge);
+    let allowAtPa = Math.max(0, allowance - p1GrossAt(firstRetAge));
     const lumpNet = (gross) => { const free = Math.min(allowAtPa, gross); allowAtPa -= free; return gross - TAX_SHORT * (gross - free); };
-    if (scenario.id === 'A') { deposit += lumpNet(fund); fund = 0; }
-    if (sep && sep.mode === 'lump') { deposit += lumpNet(fund3); fund3 = 0; }
+    // Väljavõtt tehakse väljamaksete alguse aastal (tsüklis), et raha ei kaotaks hoiusel väärtust juba töötamise ajal.
+    const doLumps = () => {
+      if (scenario.id === 'A') { deposit += lumpNet(fund); fund = 0; }
+      if (sep && sep.mode === 'lump') { deposit += lumpNet(fund3); fund3 = 0; }
+    };
     // Ühe lepingu fondipension: periood määratakse lepingu sõlmimisel (pensionieas või kohe, kui oled sellest vanem).
     // C (paindlik pension) kasutab sillaks maksuvaba fondipensioni, mille leping uueneb igal aastal (nagu D).
-    const contractStart = scenario.id === 'B' ? Math.max(pa, currentAge) : null;
+    const contractStart = scenario.id === 'B' ? Math.max(ps, currentAge) : null;
     const contractTerm = contractStart !== null ? fundPensionTerm(table, input.sex, contractStart) : 0;
 
     const rows = [];
     for (let age = startAge; age <= MAX_AGE; age++) {
+      if (age === firstRetAge) doLumps();
       const fundStart = fund + fund3, depositStart = deposit;
-      const i1g = age >= p1Start ? p1Year : 0;
+      const i1g = p1GrossAt(age);
+      const working = age >= pa && age < ps;
       // Riiklik pension pärast tulumaksu: 22% maksuvaba tulu ületavalt osalt.
       const tax1 = taxOn && age >= pa ? INCOME_TAX * Math.max(0, i1g - allowance) : 0;
       const i1 = i1g - tax1;
       // Kasutamata maksuvaba tulu 10% väljamaksetele (pensioniea aastal pärast ühekordseid väljavõtteid).
       let allowLeft = age >= pa ? (age === firstRetAge ? allowAtPa : Math.max(0, allowance - i1g)) : 0;
       let sched = 0, extraNet = 0, fromDeposit = 0, saved = 0, sched3 = 0, extra3 = 0;
-      if (age >= pa) {
+      if (working) {
+        // Palk katab kulud; riiklik pension (kui see juba käib) läheb hoiusele.
+        saved = i1; deposit += saved;
+      } else if (age >= ps) {
         // 1) plaanijärgne maksuvaba väljamakse
         if (scenario.id === 'D' || scenario.id === 'C') {
           sched = fund / fundPensionTerm(table, input.sex, age); // uus leping igal aastal lühima maksuvaba perioodiga
@@ -166,9 +191,11 @@
       }
       // Kasv enne pensioniiga on kogumisfaasis (ülal) juba arvestatud; siin kasvab vara ainult pensionieast alates.
       // Kasv ja hoiuse väärtuse muutus pensionieast (ühekordne väljamakse on arvestatud pensioniea seisuga).
-      if (age >= pa) { fund *= 1 + r; fund3 *= 1 + r; deposit *= 1 + rd; }
+      if (age >= ps) { fund *= 1 + r; fund3 *= 1 + r; }
+      if (age >= pa) deposit *= 1 + rd;
       const income = i1 + sched + extraNet + sched3 + extra3;
-      const spend = income + fromDeposit - saved;
+      // Töötamise ajal katab kulud palk (wage); riiklik pension on sel ajal hoiusele.
+      const spend = working ? needYear : income + fromDeposit - saved;
       rows.push({
         age: age,
         year: input.birthYear + age,
@@ -179,16 +206,19 @@
         i2: (sched + extraNet) / 12, // II sammas (ühine pott); eraldi III samba pott on i3
         i3: (sched3 + extra3) / 12,
         dep: fromDeposit / 12,
+        work: working,
+        wage: working ? needYear / 12 : 0,
         spend: spend / 12,
         shortfall: age >= pa ? Math.max(0, needYear - spend) / 12 : 0,
         moneyLeft: fundStart + depositStart,
         alive: survival(table, input.sex, currentAge, age),
       });
     }
-    return summarize(rows, input, table, pa, p1Start, currentAge);
+    return summarize(rows, input, table, pa, p1Start, currentAge, ps);
   }
 
-  function summarize(rows, input, table, pa, p1Start, currentAge) {
+  function summarize(rows, input, table, pa, p1Start, currentAge, ps) {
+    ps = ps || pa;
     const fromPa = rows.filter((x) => x.age >= pa);
     const short = fromPa.find((x) => x.shortfall > 0.5);
     // Esimene puudujäägi vahemik. Kui pärast seda puudujääki enam ei ole, on see ajutine auk (riiklik pension algab hiljem).
@@ -201,11 +231,12 @@
     }
     const empty = fromPa.find((x) => x.moneyLeft < 1 && x.age >= p1Start);
     const at = (age) => rows.find((x) => x.age === age);
-    const startRow = at(pa) || rows[0];
+    const startRow = at(ps) || rows[0]; // väljamaksete algus (pensioniiga või töö lõpp)
     const horizon = horizonAge(table, input.sex, currentAge);
     return {
       rows: rows,
       pensionStartAge: pa,
+      payoutStartAge: ps, // samba väljamaksete algus: pensioniiga või hiljem, kui töötad edasi
       p1StartAge: p1Start,
       horizonAge: horizon,
       startSpend: startRow.spend,
@@ -239,7 +270,7 @@
     { id: 'D', name: 'Leping igal aastal uuesti', short: 'Maksuvaba fondipension, mille lepingu sõlmid igal aastal uuesti. Ei saa otsa, aga väheneb vanas eas.' },
   ];
 
-  const api = { CURRENT_YEAR, DEFERRAL_INCREASE, SCENARIOS, INCOME_TAX, PENSIONER_ALLOWANCE, pensionAge, retirementYears, yearlyContribution, survival, horizonAge, fundPensionTerm, decisionMap, simulate, sustainableNeed };
+  const api = { CURRENT_YEAR, DEFERRAL_INCREASE, SCENARIOS, INCOME_TAX, PENSIONER_ALLOWANCE, AASTAHINNE, workAccrual, pensionAge, retirementYears, yearlyContribution, survival, horizonAge, fundPensionTerm, decisionMap, simulate, sustainableNeed };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Pension = api;
 })(typeof window !== 'undefined' ? window : globalThis);

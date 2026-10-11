@@ -123,6 +123,45 @@ for (const { label, input } of personas.filter((p) => E.CURRENT_YEAR - p.input.b
   }
 }
 
+// 8. Töötamine pärast pensioniiga: palk katab kulud, sissemaksed jätkuvad, väljamaksed algavad töö lõppedes,
+//    iga tööaasta tõstab riiklikku pensioni järgmisest aastast (sama valem mis kalkulaatoris).
+{
+  const input = { birthYear: 1961, sex: 'N', p1Monthly: 900, p2: 20000, p3: 0, p3Before2021: true, needMonthly: 1200, realReturn: 0,
+    grossMonthly: 2000, p2Rate: 0.02, p3Monthly: 0, workUntil: 68 };
+  const d = E.workAccrual(2000, true, true);
+  check(near(d, (0.8 * 2000 / 2092 + 0.8) / 2 * 10.477, 1e-9), 'töö: ühe aasta lisa ' + d.toFixed(3));
+  const s = E.simulate(input, T, SC.B);
+  check(near(row(s, 65).i1g, 900, 1e-6) && near(row(s, 66).i1g, 900 + d, 1e-6) && near(row(s, 70).i1g, 900 + 3 * d, 1e-6), 'töö: pension 65/66/70 ' + [65, 66, 70].map((a) => row(s, a).i1g.toFixed(2)).join(' / '));
+  check([65, 66, 67].every((a) => row(s, a).work && row(s, a).shortfall === 0 && row(s, a).i23 === 0), 'töö: 65–67 palk katab kulud, sambast ei võeta');
+  const pot68 = 20000 + 3 * 2000 * 12 * 0.06; // sissemaksed 65-, 66- ja 67-aastaselt
+  const g = E.simulate(input, T, SC.E);
+  check(near(g.rows.find((x) => x.age === 68).moneyLeft - g.rows.find((x) => x.age === 68).dep * 0, pot68 + row(g, 68).moneyLeft - pot68, 1e-6) && near(row(s, 68).i2 * 12, pot68 / E.fundPensionTerm(T, 'N', 68), 1e-6), 'töö: II sissemaksed jätkuvad 68-ni ja üks leping algab 68-aastaselt');
+  const a = E.simulate({ ...input, p1Monthly: 0, needMonthly: 0, incomeTax: false, workAccrual: false }, T, SC.A);
+  check(near(row(a, 68).moneyLeft, pot68 * 0.9, 1e-6) && near(row(a, 69).moneyLeft, pot68 * 0.9 * 0.99, 1e-6), 'töö: korraga väljavõtt töö lõpus, hoius kaotab väärtust alles sealt');
+  const def = E.simulate(input, T, { id: 'C', deferral: 2 });
+  check(near(row(def, 67).i1g, (900 + 2 * d) * 1.1688, 1e-6), 'töö: edasilükatud pension koos lisaga × 1,1688');
+  const none = E.simulate({ ...input, workUntil: 65 }, T, SC.B);
+  check(near(row(none, 80).i1g, 900, 1e-6), 'töö lõpeb pensionieas: pension ei muutu');
+}
+
+// 9. Ristkontroll kalkulaatoriga ka pensioniea järel töötades (tootlus 0%, III sissemakseta, sest kalkulaator arvestab ka III tagastust).
+for (const { label, input } of personas.filter((p) => E.CURRENT_YEAR - p.input.birthYear >= 55 && p.input.realReturn === 0)) {
+  const pa = E.retirementYears(input);
+  for (const W of [2, 3]) {
+    const base = { ...input, p3Monthly: 0, pensionAgeYears: pa, workUntil: Math.max(pa, E.CURRENT_YEAR - input.birthYear) + W, tkf: 0, savings: 0, tkfMonthly: 0, care: { on: false } };
+    const kStart = base.workUntil;
+    for (const [id, m, off] of [['A', 'lump', 0], ['B', 'fund', 0], ['D', 'renew', 0], ['C', 'renew', 2]]) {
+      const plan = { stateOffset: off, p2: { method: m, start: kStart }, p3: { method: m, start: kStart } };
+      const ks = K.simulate(base, T, plan), es = E.simulate(base, T, SC[id]);
+      check(ks.lastsUntil === es.coversNeedUntil, label + '/' + id + '/töö+' + W + ': katmine kalkulaator ' + ks.lastsUntil + ' vs elukaar ' + es.coversNeedUntil);
+      const kl = K.sustainableNeed(base, T, plan), el = E.sustainableNeed(base, T, SC[id]);
+      check(Math.abs(kl - el) <= 10, label + '/' + id + '/töö+' + W + ': jätkusuutlik kulu ' + kl + ' vs ' + el);
+      const a90k = (ks.rows.find((x) => x.age === 90) || {}).i1g, a90e = (es.rows.find((x) => x.age === 90) || {}).i1g;
+      check(near(a90k, a90e, 1e-6), label + '/' + id + '/töö+' + W + ': riiklik pension 90-aastaselt ' + a90k + ' vs ' + a90e);
+    }
+  }
+}
+
 console.log(passed + ' kontrolli läbis, ' + failures.length + ' kukkus läbi.');
 if (failures.length) {
   console.log(failures.slice(0, Number(process.env.SHOW || 30)).map((f) => '  ✗ ' + f).join('\n') + (failures.length > 30 ? '\n  … ja veel ' + (failures.length - 30) : ''));

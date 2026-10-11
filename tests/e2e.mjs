@@ -142,6 +142,9 @@ for (const [label, viewport] of [['lauaarvuti', { width: 1366, height: 900 }], [
   const ans = await page.textContent('#answer');
   check(/kaetud|katmata/.test(ans) && ans.replace(/\s/g, '').includes(String(tot('mugav')) + '€'), 'tulemus mugava tasemega: ' + ans.slice(0, 70));
   check((await page.$$('#compare tbody tr')).length >= 3, 'võrdlustabel');
+  // Töötamine pärast pensioniiga: väljamaksed algavad töö lõppedes ja graafiku kokkuvõte ütleb seda.
+  await page.evaluate(() => { const el = document.getElementById('workAfter'); el.value = '2'; el.dispatchEvent(new Event('change', { bubbles: true })); });
+  check(/Kui töö lõpeb \(\d+-aastaselt\)/.test(await page.textContent('#chartSummary')) && /töötad/.test(await page.textContent('#chartExplain')), 'töötamine pärast pensioniiga muudab tulemust');
   const w = await page.evaluate(() => [document.documentElement.scrollWidth, innerWidth]);
   check(w[0] <= w[1], 'horisontaalset kerimist pole (' + w.join('/') + ')');
   check(errors.length === 0, 'JavaScripti vigu pole' + (errors.length ? ': ' + errors.join(' | ') : ''));

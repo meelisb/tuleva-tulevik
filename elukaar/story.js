@@ -233,6 +233,9 @@
       p3pa: radio('p3pa') === 'grow' ? (radio('p3paPa') || 'grow') : (radio('p3pa') || 'grow'),
       p3At60: radio('p3pa') || 'grow',
       deferral: parseInt(radio('defer') || '0', 10),
+      // Töötamine pärast pensioniiga: palk katab kulud, sissemaksed jätkuvad, samba väljamaksed algavad töö lõppedes.
+      workAfter: parseInt($('workAfter').value || '0', 10),
+      workUntil: Math.max(pa, currentAge) + parseInt($('workAfter').value || '0', 10),
       contract: radio('contract'),
       pkg: pkg,
       pkgTotal: pkgTotal,
@@ -274,7 +277,7 @@
   // Samba vara pensionieas (sama kasvureegel mis simulate'is).
   // fromToday: „mis oleks, kui alates tänasest selles fondis“ (fondivahetuse korrektsioonita).
   function potAtPension(input, r, fromToday) {
-    const pa = P.retirementYears(input);
+    const pa = Math.max(P.retirementYears(input), input.workUntil || 0); // väljamaksete algus: pensioniiga või töö lõpp
     let fund = input.p2 + (fromToday ? input.p3Pre : input.p3) + (input.p3Sep && !fromToday ? input.p3Sep.amount : 0);
     const c = P.yearlyContribution(input);
     for (let a = input.currentAge; a < pa; a++) fund = fund * (1 + r) + c;
@@ -409,7 +412,7 @@
       : p3Done ? 'III samba kohta tegid valiku juba ' + input.p3Age + '-aastaselt: <strong>' + (input.p3Plan === 'lump' ? 'võtsid selle korraga välja' : 'fondipension') + '</strong>. <button type="button" class="btn btn-link p-0 align-baseline" data-goto="4">Muuda<span class="visually-hidden"> III samba valikut ' + input.p3Age + '-aastaselt</span></button>' : '';
     // 60 a samm: teine otsustuskoht, kui 55 a samm on loos, muidu esimene.
     $('h5').textContent = (pa - 5) + '-aastaselt: ' + (skipped(4) ? 'esimene' : 'teine') + ' otsustuskoht';
-    $('p60Txt').innerHTML = (input.birthYear + pa - 5) + '. aastal oled ' + (pa - 5) + '-aastane, 5 aastat enne pensioniiga. Siis avaneb soodustingimustel II samba väljavõtmise võimalus. Väljamakse algab selles loos pensionieas. Kui hakkad raha välja võtma, lõpevad II samba sissemaksed igaveseks.';
+    $('p60Txt').innerHTML = (input.birthYear + pa - 5) + '. aastal oled ' + (pa - 5) + '-aastane, 5 aastat enne pensioniiga. Siis avaneb soodustingimustel II samba väljavõtmise võimalus. Väljamakse algab selles loos pensionieas (kui töötad edasi, siis töö lõppedes). Kui hakkad raha välja võtma, lõpevad II samba sissemaksed igaveseks.';
     chapters[7].dataset.label = (pa + 1) + '+ a';
 
     // 0–18
@@ -507,6 +510,14 @@
         '<small>' + eur(input.p1Monthly * (1 + inc)) + ' kuus enne maksu' + (d ? ' (+' + one(inc * 100) + '%)' : '') + '</small></span></label>';
     }).join('');
     $('deferChoices').querySelectorAll('input').forEach((el) => el.addEventListener('change', update));
+    // Töötamine pärast pensioniiga: mõju riiklikule pensionile (RPKS, SKA 2026) ja väljamaksete algusele.
+    const perYear = P.workAccrual(input.grossMonthly, input.p2Rate > 0, input.p2Rate > 0);
+    $('workAfterNote').innerHTML = input.grossMonthly > 0
+      ? (input.workAfter > 0
+        ? 'Palk katab ' + input.workAfter + (input.workAfter === 1 ? ' aasta' : ' aasta') + ' kulud, II ja III samba sissemaksed jätkuvad ning samba väljamaksed algavad ' + input.workUntil + '-aastaselt. ' +
+          'Riiklik pension tõuseb umbes ' + eur(input.workAfter * perYear) + ' kuus enne maksu (' + eur(perYear) + ' iga tööaasta eest, ümberarvutus 1. aprillist).'
+        : 'Sinu ' + eur(input.grossMonthly) + ' brutopalgaga tõstab iga pensioniea järel töötatud aasta riiklikku pensioni umbes ' + eur(perYear) + ' kuus enne maksu.')
+      : 'Lisa esimeses sammus brutopalk, et näha, kui palju töötamine riiklikku pensioni tõstab.';
 
     // 66+
     let lockMsg = '';
@@ -529,7 +540,7 @@
     const pa = P.retirementYears(input);
     const p1 = input.p1Monthly * (1 + P.DEFERRAL_INCREASE[input.deferral]);
     const items = [
-      ['🏦', eur(potAtPension(input, input.realReturn)), 'sammastes ' + pa + '-aastaselt'],
+      ['🏦', eur(potAtPension(input, input.realReturn)), 'sammastes ' + Math.max(pa, input.workUntil) + '-aastaselt'],
       ['🏛️', eur(p1) + ' /kuus', 'riiklik pension (enne tulumaksu)'],
     ].concat(input.extraDeposit > 0 ? [['🐷', eur(input.extraDeposit), 'tavalisel hoiusel (III sambast välja võetud)']] : []).concat([
       ['🛒', visited.has(8) ? eur(input.needMonthly) + ' /kuus' : 'valimata', 'kulud' + (visited.has(8) ? ' (' + input.pkg.name + (input.edited ? ', muudetud' : '') + ')' : '')],
@@ -631,7 +642,8 @@
       [5, '🧳', 'II sammas: ' + { grow: 'jätkan kasvatamist', lump: 'võtan korraga välja', fund: 'fondipension' }[input.payout] +
         (input.p3Has && input.p3Plan === 'keep' ? '. III sammas: ' + { grow: 'jätkan kasvatamist', lump: 'võtan pensionieas korraga välja', fund: 'fondipension' }[input.p3At60] : '')],
       [6, '🏛️', (input.payout === 'grow' ? 'Pensionieas II sammas: ' + { grow: 'kasvatan edasi', lump: 'võtan korraga välja', fund: 'fondipension' }[input.method] + '. ' : '') +
-        (input.p3Has && input.p3Plan === 'keep' && input.p3At60 === 'grow' ? 'III sammas: ' + { grow: 'kasvatan edasi', lump: 'võtan korraga välja', fund: 'fondipension' }[input.p3pa] + '. ' : '') + (!input.deferral ? 'Riiklik pension ' + pa + '-aastaselt' : 'Riiklik pension ' + (pa + input.deferral) + '-aastaselt (' + input.deferral + ' a hiljem)')],
+        (input.p3Has && input.p3Plan === 'keep' && input.p3At60 === 'grow' ? 'III sammas: ' + { grow: 'kasvatan edasi', lump: 'võtan korraga välja', fund: 'fondipension' }[input.p3pa] + '. ' : '') + (!input.deferral ? 'Riiklik pension ' + pa + '-aastaselt' : 'Riiklik pension ' + (pa + input.deferral) + '-aastaselt (' + input.deferral + ' a hiljem)') +
+        (input.workAfter > 0 ? '. Töötan veel ' + input.workAfter + (input.workAfter === 1 ? ' aasta' : ' aastat') : '')],
       [7, '🌳', 'Väljamakse viis: ' + scenario.name.toLowerCase()],
       [8, '🛒', input.pkg.name + (input.edited ? ' (muudetud)' : '') + ': ' + eur(input.needMonthly) + ' kuus'],
     ];
@@ -723,12 +735,12 @@
 
   // Graafiku tekstiline kokkuvõte (põhijäreldused) ja andmetabel (WCAG 1.1.1, ka klaviatuuri ja ekraanilugeja kasutajale).
   function chartSummary(r, input) {
-    const pa = r.pensionStartAge, start = r.rows.find((x) => x.age === pa) || r.rows[0];
+    const pa = r.pensionStartAge, ps = r.payoutStartAge || pa, start = r.rows.find((x) => x.age === ps) || r.rows[0];
     const src = [eur(start.i1) + ' riiklikku pensioni (pärast tulumaksu)', start.i2 > 0.5 ? eur(start.i2) + ' II sambast' : '', start.i3 > 0.5 ? eur(start.i3) + ' III sambast' : '', start.dep > 0.5 ? eur(start.dep) + ' hoiuselt' : ''].filter(Boolean);
-    const parts = ['Pensioni alguses (' + pa + '-aastaselt) tuleb kuus ' + (src.length > 1 ? src.slice(0, -1).join(', ') + ' ja ' + src[src.length - 1] : src[0]) + '.',
+    const parts = [(ps > pa ? 'Kui töö lõpeb (' + ps + '-aastaselt), tuleb kuus ' : 'Pensioni alguses (' + pa + '-aastaselt) tuleb kuus ') + (src.length > 1 ? src.slice(0, -1).join(', ') + ' ja ' + src[src.length - 1] : src[0]) + '.',
       'Sinu kulud on ' + eur(input.needMonthly) + ' kuus.'];
     // Tulumaks riiklikult pensionilt: 22% summalt, mis ületab pensionäri maksuvaba tulu (776 € kuus, 2026).
-    const p1row = r.rows.find((x) => x.i1g > 0.5);
+    const p1row = start.i1g > 0.5 ? start : r.rows.find((x) => x.i1g > 0.5); // sama aasta, mille kohta on esimene lause
     if (p1row) parts.splice(1, 0, p1row.tax1 > 0.5
       ? 'Riiklikust pensionist (' + eur(p1row.i1g) + ' enne maksu) läheb tulumaksuks ' + eur(p1row.tax1) + ' kuus: 22% summalt, mis ületab pensionäri maksuvaba tulu ' + eur(P.PENSIONER_ALLOWANCE / 12) + ' kuus.'
       : 'Riiklik pension on väiksem kui pensionäri maksuvaba tulu (' + eur(P.PENSIONER_ALLOWANCE / 12) + ' kuus), seega tulumaksu pole.');
@@ -743,7 +755,7 @@
     return '<table class="table table-sm align-middle mb-0"><caption id="chartTableCaption">Sissetulek ja kulud kuus vanuse järgi (tänastes eurodes, pärast tulumaksu)</caption>' +
       '<thead><tr><th scope="col">Vanus</th><th scope="col">Aasta</th><th scope="col" class="text-end">I sammas</th><th scope="col" class="text-end">II sammas</th><th scope="col" class="text-end">III sammas</th><th scope="col" class="text-end">Hoiuselt</th><th scope="col" class="text-end">Kulud</th><th scope="col" class="text-end">Puudu</th><th scope="col" class="text-end">Elus</th></tr></thead><tbody>' +
       rows.map((x) => '<tr><th scope="row">' + x.age + '</th><td>' + x.year + '</td><td class="text-end">' + eur(x.i1) + '</td><td class="text-end">' + eur(x.i2) + '</td><td class="text-end">' + eur(x.i3) + '</td><td class="text-end">' + eur(x.dep) +
-        '</td><td class="text-end">' + (x.pre ? '–' : eur(input.needMonthly)) + '</td><td class="text-end">' + (x.shortfall > 0.5 ? eur(x.shortfall) : '–') + '</td><td class="text-end">' + Math.round(x.alive * 100) + '%</td></tr>').join('') +
+        '</td><td class="text-end">' + (x.pre ? '–' : x.work ? 'palk' : eur(input.needMonthly)) + '</td><td class="text-end">' + (x.shortfall > 0.5 ? eur(x.shortfall) : '–') + '</td><td class="text-end">' + Math.round(x.alive * 100) + '%</td></tr>').join('') +
       '</tbody></table>';
   }
 
@@ -762,7 +774,7 @@
   function chartExplain(r, input, mobile) {
     // Kirjutatud nii, et graafiku sisu on arusaadav ka ilma seda nägemata (ekraanilugeja).
     const pa = r.pensionStartAge, need = input.needMonthly;
-    const rows = r.rows.filter((x) => x.age >= pa);
+    const rows = r.rows.filter((x) => x.age >= pa && !x.work);
     const ageOf = (a) => a + '-aastaselt';
     const alive = (a) => { const x = rows.find((y) => y.age === a); return x ? Math.round(x.alive * 100) : null; };
     // Etapid: järjestikused aastad, kus kulude katmise allikad on samad.
@@ -806,6 +818,11 @@
     if (pre.length) preItems.push('<li><strong>' + pre[0].age + '–' + pre[pre.length - 1].age + ' a (enne pensioniiga):</strong> III samba fondipension keskmiselt ' +
       eur(pre.reduce((s, x) => s + x.i3, 0) / pre.length) + ' kuus pärast maksu. See on lisaraha palgale. Ülejäänud III samba raha kasvab edasi.</li>');
     else if (input.p3Has && input.p3Plan === 'lump') preItems.push('<li><strong>' + input.p3Age + ' a:</strong> võtad III samba korraga välja, ' + eur(input.p3Net) + ' pärast maksu. Pensioniks seda ei jää.</li>');
+    const work = r.rows.filter((x) => x.work);
+    if (work.length) preItems.push('<li><strong>' + work[0].age + '–' + work[work.length - 1].age + ' a (töötad):</strong> palk katab kulud. ' +
+      (work.some((x) => x.i1 > 0.5) ? 'Riiklik pension (' + eur(work[work.length - 1].i1) + ' kuus pärast maksu) läheb sel ajal hoiusele. ' : 'Riiklik pension algab hiljem. ') +
+      'II ja III samba sissemaksed jätkuvad, väljamaksed algavad ' + r.payoutStartAge + '-aastaselt. Iga tööaasta tõstab riiklikku pensioni umbes ' +
+      eur(P.workAccrual(input.grossMonthly, input.p2Rate > 0, input.p2Rate > 0)) + ' kuus enne maksu.</li>');
     const items = preItems.concat(phases.map((ph, n) => {
       const ages = ph.from === ph.to ? ph.from + ' a' : ph.from + '–' + ph.to + ' a';
       const src = parts(ph);
@@ -843,7 +860,8 @@
       labels: rows.map((x) => x.age),
       datasets: [
         // Värvid samad. Lisaks: heledamatel tulpadel tumesinine äär (eristub valgest taustast), hoiusel triibud.
-        Object.assign({ type: 'bar', label: 'I sammas', data: rows.map((x) => Math.round(x.i1)), backgroundColor: '#002f63', stack: 'income', yAxisID: 'y', order: 3 }, area('origin')),
+        Object.assign({ type: 'bar', label: 'Palk', data: rows.map((x) => Math.round(x.wage || 0)), backgroundColor: '#c9d1da', borderColor: '#6b7074', borderWidth: 1, stack: 'income', yAxisID: 'y', order: 3 }, area('origin')),
+        Object.assign({ type: 'bar', label: 'I sammas', data: rows.map((x) => Math.round(x.work ? 0 : x.i1)), backgroundColor: '#002f63', stack: 'income', yAxisID: 'y', order: 3 }, area('origin')),
         Object.assign({ type: 'bar', label: 'II sammas', data: rows.map((x) => Math.round(x.i2)), backgroundColor: '#00aeea', borderColor: '#002f63', borderWidth: 1, stack: 'income', yAxisID: 'y', order: 3 }, area('-1')),
         Object.assign({ type: 'bar', label: 'III sammas', data: rows.map((x) => Math.round(x.i3)), backgroundColor: dots('#006ce6', '#ffffff'), borderColor: '#002f63', borderWidth: 1, stack: 'income', yAxisID: 'y', order: 3 }, area('-1')),
         Object.assign({ type: 'bar', label: 'Hoiuselt (välja võetud raha)', data: rows.map((x) => Math.round(x.dep)), backgroundColor: stripes('#9fd8f0', '#002f63'), borderColor: '#002f63', borderWidth: 1, stack: 'income', yAxisID: 'y', order: 3 }, area('-1')),
@@ -1073,6 +1091,7 @@
       '## Sinu andmed', '',
       '- Sünniaasta: ' + input.birthYear + ', sugu: ' + (input.sex === 'N' ? 'naine' : 'mees') + ', pensioniiga: ' + pa + ' a',
       '- Riiklik pension: ' + eur(input.p1Monthly) + ' kuus enne tulumaksu (tulumaks 22% summalt, mis ületab pensionäri maksuvaba tulu ' + eur(P.PENSIONER_ALLOWANCE / 12) + ' kuus)',
+      '- Töötan pärast pensioniiga: ' + (input.workAfter > 0 ? input.workAfter + (input.workAfter === 1 ? ' aasta' : ' aastat') + ' (samba väljamaksed algavad ' + input.workUntil + '-aastaselt)' : 'ei'),
       '- II sammas praegu: ' + eur(input.p2) + ', III sammas praegu: ' + eur(input.p3Base),
       '- Brutopalk: ' + eur(input.grossMonthly) + ' kuus, II samba makse ' + pct(input.p2Rate) + ', III sambasse ' + eur(input.p3Monthly) + ' kuus',
       '- Tootlus pärast inflatsiooni: ' + pct(input.realReturn) + ' aastas', '',

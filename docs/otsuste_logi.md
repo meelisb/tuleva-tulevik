@@ -2,6 +2,11 @@
 
 Kuupäevadega otsused, kontrollid ja parandatud vead. Uuemad üleval. Lisa siia iga sisuline otsus, et see ei jääks ainult vestlusesse.
 
+## 11.10.2026 (õhtupoolik): testijate tagasiside
+
+- 16 vastust tulevanemina.ee tagasisidevormist (11.10, kutsega), kokkuvõte: [testijate_tagasiside_2026-10-11.md](testijate_tagasiside_2026-10-11.md). Kõik täitsid andmed ise, 12/16 oskavad öelda vanuse, 10/16 said uue teadmise (peamiselt fondipensioni leping), 5 muudaksid plaani, 6 võib-olla.
+- Leitud viga: sünniaasta piir 1990 (mõlemas prototüübis) arvutas hilisema sünniaasta 1990 järgi ilma hoiatuseta. Ettepanekud prioriteedi järgi on kokkuvõtte lõpus; tegemata.
+
 ## 11.10.2026 (pärastlõuna): Elukaare autori 11.10 hommikused muudatused meie repos
 
 - Elukaar: „III sambaga liitusin“ vaikimisi „enne 2021“, et 55 a otsustuskoht oleks vaikimisi näha (sihtrühma 55–65 III samba omanikud on enamasti liitunud enne 2021 `[inferred]`). „2021 või hiljem“ korral ütleb abitekst, miks 55 a sammu pole (soodne maks alates 60).

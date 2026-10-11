@@ -4,6 +4,7 @@ Tiimi „Tulevane Mina“ töö Tuleva häkatonil (9.–11.10.2026). Küsimus, m
 
 - [Tööleht ja pitch'i taust](tulevane_mina_tooleht_ja_pitch_2026-10-10.md)
 - [Otsuste logi](docs/otsuste_logi.md): kuupäevadega otsused, kontrollitud faktid, parandatud vead
+- [Testijate tagasiside 11.10](docs/testijate_tagasiside_2026-10-11.md): Elukaare test, 16 vastust, teemad ja ettepanekud
 - [Tasuvusmudel](docs/kulumudel.md): mitu fondipensioni valinud kogujat tasub Elukaare ehituse ja ülalpidamise ära (`node scripts/kulumudel.js`)
 - [CLAUDE.md](CLAUDE.md): kuidas repot jätkata (reeglid, mudeli konventsioonid, testimine, majutus)
 - [Tuleva reporting engine: mis andmed seal on ja mis meile kasulik](reporting_engine_andmed_2026-10-10.md)

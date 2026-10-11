@@ -144,6 +144,21 @@ for (const { label, input } of personas.filter((p) => E.CURRENT_YEAR - p.input.b
   check(near(row(none, 80).i1g, 900, 1e-6), 'töö lõpeb pensionieas: pension ei muutu');
 }
 
+// 8b. Fondipensioni lepingud (Elukaare autori muudatused 11.10): C ühe lepinguga ja III samba eraldi leping.
+{
+  const input = { birthYear: 1961, sex: 'N', p1Monthly: 900, p2: 30000, p3: 0, p3Before2021: true, needMonthly: 0, realReturn: 0.02, incomeTax: false };
+  const b = E.simulate(input, T, SC.B), c1 = E.simulate(input, T, { id: 'C', deferral: 2, contract: 'once' }), cy = E.simulate(input, T, { id: 'C', deferral: 2 });
+  check(near(row(c1, 70).i2, row(b, 70).i2, 1e-9) && row(c1, 66).i1g === 0 && near(row(c1, 67).i1g, 900 * 1.1688, 1e-9), 'C üks leping: II väljamakse sama mis B, riiklik pension 2 a hiljem');
+  check(row(c1, 75).i2 > row(cy, 75).i2, 'C üks leping: 75-aastaselt suurem kui iga-aastase uuendamisega');
+  const t = E.fundPensionTerm(T, 'N', 65);
+  const s3 = E.simulate({ ...input, p2: 0, p3Sep: { amount: 20000, mode: 'fund', contract: 'once' } }, T, SC.B);
+  check(row(s3, 65 + t - 1).i3 > 0 && row(s3, 65 + t).i3 === 0, 'III üks leping lõpeb perioodi lõpus (' + (65 + t) + ')');
+  check(near(row(s3, 65).i3 * 12, 20000 / t, 1e-9), 'III üks leping: esimene makse jääk / periood');
+  const s55 = E.simulate({ ...input, realReturn: 0, birthYear: 1966, p2: 0, p3Sep: { amount: 20000, mode: 'fund', contract: 'once', start: 55 } }, T, SC.B);
+  const t55 = E.fundPensionTerm(T, 'N', 55);
+  check(near(row(s55, 65).i3 * 12, 20000 / (t55 - 10), 1e-9), '55-aastaselt alanud III lepingu periood loetakse 55-st');
+}
+
 // 9. Ristkontroll kalkulaatoriga ka pensioniea järel töötades (tootlus 0%, III sissemakseta, sest kalkulaator arvestab ka III tagastust).
 for (const { label, input } of personas.filter((p) => E.CURRENT_YEAR - p.input.birthYear >= 55 && p.input.realReturn === 0)) {
   const pa = E.retirementYears(input);

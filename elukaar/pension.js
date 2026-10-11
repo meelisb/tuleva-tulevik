@@ -1,3 +1,4 @@
+
 // Tulevane Mina: arvutusloogika. Puhtad funktsioonid, töötab brauseris ja Node'is (testid).
 // Kõik summad on tänastes eurodes (reaalväärtus). Mudel on aastapõhine.
 //
@@ -143,9 +144,15 @@
       if (sep && sep.mode === 'lump') { deposit += lumpNet(fund3); fund3 = 0; }
     };
     // Ühe lepingu fondipension: periood määratakse lepingu sõlmimisel (pensionieas või kohe, kui oled sellest vanem).
-    // C (paindlik pension) kasutab sillaks maksuvaba fondipensioni, mille leping uueneb igal aastal (nagu D).
-    const contractStart = scenario.id === 'B' ? Math.max(ps, currentAge) : null;
+    // C (paindlik pension) kasutab sillaks maksuvaba fondipensioni. Leping uueneb vaikimisi igal aastal (nagu D),
+    // scenario.contract === 'once' korral on see üks leping (nagu B).
+    const onceC = scenario.id === 'C' && scenario.contract === 'once';
+    const contractStart = scenario.id === 'B' || onceC ? Math.max(ps, currentAge) : null;
     const contractTerm = contractStart !== null ? fundPensionTerm(table, input.sex, contractStart) : 0;
+    // Eraldi III samba fondipension: sep.contract === 'once' → üks leping alates sep.start (vaikimisi pensioniiga), muidu uus leping igal aastal.
+    const once3 = !!(sep && sep.mode === 'fund' && sep.contract === 'once');
+    const start3 = once3 ? (sep.start !== undefined ? sep.start : Math.max(ps, currentAge)) : null; // vaikimisi väljamaksete algus (pensioniiga või töö lõpp)
+    const term3 = once3 ? fundPensionTerm(table, input.sex, start3) : 0;
 
     const rows = [];
     for (let age = startAge; age <= MAX_AGE; age++) {
@@ -164,15 +171,19 @@
         saved = i1; deposit += saved;
       } else if (age >= ps) {
         // 1) plaanijärgne maksuvaba väljamakse
-        if (scenario.id === 'D' || scenario.id === 'C') {
+        if (scenario.id === 'D' || (scenario.id === 'C' && !onceC)) {
           sched = fund / fundPensionTerm(table, input.sex, age); // uus leping igal aastal lühima maksuvaba perioodiga
         } else if (contractStart !== null && age >= contractStart) {
           const left = contractTerm - (age - contractStart);
           sched = left > 0 ? fund / left : 0;
         }
         fund -= sched;
-        // Eraldi III sammas fondipensionina: uus leping igal aastal (maksuvaba).
-        if (sep && sep.mode === 'fund') { sched3 = fund3 / fundPensionTerm(table, input.sex, age); fund3 -= sched3; }
+        // Eraldi III sammas fondipensionina (maksuvaba): üks leping või uus leping igal aastal.
+        if (sep && sep.mode === 'fund') {
+          const left3 = once3 ? term3 - (age - start3) : 0;
+          sched3 = once3 ? (left3 > 0 ? fund3 / left3 : 0) : fund3 / fundPensionTerm(table, input.sex, age);
+          fund3 -= sched3;
+        }
         // 2) vajaduse katmine: hoius, siis lisaväljamakse sambast (10%), viimasena eraldi III sambast (10%)
         let gap = needYear - i1 - sched - sched3;
         if (gap > 0) {
@@ -274,3 +285,4 @@
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Pension = api;
 })(typeof window !== 'undefined' ? window : globalThis);
+

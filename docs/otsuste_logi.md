@@ -2,6 +2,13 @@
 
 Kuupäevadega otsused, kontrollid ja parandatud vead. Uuemad üleval. Lisa siia iga sisuline otsus, et see ei jääks ainult vestlusesse.
 
+## 11.10.2026 (pärastlõuna): Elukaare autori 11.10 hommikused muudatused meie repos
+
+- Elukaare autor tegi muudatused tiimi teise repo ühefailisesse koopiasse (`kadi-branch`, cca74e1, 09:40). Tõstetud siia kolmepoolse ühendamisega: alus 37e7cc3 (millest autor alustas), meie = tulumaks ja töötamine, nende = autori muudatused. Tasast fondipensioni makset (`annuityDue`) autori versioonis ei olnud ja seda ei võetud üle.
+- Uus: II ja III samba fondipensioni leping eraldi (III vaikimisi üks leping, 55-aastaselt alanud lepingu periood 55-st), C ühe lepinguga valik, hoiatus kui iga-aastane uuendamine oleks parem, lukus valikud ja peidetud read puuduva samba korral, mobiiliparandused, kulukaartidelt kvintiilide tekst eemaldatud (allikas jääb kulude muutmise vaatesse).
+- Ühendamisel: üks leping (B, C ühe lepinguga, III eraldi leping) algab väljamaksete algusest (pensioniiga või töö lõpp); otsuste kaardil on nii tulumaksu lause kui ka autori tingimus kindlustusseltsi lause kohta.
+- Testid autori kirjelduse järgi: C ühe lepinguga = B väljamakse ja riiklik pension 2 a hiljem; III üks leping lõpeb perioodi lõpus ja 55-st alanud periood loetakse 55-st.
+
 ## 11.10.2026 (päev): töötamine Elukaares, ülevaade tiimi teise repo muudatustest
 
 - Elukaar: „Töötan pärast pensioniiga“ (0–5 aastat). Palk katab kulud, sissemaksed jätkuvad, samba väljamaksed (ka korraga väljavõtt) algavad töö lõppedes, iga tööaasta tõstab riiklikku pensioni (sama valem mis kalkulaatoris). Ristkontroll kalkulaatoriga laiendatud töötamisele: identne.

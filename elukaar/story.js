@@ -1193,7 +1193,9 @@
     if (none && $('p3').value !== '0') { $('p3').dataset.prev = $('p3').value; $('p3').value = 0; }
     if (!none && $('p3').dataset.prev) { $('p3').value = $('p3').dataset.prev; delete $('p3').dataset.prev; }
     $('p3OpenWrap').classList.toggle('d-none', !none);
-    $('p3JoinedHint').textContent = none ? 'Kui plaanid III samba avada, sisesta sissemakse ja vanus, millal avad.' : 'Enne 2021 liitunul lisandub 55 a otsustuskoht.';
+    $('p3JoinedHint').textContent = none ? 'Kui plaanid III samba avada, sisesta sissemakse ja vanus, millal avad.'
+      : $('p3Joined').value === 'before' ? 'Enne 2021 liitunul saad III samba soodsa maksuga kätte alates 55. eluaastast, seepärast on lool 55 a otsustuskoht.'
+        : '2021 või hiljem liitunul on III samba soodne maks alates 60. eluaastast, seepärast 55 a otsustuskohta ei ole (varem välja võttes on tulumaks 22%).';
   }
   $('p3Joined').addEventListener('change', () => { syncP3Fields(); go(skipped(step) ? shownSteps().find((i) => i > step) : step, false); });
   syncP3Fields();

@@ -19,6 +19,7 @@ Kui leht näib vana, laadi uuesti (Cmd+Shift+R). Avaldus toimub iga `main`-i pus
 - Testijad kasutasid Elukaare koopiat aadressil https://tulevanemina.ee/elukaar/ (tiimi teine repo). See erineb siinsest: siin on lisaks töötamine pärast pensioniiga ja Pensionikeskuse reeglile vastav fondipensioni makse.
 - Kokkuvõte: [testijate tagasiside 11.10](docs/testijate_tagasiside_2026-10-11.md). Tagasiside põhjal prototüüpe veel ei muudeta (Meelise otsus 11.10).
 
+- [Pitch'i slaidid](https://docs.google.com/presentation/d/1xyJTx9TOP8s0AkDgao7eNAiX3P1U2tR-/edit) (Google Slides)
 - [Tööleht ja pitch'i taust](tulevane_mina_tooleht_ja_pitch_2026-10-10.md)
 - [Otsuste logi](docs/otsuste_logi.md): kuupäevadega otsused, kontrollitud faktid, parandatud vead
 - [Testijate tagasiside 11.10](docs/testijate_tagasiside_2026-10-11.md): Elukaare test, 16 vastust, teemad ja ettepanekud

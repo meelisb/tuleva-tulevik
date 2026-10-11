@@ -1,6 +1,6 @@
 # CLAUDE.md: Tulevane Mina (tuleva-tulevik)
 
-Juhend AI-agendile ja tiimiliikmele, kes seda repot jätkab. Kõik projekti kontekst on repos: see fail, `README.md` (testilingid, eeldused), `docs/otsuste_logi.md`, `docs/testijate_tagasiside_2026-10-11.md`, `docs/kulumudel.md` ja `tulevane_mina_tooleht_ja_pitch_2026-10-10.md`. Ära jäta otsuseid ega kontrollitud fakte ainult lokaalsesse mällu või vestlusesse; kirjuta need siia.
+Juhend AI-agendile ja tiimiliikmele, kes seda repot jätkab. Kõik projekti kontekst on repos: see fail, `README.md` (testilingid, eeldused), `docs/otsuste_logi.md`, `docs/testijate_tagasiside_2026-10-11.md`, `docs/kulumudel.md` ja `tulevane_mina_tooleht_ja_pitch_2026-10-10.md`. Pitch'i slaidid: [Google Slides](https://docs.google.com/presentation/d/1xyJTx9TOP8s0AkDgao7eNAiX3P1U2tR-/edit). Ära jäta otsuseid ega kontrollitud fakte ainult lokaalsesse mällu või vestlusesse; kirjuta need siia.
 
 ## Mis see on
 

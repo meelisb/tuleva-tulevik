@@ -21,6 +21,31 @@
   const II_STATE = 0.04;      // riigi osa II sambasse (sotsiaalmaksust)
   const II_MIN_AGE = 60;      // II sammas: pensioniiga − 5 (lihtsustatult 60)
 
+  // Tulumaks pensionilt (EMTA 2026): 22%. Maksuvaba tulu ei sõltu tulust: pensioniealisel 776 € kuus, nooremal 700 € kuus.
+  // SKA rakendab selle riiklikult pensionilt; kasutamata osa rakendab Pensionikeskus 10% maksuga sambaväljamaksetele.
+  // Maksuvaba fondipension (elada jäänud aastate periood) ei kasuta maksuvaba tulu. Summad tänases rahas.
+  const INCOME_TAX = 0.22;
+  const ALLOW_PENSION = 776 * 12;
+  const ALLOW_GENERAL = 700 * 12;
+  // Töötamine pärast pensioniiga suurendab riiklikku pensioni (RPKS § 25: ümberarvutus igal aastal 1. aprillist eelmise aasta
+  // sotsiaalmaksu järgi). Alates 2021 lisandub ühendosa: (kindlustusosak + solidaarosak) / 2 × aastahinne (RPKS § 12, § 13¹).
+  const AASTAHINNE = 10.477;  // SKA, alates 1.04.2026
+  const AVG_WAGE = 2092;      // keskmine brutokuupalk 2025, Statistikaamet PA103 (kindlustusosaku alus)
+  const MIN_WAGE = 946;       // töötasu alammäär alates 1.04.2026 (solidaarosaku alus)
+
+  // Ühe tööaasta mõju riiklikule pensionile (€ kuus, enne paindliku pensioni kordajat).
+  // II sambaga liitunul läheb riiklikku pensionikindlustusse 16% (mitte 20%) palgast ja solidaarosak on kuni 0,8.
+  function workAccrual(grossMonthly, iiContributing, iiJoined) {
+    if (!(grossMonthly > 0)) return 0;
+    const share = iiContributing ? 0.8 : 1;
+    const insurance = share * grossMonthly / AVG_WAGE;
+    const solidarity = Math.min(iiJoined ? 0.8 : 1, share * grossMonthly / MIN_WAGE);
+    return AASTAHINNE * (insurance + solidarity) / 2;
+  }
+  // 10% maksuga väljamakse, kui maksuvaba tulust on veel `allow` alles: kätte jääv summa ja vajalik bruto.
+  const netReduced = (gross, allow) => gross - TAX_REDUCED * Math.max(0, gross - allow);
+  const grossForNet = (net, allow) => (net <= allow ? net : (net - TAX_REDUCED * allow) / (1 - TAX_REDUCED));
+
   // Pensioniiga kalendriaasta järgi. 2028 ja 2029 on eelnõud; hilisemad on teadmata.
   function pensionAge(birthYear) {
     const y65 = birthYear + 65;
@@ -79,7 +104,13 @@
     const workUntil = Math.max(currentAge, input.workUntil || pa);
     const stateOffset = plan.stateOffset || 0;
     const stateStart = pa + stateOffset;
-    const stateYear = input.p1Monthly * (1 + STATE_COEF[String(stateOffset)]) * 12;
+    const coef = 1 + STATE_COEF[String(stateOffset)];
+    const taxOn = input.incomeTax !== false;
+    const accrualOn = input.workAccrual !== false;
+    let accrued = 0; // pärast pensioniiga töötamisest lisandunud riiklik pension (€ aastas, enne kordajat)
+    const stateGross = () => (input.p1Monthly * 12 + accrued) * coef;
+    const allowanceAt = (age) => (taxOn ? (age >= pa ? ALLOW_PENSION : ALLOW_GENERAL) : 0);
+    const stateTaxOf = (grossYear, age) => (taxOn ? INCOME_TAX * Math.max(0, grossYear - allowanceAt(age)) : 0);
     const p3Reduced = p3ReducedAge(input);
     const gross = (input.grossMonthly || 0) * 12;
 
@@ -94,6 +125,12 @@
     for (let age = currentAge; age <= MAX_AGE; age++) {
       const working = age < workUntil;
       const moneyStart = ii.bal + iii.bal + tkf + dep;
+      // Riiklik pension sel aastal: enne ja pärast tulumaksu. Kasutamata maksuvaba tulu (pensionieast) läheb 10% väljamaksetele.
+      const i1g = age >= stateStart ? stateGross() : 0;
+      const tax1 = stateTaxOf(i1g, age);
+      const i1 = i1g - tax1;
+      let allowLeft = taxOn && age >= pa ? Math.max(0, allowanceAt(age) - i1g) : 0;
+      const iiContributing = working && !iiStopped && input.p2Rate > 0;
       // 1) sissemaksed töötamise ajal
       if (working) {
         if (!iiStopped && input.p2Rate > 0) {
@@ -110,7 +147,10 @@
       for (const [p, name] of [[ii, 'ii'], [iii, 'iii']]) {
         if (p.plan.method === 'lump' && age === p.start && p.bal > 0) {
           const t = name === 'iii' && age < p3Reduced ? TAX_EARLY : TAX_REDUCED;
-          taxTotal += p.bal * t; dep += p.bal * (1 - t); p.bal = 0;
+          const free = t === TAX_REDUCED ? Math.min(allowLeft, p.bal) : 0;
+          allowLeft -= free;
+          const tax = t * (p.bal - free);
+          taxTotal += tax; dep += p.bal - tax; p.bal = 0;
           if (name === 'ii' && !iiStopped) { iiStopped = true; iiStoppedAge = age; }
         }
       }
@@ -121,7 +161,6 @@
       const s3tax = age < p3Reduced ? s3gross * TAX_EARLY : 0;
       const s3 = s3gross - s3tax; taxTotal += s3tax;
       if (s2 > 0 && !iiStopped) { iiStopped = true; iiStoppedAge = age; }
-      const i1 = age >= stateStart ? stateYear : 0;
       const income = i1 + s2 + s3;
 
       let fromDep = 0, fromTkf = 0, extra2 = 0, extra3 = 0, shortfall = 0, need = 0;
@@ -140,13 +179,18 @@
             fromTkf = g * netPerGross; gap -= fromTkf;
           }
           if (gap > 0 && iii.bal > 0) {
-            const t = age < p3Reduced ? TAX_EARLY : TAX_REDUCED;
-            const g = Math.min(iii.bal, gap / (1 - t));
-            iii.bal -= g; taxTotal += g * t; extra3 = g * (1 - t); gap -= extra3;
+            if (age < p3Reduced) {
+              const g = Math.min(iii.bal, gap / (1 - TAX_EARLY));
+              iii.bal -= g; taxTotal += g * TAX_EARLY; extra3 = g * (1 - TAX_EARLY);
+            } else {
+              const g = Math.min(iii.bal, grossForNet(gap, allowLeft));
+              extra3 = netReduced(g, allowLeft); iii.bal -= g; taxTotal += g - extra3; allowLeft = Math.max(0, allowLeft - g);
+            }
+            gap -= extra3;
           }
           if (gap > 0 && ii.bal > 0 && age >= II_MIN_AGE) {
-            const g = Math.min(ii.bal, gap / (1 - TAX_REDUCED));
-            ii.bal -= g; taxTotal += g * TAX_REDUCED; extra2 = g * (1 - TAX_REDUCED); gap -= extra2;
+            const g = Math.min(ii.bal, grossForNet(gap, allowLeft));
+            extra2 = netReduced(g, allowLeft); ii.bal -= g; taxTotal += g - extra2; allowLeft = Math.max(0, allowLeft - g); gap -= extra2;
             if (!iiStopped) { iiStopped = true; iiStoppedAge = age; }
           }
           shortfall = Math.max(0, gap);
@@ -156,12 +200,16 @@
       }
       // 4) kasv
       ii.bal *= 1 + r; iii.bal *= 1 + r; tkf *= 1 + r; dep *= 1 + rd;
+      // 5) pensioniea järel töötatud aasta tõstab riiklikku pensioni järgmisest aastast (ümberarvutus 1. aprillist)
+      if (accrualOn && working && age >= pa) accrued += 12 * workAccrual(input.grossMonthly || 0, iiContributing, input.p2Rate > 0);
       rows.push({
         age: age,
         year: input.birthYear + age,
         working: working,
         need: need / 12,
-        i1: i1 / 12,
+        i1: i1 / 12, // riiklik pension pärast tulumaksu
+        i1g: i1g / 12, // enne tulumaksu
+        tax1: tax1 / 12,
         i23: (s2 + s3 + extra2 + extra3) / 12,
         sav: (fromDep + fromTkf) / 12,
         shortfall: shortfall / 12,
@@ -194,7 +242,8 @@
       horizonAge: horizon,
       lastsUntil: short ? short.age : null, // null = jätkub kuni 100
       aliveBeyond: short ? short.alive : 0,
-      stateAfter: short ? stateYear / 12 : null, // riiklik pension kuus (ka siis, kui see algab alles hiljem)
+      // riiklik pension kuus pärast tulumaksu (ka siis, kui see algab alles hiljem)
+      stateAfter: short ? (rows.find((x) => x.age >= short.age && x.i1g > 0) || { i1: 0 }).i1 : null,
       gapEnd: gapEnd,
       gapTemporary: gapTemporary,
       needAfter: short ? short.need : null,
@@ -202,6 +251,9 @@
       inheritance90: r90.moneyLeft,
       tax90: r90.taxToDate,
       stateSupport: stateSupport,
+      stateGrossStart: (rows.find((x) => x.i1g > 0) || { i1g: 0 }).i1g, // riiklik pension alguses kuus, enne maksu
+      stateGrossEnd: rows[rows.length - 1].i1g, // ja lõpus (pärast töötamise lisandumist)
+      stateTax90: rows.filter((x) => x.age <= 90).reduce((a, x) => a + x.tax1 * 12, 0),
       refundTotal: refundTotal,
       iiStoppedAge: iiStoppedAge,
     };
@@ -242,7 +294,7 @@
     ];
   }
 
-  const api = { CURRENT_YEAR, STATE_COEF, pensionAge, survival, horizonAge, fundPensionTerm, p3ReducedAge, needAt, simulate, sustainableNeed, payoutStart, presets };
+  const api = { CURRENT_YEAR, STATE_COEF, INCOME_TAX, ALLOW_PENSION, ALLOW_GENERAL, AASTAHINNE, AVG_WAGE, MIN_WAGE, workAccrual, pensionAge, survival, horizonAge, fundPensionTerm, p3ReducedAge, needAt, simulate, sustainableNeed, payoutStart, presets };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Pension = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -5,7 +5,7 @@
 
   const COLORS = { i1: '#002f63', i23: '#00aeea', sav: '#9fd8f0', short: '#db2200', need: '#db2200', alive: '#6b7074', money: '#006ce6', grid: '#e0e6ec', work: '#f5f7f9' };
   const SERIES = [
-    ['i1', 'Riiklik pension (I sammas)'],
+    ['i1', 'Riiklik pension (I sammas, pärast tulumaksu)'],
     ['i23', 'II ja III sammas'],
     ['sav', 'Säästudest (hoius, kogumisfond, korraga välja võetud raha)'],
     ['short', 'Puudu'],

@@ -34,7 +34,9 @@ for (const { label, input } of personas) {
     check(near(row(s, pa).moneyLeft, ref, 0.01), label + '/' + id + ': vara pensionieas ' + row(s, pa).moneyLeft.toFixed(0) + ', õige ' + ref.toFixed(0));
   }
   const a = E.simulate(input, T, SC.A);
-  check(near(row(a, pa).moneyLeft, ref * 0.9, 0.01), label + '/A: korraga välja = 90% varast');
+  // Korraga välja: 10% maks, millest lahutub pensioniea aasta kasutamata maksuvaba tulu (776 € kuus miinus pension).
+  const free = Math.min(ref, Math.max(0, 9312 - input.p1Monthly * 12));
+  check(near(row(a, pa).moneyLeft, ref - 0.1 * (ref - free), 0.01), label + '/A: korraga välja = vara − 10% maks (maksuvaba osaga)');
 }
 
 // 2. Rahavoogude tasakaal pensionieast (tootlus ja hoius 0%): raha muutus = riiklik pension − kulutus − maks, kus 0 ≤ maks ≤ sambast võetu / 9.
@@ -97,7 +99,7 @@ for (const { label, input } of personas.filter((_, k) => k % 4 === 0)) {
 
 // 6b. Hoius kaotab vaikimisi 1% aastas (sama mis kalkulaatoris).
 {
-  const input = { birthYear: 1961, sex: 'N', p1Monthly: 0, p2: 10000, p3: 0, p3Before2021: true, needMonthly: 0, realReturn: 0 };
+  const input = { birthYear: 1961, sex: 'N', p1Monthly: 0, p2: 10000, p3: 0, p3Before2021: true, needMonthly: 0, realReturn: 0, incomeTax: false };
   const s = E.simulate(input, T, SC.A);
   check(near(row(s, 66).moneyLeft, 9000 * 0.99, 0.01), 'hoius −1%: ' + row(s, 66).moneyLeft.toFixed(2));
   const z = E.simulate({ ...input, depositReturn: 0 }, T, SC.A);

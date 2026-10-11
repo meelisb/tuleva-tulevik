@@ -26,7 +26,7 @@ assert.ok(P.pensionAge(1970).label.startsWith('u '));
 
 // Riiklik pension 2 aastat hiljem on 16,88% suurem ja enne seda null.
 const c = P.simulate(base, table, Cx);
-assert.ok(Math.abs(c.rows.find((x) => x.age === 70).i1 - 900 * 1.1688) < 0.01);
+assert.ok(Math.abs(c.rows.find((x) => x.age === 70).i1g - 900 * 1.1688) < 0.01);
 assert.strictEqual(c.rows.find((x) => x.age === 65).i1, 0);
 
 // Väike vajadus: ühe lepinguga (B) lõpeb samba raha perioodi lõpus, igal aastal uuendades (D) mitte.
@@ -83,7 +83,7 @@ for (const s of [A, B, Cx, D]) {
 // Edasilükkamine töötab ka teiste stsenaariumitega (vaikimisi 0, senised tulemused samad).
 const a2 = P.simulate(base, table, { ...A, deferral: 2 });
 assert.strictEqual(a2.rows.find((x) => x.age === 66).i1, 0);
-assert.ok(Math.abs(a2.rows.find((x) => x.age === 70).i1 - 900 * 1.1688) < 0.01);
+assert.ok(Math.abs(a2.rows.find((x) => x.age === 70).i1g - 900 * 1.1688) < 0.01);
 
 // Eraldi III sammas: sama väljamakse viis kui II sambal annab sama tulemuse kui ühine pott.
 {
@@ -98,6 +98,29 @@ assert.ok(Math.abs(a2.rows.find((x) => x.age === 70).i1 - 900 * 1.1688) < 0.01);
   // III fondipensionina toob igal aastal sissetulekut.
   const f = P.simulate({ ...base, p3: 0, p3Sep: { amount: base.p3, mode: 'fund' } }, table, A);
   assert.ok(f.rows.find((x) => x.age === 66).i23 > 0);
+}
+
+// ---- Tulumaks pensionieas (EMTA 2026): 22%, pensionäri maksuvaba tulu 776 € kuus (9312 € aastas) ----
+{
+  const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-6, msg + ': ' + a + ' vs ' + b);
+  const tb = { ...base, realReturn: 0, p2: 100000, p3: 0, needMonthly: 1, depositReturn: 0 };
+  const rowOf = (s, age) => s.rows.find((x) => x.age === age);
+  const E = { id: 'E' };
+  // Riiklik pension: 22% ainult 776 € ületavalt osalt; alla 776 € maksu pole; väljalülitus.
+  const s = P.simulate({ ...tb, p1Monthly: 1000 }, table, B);
+  near(rowOf(s, 65).i1g, 1000, 'bruto pension'); near(rowOf(s, 65).tax1, 0.22 * 224, 'tulumaks pensionilt');
+  near(rowOf(P.simulate({ ...tb, p1Monthly: 700 }, table, B), 65).i1, 700, 'madal pension jääb tervelt kätte');
+  near(rowOf(P.simulate({ ...tb, p1Monthly: 1000, incomeTax: false }, table, B), 65).i1, 1000, 'incomeTax=false');
+  // Kasutamata maksuvaba tulu (pension 500 € → 3312 € aastas) vähendab 10% lisaväljamakse maksu.
+  const on = P.simulate({ ...tb, p1Monthly: 500, needMonthly: 1000 }, table, E);
+  near(rowOf(on, 66).moneyLeft, 100000 - (6000 - 0.1 * 3312) / 0.9, 'lisaväljamakse maksuvaba osaga');
+  // Edasilükkamise aastatel on kogu maksuvaba tulu 10% väljamaksetele.
+  const d = P.simulate({ ...tb, p1Monthly: 1000, needMonthly: 1000 }, table, { id: 'E', deferral: 2 });
+  near(rowOf(d, 66).moneyLeft, 100000 - (12000 - 0.1 * 9312) / 0.9, 'edasilükkamise ajal terve maksuvaba tulu');
+  // Ühekordne väljavõtt (A): 10% maks, millest lahutub pensioniea aasta kasutamata maksuvaba tulu.
+  near(rowOf(P.simulate({ ...tb, p1Monthly: 500, p2: 10000 }, table, A), 65).moneyLeft, 10000 - 0.1 * (10000 - 3312), 'ühekordne väljavõtt');
+  // Fondipension on maksuvaba.
+  near(rowOf(s, 70).i2, rowOf(P.simulate({ ...tb, p1Monthly: 1000, incomeTax: false }, table, B), 70).i2, 'fondipension tulumaksuta');
 }
 
 console.log('OK');

@@ -16,8 +16,10 @@ const lasts = (s) => (s.lastsUntil === null ? 101 : s.lastsUntil);
 const plan = (m2, m3, s2, s3, offset = 0) => ({ stateOffset: offset, p2: { method: m2, start: s2 }, p3: { method: m3, start: s3 } });
 
 // Lihtne alus käsitsi arvutamiseks: tootlus 0%, hoius 0%, juba pensioniealine (sündinud 1961, 65-aastane).
+// Tulumaks ja töötamise mõju pensionile on siin välja lülitatud; neid testivad juhtumid 1n–1t.
 const zero = { birthYear: 1961, sex: 'N', pensionAgeYears: 65, workUntil: 65, p1Monthly: 900, p2: 0, p3: 0, tkf: 0, savings: 0,
-  p3Before2021: false, grossMonthly: 0, p2Rate: 0, p3Monthly: 0, tkfMonthly: 0, needMonthly: 1000, realReturn: 0, depositReturn: 0, care: { on: false } };
+  p3Before2021: false, grossMonthly: 0, p2Rate: 0, p3Monthly: 0, tkfMonthly: 0, needMonthly: 1000, realReturn: 0, depositReturn: 0, care: { on: false },
+  incomeTax: false, workAccrual: false };
 
 // ---------- 1. Käsitsi arvutatud juhtumid ----------
 
@@ -114,6 +116,62 @@ const zero = { birthYear: 1961, sex: 'N', pensionAgeYears: 65, workUntil: 65, p1
 {
   const s = P.simulate({ ...zero, p1Monthly: 5000, care: { on: true, fromAge: 85, monthly: 1603, replaces: 400 } }, T, plan('keep', 'keep', 65, 65));
   check(row(s, 84).need === 1000 && near(row(s, 85).need, 2203), '1m: hooldekodu vajadus 85-aastaselt');
+}
+
+// 1n. Tulumaks riiklikult pensionilt: 22% osalt, mis ületab maksuvaba tulu (pensioniealisel 776 €, nooremal 700 € kuus).
+const taxed = { ...zero, incomeTax: true };
+{
+  const s = P.simulate({ ...taxed, p1Monthly: 1000 }, T, plan('keep', 'keep', 65, 65));
+  check(near(row(s, 65).i1g, 1000) && near(row(s, 65).tax1, 0.22 * 224) && near(row(s, 65).i1, 1000 - 0.22 * 224), '1n: 1000 € pension → ' + row(s, 65).i1.toFixed(2) + ' € kätte');
+  const lo = P.simulate({ ...taxed, p1Monthly: 700 }, T, plan('keep', 'keep', 65, 65));
+  check(near(row(lo, 65).tax1, 0) && near(row(lo, 65).i1, 700), '1n: alla 776 € pensionilt maksu pole');
+  const early = P.simulate({ ...taxed, birthYear: 1966, workUntil: 64 }, T, plan('keep', 'keep', 65, 65, -1));
+  const g = 900 * (1 - 0.0717);
+  check(near(row(early, 64).tax1, 0.22 * (g - 700)), '1n: enne pensioniiga makstud pensionilt maksuvaba tulu 700 €');
+  check(near(s.stateAfter || row(s, 65).i1, row(s, 65).i1), '1n: „pärast seda“ on pension pärast maksu');
+}
+// 1o. Kasutamata maksuvaba tulu vähendab 10% lisaväljamakse maksu: pension 500 € → 3312 € aastas vaba.
+{
+  const s = P.simulate({ ...taxed, p1Monthly: 500, p2: 100000, needMonthly: 1000 }, T, plan('keep', 'keep', 65, 65));
+  const gross = (6000 - 0.1 * 3312) / 0.9;
+  check(near(row(s, 65).taxToDate, gross - 6000) && near(row(s, 66).moneyLeft, 100000 - gross), '1o: II lisaväljamakse maks ' + row(s, 65).taxToDate.toFixed(2));
+  const hi = P.simulate({ ...taxed, p1Monthly: 900, p2: 100000, needMonthly: 1500 }, T, plan('keep', 'keep', 65, 65));
+  const gap = 1500 * 12 - (900 - 0.22 * 124) * 12;
+  check(near(row(hi, 65).taxToDate, gap / 0.9 * 0.1), '1o: pension üle 776 €: lisaväljamakse 10% kogu summalt');
+}
+// 1p. Ühekordne väljavõtt pensioniea aastal: 10% maks, millest lahutub kasutamata maksuvaba tulu.
+{
+  const s = P.simulate({ ...taxed, p1Monthly: 500, p2: 10000, needMonthly: 0 }, T, plan('lump', 'keep', 65, 65));
+  check(near(row(s, 65).taxToDate, 0.1 * (10000 - 3312)), '1p: korraga väljavõtu maks ' + row(s, 65).taxToDate.toFixed(2));
+}
+// 1q. Fondipension on maksuvaba ega kasuta maksuvaba tulu.
+{
+  const on = P.simulate({ ...taxed, p1Monthly: 1000, p2: 30000, needMonthly: 0 }, T, plan('fund', 'keep', 65, 65));
+  const off = P.simulate({ ...zero, p1Monthly: 1000, p2: 30000, needMonthly: 0 }, T, plan('fund', 'keep', 65, 65));
+  check(near(row(on, 70).i23, row(off, 70).i23) && near(on.tax90, 0), '1q: fondipension tulumaksuta');
+}
+// 1r. Töötamine pärast pensioniiga tõstab riiklikku pensioni järgmisest aastast (RPKS § 25, ühendosa § 12 ja § 13¹).
+//     2000 € palk, II sambaga liitunud ja sissemaksed käivad: (0,8 × 2000/2092 + 0,8) / 2 × 10,477 € kuus aastas.
+const acc = { ...zero, workAccrual: true, birthYear: 1961, workUntil: 68, grossMonthly: 2000, p2Rate: 0.02 };
+{
+  const d = (0.8 * 2000 / 2092 + 0.8) / 2 * 10.477;
+  check(near(P.workAccrual(2000, true, true), d, 1e-9), '1r: ühe tööaasta lisa ' + d.toFixed(3) + ' € kuus');
+  const s = P.simulate(acc, T, plan('keep', 'keep', 68, 68));
+  check(near(row(s, 65).i1g, 900) && near(row(s, 66).i1g, 900 + d) && near(row(s, 68).i1g, 900 + 3 * d) && near(row(s, 75).i1g, 900 + 3 * d), '1r: pension 65/66/68/75: ' + [65, 66, 68, 75].map((a) => row(s, a).i1g.toFixed(2)).join(' / '));
+  // Edasilükkamisel rakendub kordaja kogu pensionile, ka töötatud aastate lisale (RPKS § 11¹ lg 4).
+  const def = P.simulate(acc, T, plan('keep', 'keep', 68, 68, 2));
+  check(near(row(def, 67).i1g, (900 + 2 * d) * 1.1688), '1r: edasilükatud pension koos lisaga × 1,1688');
+  // Ilma II sambata: 20% riiklikku kindlustusse, solidaarosak kuni 1,0.
+  check(near(P.workAccrual(2000, false, false), (2000 / 2092 + 1) / 2 * 10.477, 1e-9), '1r: ilma II sambata suurem lisa');
+  // Töö lõpeb pensionieas: lisa ei teki.
+  const no = P.simulate({ ...acc, workUntil: 65 }, T, plan('keep', 'keep', 65, 65));
+  check(near(row(no, 80).i1g, 900), '1r: töö lõpeb pensionieas → pension ei muutu');
+}
+// 1s. Kui II samba väljamakse algab töötamise ajal, lõpevad II sissemaksed ja 20% läheb riiklikku kindlustusse.
+{
+  const s = P.simulate(acc, T, plan('renew', 'keep', 65, 68));
+  const d1 = (0.8 * 2000 / 2092 + 0.8) / 2 * 10.477, d2 = (2000 / 2092 + 0.8) / 2 * 10.477;
+  check(near(row(s, 66).i1g, 900 + d1) && near(row(s, 67).i1g, 900 + d1 + d2), '1s: II väljamakse järel suurem lisa (solidaarosak jääb kuni 0,8)');
 }
 
 // ---------- 2. Rahavoogude tasakaal (tootlus 0%) ----------
@@ -217,7 +275,8 @@ for (const { label, input } of personas) {
   const covered = sC.rows.filter((r) => !r.working).every((r) => r.i1 >= r.need);
   if (covered) check(near(sC.tax90, 0) && near(sB.tax90, 0), label + ': riiklik pension katab vajaduse → B ja C maksuvabad');
   // Ühekordne maks on vähemalt 10% II sambast (+ III).
-  check(sA.tax90 >= 0.1 * input.p2 - 0.01, label + ': kõik korraga maks ≥ 10% II sambast');
+  // Ühekordne maks on vähemalt 10% II sambast, millest on maha arvatud pensioniea aasta maksuvaba tulu (kuni 9312 €).
+  check(sA.tax90 >= 0.1 * Math.max(0, input.p2 - 9312) - 0.01, label + ': kõik korraga maks ≥ 10% (II sammas − maksuvaba tulu)');
   // Riigi tugi: valmisstrateegiad ei alusta II sambast enne töö lõppu, seega riigi 4% ei kao.
   for (const pl of [A, B, C, D]) {
     const s = sim(pl);
@@ -231,7 +290,8 @@ for (const { label, input } of personas) {
     check(row(sC, 100).i23 > 0, label + ': C makse jätkub 100-aastaselt');
   }
   // Riiklik pension üksi: kui töötad vähemalt pensionieani, katab jätkusuutlik kulu vähemalt riikliku pensioni.
-  if (input.workUntil >= 65) check(L(input, C) >= input.p1Monthly - 10, label + ': jätkusuutlik kulu ≥ riiklik pension');
+  const p1net = input.p1Monthly - 0.22 * Math.max(0, input.p1Monthly - 776);
+  if (input.workUntil >= 65) check(L(input, C) >= p1net - 10, label + ': jätkusuutlik kulu ≥ riiklik pension pärast maksu');
   // Ülempiir: jätkusuutlik kulu ei saa ületada riiklikku pensioni + kogu raha, kui see kasvaks 4% aastas ja kuluks horisondini.
   const years = sC.horizonAge - Math.max(cur, input.workUntil) + 1;
   const contrib = Math.max(0, input.workUntil - cur) * 12 * (input.grossMonthly * (input.p2Rate + 0.04) + input.p3Monthly * 1.22 + input.tkfMonthly);

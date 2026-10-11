@@ -154,13 +154,24 @@
       s2opts.map((a) => '<option value="' + a + '"' + (a === plan.p2.start ? ' selected' : '') + '>' + a + '-aastaselt (' + (by + a) + ')</option>').join('') + '</select>' +
       (losing ? '<p class="warn mt-2 mb-0"><strong>Riigi tugi kaob.</strong> Töötad ' + input.workUntil + '-aastaseni. Kui alustad II sambast ' + plan.p2.start + '-aastaselt, lõpevad II samba sissemaksed, ka riigi 4%: umbes ' + eur(input.grossMonthly * 12 * 0.04) + ' aastas.</p>' :
         '<p class="small text-secondary mt-2 mb-0">II samba esimese väljamaksega lõpevad II samba sissemaksed, ka riigi 4%. Kui töötad edasi, tasub II sambast alustada pärast töötamist.</p>') + '</section>';
+    // Riiklik pension pärast tulumaksu (enne pensioniiga makstud pensionile kehtib üldine maksuvaba tulu).
+    const netState = (g, early) => g - P.INCOME_TAX * Math.max(0, g - (early ? P.ALLOW_GENERAL : P.ALLOW_PENSION) / 12);
+    const workAfter = Math.max(0, input.workUntil - Math.max(pa, cur));
+    const accrualPerYear = P.workAccrual(input.grossMonthly, input.p2Rate > 0, input.p2Rate > 0);
     const offs = []; for (let k = -5; k <= 5; k++) if (k === 0 || pa + k >= cur) offs.push(k);
     const i1 = '<section class="decision" aria-labelledby="d1"><h3 class="h6 mb-1" id="d1">Riiklik pension (I sammas)</h3>' +
       '<p class="window">Ajaaken: kuni 5 aastat enne vanaduspensioniiga (' + (pa - 5) + '-aastaselt) või ükskõik millal hiljem.</p>' +
       '<p class="small mb-2">Riiklik pension ehk I sammas on Sotsiaalkindlustusameti makstav vanaduspension. Vanaduspensioniealt (' + pa + ') saad selle ilma vähendamise ja suurendamiseta. Varem või hiljem võtmist nimetab Sotsiaalkindlustusamet <strong>paindlikuks pensioniks</strong>: varem väheneb ja hiljem suureneb pension eluks ajaks.</p>' +
       '<label class="form-label" for="s1">Alustan</label><select class="form-select" id="s1">' +
-      offs.map((k) => '<option value="' + k + '"' + (k === plan.stateOffset ? ' selected' : '') + '>' + (pa + k) + '-aastaselt (' + (by + pa + k) + ') · ' + (k === 0 ? 'õigel ajal' : sgnPct(P.STATE_COEF[String(k)])) + ' · ' + eur(input.p1Monthly * (1 + P.STATE_COEF[String(k)])) + ' kuus</option>').join('') + '</select>' +
-      '<p class="small text-secondary mt-2 mb-0">Riiklik pension on ainus sissetulek, mis kestab elu lõpuni ja kasvab koos hindadega.</p></section>';
+      offs.map((k) => {
+        const g = input.p1Monthly * (1 + P.STATE_COEF[String(k)]);
+        return '<option value="' + k + '"' + (k === plan.stateOffset ? ' selected' : '') + '>' + (pa + k) + '-aastaselt (' + (by + pa + k) + ') · ' + (k === 0 ? 'õigel ajal' : sgnPct(P.STATE_COEF[String(k)])) + ' · ' + eur(netState(g, k < 0)) + ' kuus kätte</option>';
+      }).join('') + '</select>' +
+      (() => { const g = input.p1Monthly * (1 + P.STATE_COEF[String(plan.stateOffset)]), n = netState(g, plan.stateOffset < 0);
+        return '<p class="small mt-2 mb-0">Valitud: ' + eur(g) + ' kuus enne tulumaksu, tulumaks ' + eur(g - n) + ', kätte ' + eur(n) + '.</p>'; })() +
+      '<p class="small text-secondary mt-1 mb-0">Tulumaks on 22% osalt, mis ületab maksuvaba tulu: pensionieast 776 € kuus, enne seda 700 € (EMTA, 2026). Riiklik pension on ainus sissetulek, mis kestab elu lõpuni ja kasvab koos hindadega.</p>' +
+      (workAfter > 0 ? '<p class="small mt-2 mb-0"><strong>Töötad pärast pensioniiga ' + workAfter + (workAfter === 1 ? ' aasta' : ' aastat') + '.</strong> See tõstab riiklikku pensioni umbes ' + eur(workAfter * accrualPerYear) + ' kuus enne maksu (' + eur(accrualPerYear) + ' iga tööaasta eest, ümberarvutus 1. aprillist). Kui lükkad pensioni edasi, suureneb ka see lisa.</p>' : '') +
+      '</section>';
     $('decisions').innerHTML = iii + ii + i1 + '<p class="small-muted mt-2 mb-0">Kogumisfondi ja hoiust kasutame vajadusel enne sambaid.</p>';
 
     document.querySelectorAll('input[name=m3]').forEach((r) => r.addEventListener('change', () => { state.plan.p3.method = r.value; refreshDecisions(r); }));
@@ -200,7 +211,7 @@
       h += '<p class="mb-1">' + why + ' Alates ' + (r.gapEnd + 1) + '-aastaselt katab sissetulek vajaduse jälle. Auk tuleb katta säästudest või töötada kauem.</p>';
     } else if (r.lastsUntil !== null) {
       const cover = r.needAfter > 0 ? Math.round(r.stateAfter / r.needAfter * 100) : 0;
-      h += '<p class="mb-1">Pärast seda jääb riiklik pension ' + eur(r.stateAfter) + ' kuus, mis katab ' + cover + '% sinu vajadusest (' + eur(r.needAfter) + '). Tõenäosus, et elad kauem kui ' + r.lastsUntil + '-aastaseks: ' + pct(r.aliveBeyond) + '.</p>';
+      h += '<p class="mb-1">Pärast seda jääb riiklik pension ' + eur(r.stateAfter) + ' kuus pärast tulumaksu, mis katab ' + cover + '% sinu vajadusest (' + eur(r.needAfter) + '). Tõenäosus, et elad kauem kui ' + r.lastsUntil + '-aastaseks: ' + pct(r.aliveBeyond) + '.</p>';
     }
     // Otsuse hind: kõigis variantides kulutad sama palju, seega rohkem alles = parem.
     const retired = r.rows.filter((x) => !x.working);
@@ -222,7 +233,7 @@
   function renderMetrics(r) {
     const tiles = [
       [r.lastsUntil === null ? '100+' : r.lastsUntil + ' a', 'raha jätkub kuni'],
-      [r.lastsUntil === null ? '–' : eur(r.stateAfter), r.gapTemporary ? 'riiklik pension kuus alates ' + r.stateStart + ' a' : 'kuus pärast seda (ainult riiklik pension)'],
+      [r.lastsUntil === null ? '–' : eur(r.stateAfter), r.gapTemporary ? 'riiklik pension kuus alates ' + r.stateStart + ' a' : 'kuus pärast seda (ainult riiklik pension, pärast tulumaksu)'],
       [eur(r.inheritance90), 'jääb pärandiks, kui elad 90-aastaseks'],
       [eur(r.tax90), 'tulumaks sammaste väljamaksetelt kuni 90'],
       [eur(r.stateSupport), 'riigi tugi sissemaksetele (II samba 4%, III samba tagastus)'],

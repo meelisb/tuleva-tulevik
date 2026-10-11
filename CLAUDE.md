@@ -29,7 +29,8 @@ Juhend AI-agendile ja tiimiliikmele, kes seda repot jätkab. Kõik projekti kont
 - II samba esimene väljamakse lõpetab II samba sissemaksed, ka riigi 4% (kalkulaatoris modelleeritud).
 - Kaks mootorit: `kalkulaator/pension.js` ja `elukaar/pension.js` (viimane on esimese varasema versiooni edasiarendus). `tests/elukaar.scenarios.test.js` kontrollib, et samade sisenditega annavad mõlemad **sama tulemuse**. Kui muudad ühise loogika ühes mootoris, muuda ka teises või muuda ristkontrolli teadlikult.
 - Kulutasemed ja nimed (kokkuhoidlik, optimaalne, mugav) tulevad ainult failist `data/kulud.js`, mõlemas prototüübis samad. Ära lisa käsitsi „lisasid“ ilma allikata.
-- Lihtsustused (README „Eeldused“): riikliku pensioni tulumaks puudub, palga ja pensioni reaalkasv puudub, töö pärast pensioniiga pensioni ei tõsta.
+- Riiklik pension: sisend on enne tulumaksu, ridadel `i1` pärast maksu, `i1g` enne, `tax1` maks. Tulumaks ja maksuvaba tulu (776 € / 700 €) ning selle kasutamine 10% väljamaksetel on mõlemas mootoris sama loogikaga; väljalülitus `incomeTax: false`. Kalkulaatoris tõstab pensioniea järel töötamine pensioni (`workAccrual`, väljalülitus `workAccrual: false`). Konstandid ja allikad: README „Eeldused“.
+- Lihtsustused (README „Eeldused“): palga ja pensioni reaalkasv puudub.
 
 ## Andmed ja skriptid
 

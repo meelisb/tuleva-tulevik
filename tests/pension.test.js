@@ -19,10 +19,10 @@ assert.ok(Math.abs(P.survival(table, 'M', 65, 81) - 0.51) < 0.01);
 
 // Riiklik pension: varem −7,17% (1 a), hiljem +16,88% (2 a), algab õigel ajal.
 const early = P.simulate(base, table, plan('renew', 'renew', -1));
-assert.ok(Math.abs(early.rows.find((x) => x.age === 64).i1 - 900 * (1 - 0.0717)) < 0.01);
+assert.ok(Math.abs(early.rows.find((x) => x.age === 64).i1g - 900 * (1 - 0.0717)) < 0.01);
 const late = P.simulate(base, table, plan('renew', 'renew', 2));
-assert.strictEqual(late.rows.find((x) => x.age === 66).i1, 0);
-assert.ok(Math.abs(late.rows.find((x) => x.age === 67).i1 - 900 * 1.1688) < 0.01);
+assert.strictEqual(late.rows.find((x) => x.age === 66).i1g, 0);
+assert.ok(Math.abs(late.rows.find((x) => x.age === 67).i1g - 900 * 1.1688) < 0.01);
 
 // Põhimõte 1: II samba esimene väljamakse lõpetab riigi toe. Töötad 68-ni: kui alustad II sambast 65-aastaselt, kaob 3 aasta 4%.
 const w = { ...base, workUntil: 68 };

@@ -73,11 +73,15 @@ Kõik arvutustestid: `npm test`.
 
 Summad on tänases rahas. Edasilükkamise tõusud on SKA 2026 keskmised. Kindlustuslepingut (annuiteeti) ei arvestata.
 
-**Lihtsustused (mõlemas prototüübis):**
+**Tulumaks (mõlemas prototüübis, EMTA 2026):** riiklikult pensionilt 22% osalt, mis ületab maksuvaba tulu (pensionieast 776 € kuus, kalkulaatoris enne pensioniiga makstud pensionilt 700 € kuus). Kasutamata maksuvaba tulu vähendab sama aasta 10% maksuga sambaväljamaksete (korraga või osaliselt) maksu. Maksuvaba fondipension (elada jäänud aastate periood) maksuvaba tulu ei kasuta. Sisestatav riiklik pension on enne tulumaksu (SKA kalkulaatori väljund), graafik näitab summat pärast maksu.
 
-- Riiklikult pensionilt tulumaksu ei arvestata (ka pensionäri maksuvaba tulu mitte).
-- Palk ja riiklik pension reaalselt ei kasva: mõlemad on kogu aeg tänases rahas sama suured.
-- Pensioniea järel töötamine riiklikku pensioni ei suurenda.
+**Töötamine pärast pensioniiga (kalkulaatoris):** iga tööaasta tõstab riiklikku pensioni järgmisest aastast (ümberarvutus 1. aprillist, RPKS § 25): (kindlustusosak + solidaarosak) / 2 × aastahinne 10,477 € (SKA, alates 1.04.2026). Kindlustusosak = palk / keskmine brutokuupalk 2 092 € (Statistikaamet PA103, 2025), II sambaga liitunul ja sissemaksete ajal 80% sellest; solidaarosak = palk / töötasu alammäär 946 €, kuni 1,0 (II sambaga liitunul kuni 0,8) (RPKS § 12, § 13¹). Edasilükkamisel rakendub kordaja kogu pensionile, ka sellele lisale (RPKS § 11¹ lg 4). SKA prognoosi sisestamisel vali „Vanaduspension“ (pensioniea seis), siis ei arvestata töötamist topelt. Elukaares töötamist pärast pensioniiga ei modelleerita.
+
+**Lihtsustused:**
+
+- Palk ja riiklik pension reaalselt ei kasva: mõlemad on kogu aeg tänases rahas sama suured (ka maksuvaba tulu 776 € ja aastahinne).
+- Keskmine palk on 2025. aasta oma; tegelik kindlustusosak arvutatakse sama aasta keskmise sotsiaalmaksu järgi.
+- Maksuvaba tulu enne pensioniiga 10% väljamaksetele ei rakendata (konservatiivne).
 
 - Kalkulaator: sissemaksed jätkuvad töötamise lõpuni, hoiuse intress jääb vaikimisi inflatsioonist 1% maha, III samba tulumaksutagastus on arvestatud.
 - Elukaar: väljamaksed algavad pensionieas, hoiuse intress jääb inflatsioonist 1% maha (nagu kalkulaatoris), III samba tulumaksutagastust ei arvestata.

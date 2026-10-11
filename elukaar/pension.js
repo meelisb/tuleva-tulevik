@@ -18,6 +18,14 @@
   const DEFERRAL_INCREASE = { 0: 0, 1: 0.0793, 2: 0.1688, 3: 0.2701, 4: 0.385, 5: 0.5157 };
 
   const TAX_SHORT = 0.10; // ühekordne, osaline ja lühike fondipension pensioniea lähedal
+  // Tulumaks pensionieas (EMTA 2026): 22%; vanaduspensioniealisel maksuvaba tulu 776 € kuus (9312 € aastas), mis ei sõltu tulust.
+  // SKA arvestab selle riiklikult pensionilt, kasutamata osa rakendab Pensionikeskus 10% maksuga väljamaksetele.
+  // Maksuvaba (elada jäänud aastate) fondipension maksuvaba tulu ei kasuta. Tänastes eurodes. Väljalülitus: input.incomeTax = false.
+  // Sama loogika on kalkulaatori mootoris (ristkontroll: tests/elukaar.scenarios.test.js).
+  const INCOME_TAX = 0.22;
+  const PENSIONER_ALLOWANCE = 776 * 12;
+  const netTenPercent = (gross, allow) => gross - TAX_SHORT * Math.max(0, gross - allow);
+  const grossForNet = (net, allow) => (net <= allow ? net : (net - TAX_SHORT * allow) / (1 - TAX_SHORT));
 
   // Pensioniiga kalendriaasta järgi. 2028 ja 2029 on eelnõud; hilisemad on teadmata (ligikaudne).
   function pensionAge(birthYear) {
@@ -91,7 +99,9 @@
     const startAge = Math.max(currentAge, 55);
     const deferral = scenario.deferral || 0; // C: sild fondipensioniga; teised stsenaariumid võivad samuti edasi lükata
     const p1Start = pa + deferral;
-    const p1Year = input.p1Monthly * (1 + DEFERRAL_INCREASE[deferral]) * 12;
+    const p1Year = input.p1Monthly * (1 + DEFERRAL_INCREASE[deferral]) * 12; // enne tulumaksu
+    const taxOn = input.incomeTax !== false;
+    const allowance = taxOn ? PENSIONER_ALLOWANCE : 0;
     const needYear = need * 12;
 
     // Samba vara kasvab kuni kasutamiseni ja sinna lisanduvad sissemaksed.
@@ -106,8 +116,12 @@
 
     // Hoius pensioni alguses: varem sambast välja võetud ja kõrvale pandud raha (valikuline, vaikimisi 0).
     let deposit = input.extraDeposit || 0;
-    if (scenario.id === 'A') { deposit += fund * (1 - TAX_SHORT); fund = 0; }
-    if (sep && sep.mode === 'lump') { deposit += fund3 * (1 - TAX_SHORT); fund3 = 0; }
+    // Ühekordne väljavõtt pensioniea aastal: 10% tulumaks, millest saab maha arvata selle aasta kasutamata maksuvaba tulu.
+    const firstRetAge = Math.max(pa, startAge);
+    let allowAtPa = Math.max(0, allowance - (firstRetAge >= p1Start ? p1Year : 0));
+    const lumpNet = (gross) => { const free = Math.min(allowAtPa, gross); allowAtPa -= free; return gross - TAX_SHORT * (gross - free); };
+    if (scenario.id === 'A') { deposit += lumpNet(fund); fund = 0; }
+    if (sep && sep.mode === 'lump') { deposit += lumpNet(fund3); fund3 = 0; }
     // Ühe lepingu fondipension: periood määratakse lepingu sõlmimisel (pensionieas või kohe, kui oled sellest vanem).
     // C (paindlik pension) kasutab sillaks maksuvaba fondipensioni, mille leping uueneb igal aastal (nagu D).
     const contractStart = scenario.id === 'B' ? Math.max(pa, currentAge) : null;
@@ -116,7 +130,12 @@
     const rows = [];
     for (let age = startAge; age <= MAX_AGE; age++) {
       const fundStart = fund + fund3, depositStart = deposit;
-      const i1 = age >= p1Start ? p1Year : 0;
+      const i1g = age >= p1Start ? p1Year : 0;
+      // Riiklik pension pärast tulumaksu: 22% maksuvaba tulu ületavalt osalt.
+      const tax1 = taxOn && age >= pa ? INCOME_TAX * Math.max(0, i1g - allowance) : 0;
+      const i1 = i1g - tax1;
+      // Kasutamata maksuvaba tulu 10% väljamaksetele (pensioniea aastal pärast ühekordseid väljavõtteid).
+      let allowLeft = age >= pa ? (age === firstRetAge ? allowAtPa : Math.max(0, allowance - i1g)) : 0;
       let sched = 0, extraNet = 0, fromDeposit = 0, saved = 0, sched3 = 0, extra3 = 0;
       if (age >= pa) {
         // 1) plaanijärgne maksuvaba väljamakse
@@ -134,12 +153,12 @@
         if (gap > 0) {
           fromDeposit = Math.min(deposit, gap); deposit -= fromDeposit; gap -= fromDeposit;
           if (gap > 0 && fund > 0) {
-            const gross = Math.min(fund, gap / (1 - TAX_SHORT));
-            fund -= gross; extraNet = gross * (1 - TAX_SHORT); gap -= extraNet;
+            const gross = Math.min(fund, grossForNet(gap, allowLeft));
+            extraNet = netTenPercent(gross, allowLeft); fund -= gross; gap -= extraNet; allowLeft = Math.max(0, allowLeft - gross);
           }
           if (gap > 0 && fund3 > 0) {
-            const gross3 = Math.min(fund3, gap / (1 - TAX_SHORT));
-            fund3 -= gross3; extra3 = gross3 * (1 - TAX_SHORT); gap -= extra3;
+            const gross3 = Math.min(fund3, grossForNet(gap, allowLeft));
+            extra3 = netTenPercent(gross3, allowLeft); fund3 -= gross3; gap -= extra3; allowLeft = Math.max(0, allowLeft - gross3);
           }
         } else {
           saved = -gap; deposit += saved;
@@ -153,7 +172,9 @@
       rows.push({
         age: age,
         year: input.birthYear + age,
-        i1: i1 / 12,
+        i1: i1 / 12, // riiklik pension pärast tulumaksu
+        i1g: i1g / 12, // enne tulumaksu
+        tax1: tax1 / 12,
         i23: (sched + extraNet + sched3 + extra3) / 12,
         i2: (sched + extraNet) / 12, // II sammas (ühine pott); eraldi III samba pott on i3
         i3: (sched3 + extra3) / 12,
@@ -218,7 +239,7 @@
     { id: 'D', name: 'Leping igal aastal uuesti', short: 'Maksuvaba fondipension, mille lepingu sõlmid igal aastal uuesti. Ei saa otsa, aga väheneb vanas eas.' },
   ];
 
-  const api = { CURRENT_YEAR, DEFERRAL_INCREASE, SCENARIOS, pensionAge, retirementYears, yearlyContribution, survival, horizonAge, fundPensionTerm, decisionMap, simulate, sustainableNeed };
+  const api = { CURRENT_YEAR, DEFERRAL_INCREASE, SCENARIOS, INCOME_TAX, PENSIONER_ALLOWANCE, pensionAge, retirementYears, yearlyContribution, survival, horizonAge, fundPensionTerm, decisionMap, simulate, sustainableNeed };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Pension = api;
 })(typeof window !== 'undefined' ? window : globalThis);

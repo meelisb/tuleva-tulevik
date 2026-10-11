@@ -2,6 +2,13 @@
 
 Kuupäevadega otsused, kontrollid ja parandatud vead. Uuemad üleval. Lisa siia iga sisuline otsus, et see ei jääks ainult vestlusesse.
 
+## 11.10.2026: tulumaks ja töötamine pärast pensioniiga
+
+- Mõlemas mootoris riiklikult pensionilt tulumaks 22% maksuvaba tulu ületavalt osalt; kasutamata maksuvaba tulu vähendab 10% väljamaksete maksu. Loogika on üle võetud tiimi teise repo commit'ist be68ea0 (Elukaare koopia) ja lisatud ka kalkulaatorisse; ristkontroll on jätkuvalt identne.
+- Kontrollitud allikad: EMTA „Basic exemption at pensionable age“ (776 € kuus, 9 312 € aastas; enne pensioniiga 700 €; Pensionikeskus rakendab kasutamata osa II samba maksustatavale väljamaksele); SKA „Pensioni suuruse arvutamine“ (aastahinne 10,477 € alates 1.04.2026; ühendosa = (kindlustusosak + solidaarosak) / 2); RPKS § 11¹ lg 4, § 12, § 13¹ (II sambaga liitunul solidaarosak kuni 0,8), § 25 (ümberarvutus 1. aprillist eelmise aasta sotsiaalmaksu järgi); töötasu alammäär 946 € (VV määrus 23.03.2026 nr 36, alates 1.04.2026); keskmine brutokuupalk 2025: 2 092 € (Statistikaamet PA103).
+- Kalkulaator: pensioniea järel töötatud aasta tõstab pensioni järgmisest aastast. Näide: 2 000 € palk, II sambaga liitunud: +8,20 € kuus aastas; ilma II sambata +10,25 €. Edasilükkamisel rakendub kordaja ka lisale `[inferred]` RPKS § 11¹ lg 4 sõnastusest.
+- Avatud: kas solidaarosaku ülempiir 0,8 kehtib ka pärast II samba väljamaksete algust, kui sissemaksed on lõppenud (praegu: jah, sest seadus ütleb „liitunutel“) `[inferred]`; kas üldine maksuvaba tulu 700 € rakendub enne pensioniiga 10% väljamaksetele (praegu: ei).
+
 ## 10.10.2026 (õhtu): pitch
 
 - Pühapäeval (11.10 kell 11.30, Tuleva nõukogu, 3 min + 2 min küsimusi) esitleme **ainult Elukaart**.

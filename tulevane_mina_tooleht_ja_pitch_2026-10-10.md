@@ -303,7 +303,7 @@ Küsimuste õige järjekord: **sisendid ennem, otsused pärast.**
 
 - [ ] Kas paindliku pensioni tõusud arvutatakse kõigile sama elutabeli järgi (RPKS)? Kui jah, võidavad naised edasilükkamisest süstemaatiliselt rohkem.
 - [x] Statistikaameti leibkonna eelarve uuringust tabel pensionäride kulude vaikeväärtuseks: LE205 (10.10.2026). Avatud: pensionäride kulud tulukvintiilide kaupa avalikult puuduvad, vajaks eritellimust.
-- [ ] Pensionäri maksuvaba tulu 2026. aastal.
+- [x] Pensionäri maksuvaba tulu 2026. aastal: 776 € kuus (9 312 € aastas), enne pensioniiga 700 € (EMTA, kontrollitud 11.10.2026). Arvestatud mõlemas prototüübis.
 - [ ] Kas III samba piir „alates 60“ on 2021+ liitujate jaoks seotud pensioniea muutumisega (pensioniiga −5)?
 - [ ] Mitu kindlustusseltsi pakub praegu II samba pensionilepingut? Pensionikeskuse leht nimetab ainult Compensat.
 - [ ] Kas maksuvaba fondipensioni periood arvutatakse vanuse **ja soo** järgi (Pensionikeskuse leht) või sootult (Tuleva kalkulaator)? Sisselogitud kasutajale tuleb väärtus API-st `/v1/withdrawals/eligibility` → `recommendedDurationYears`.

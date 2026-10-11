@@ -2,6 +2,13 @@
 
 Kuupäevadega otsused, kontrollid ja parandatud vead. Uuemad üleval. Lisa siia iga sisuline otsus, et see ei jääks ainult vestlusesse.
 
+## 11.10.2026 (õhtu): dokumentatsioon ajakohaseks
+
+- Tagasiside põhjal prototüüpe ei muudeta (Meelise otsus); ettepanekud on tagasiside kokkuvõttes ootel.
+- README algusesse testilingid (avaleht, kalkulaator, printsiibid, elukaar) ja tagasiside lehed (vorm, tulemused). Tulemuste lehe parool on tiimi sisekanalis, mitte avalikus repos: lehel on ka testijate e-posti aadresside eksport.
+- Ajakohastatud: prototüüpide kirjeldused, testide arv, Elukaare väljamaksete algus töötamisel, fondipensioni lepingud, tiimi teise repo seis (PR #14 ühendatud 10.10, Elukaare koopia erinevused).
+- Demo video skript (`scripts/demo/record.mjs`) töötab, aga lugu on muutunud: korraga välja → kaetud 85-ni, soovitus → kaetud 97-ni ja lõpus hoiatus lepingu kohta (skript lepingut ei vali). Koodi ei muudetud.
+
 ## 11.10.2026 (õhtupoolik): testijate tagasiside
 
 - 16 vastust tulevanemina.ee tagasisidevormist (11.10, kutsega), kokkuvõte: [testijate_tagasiside_2026-10-11.md](testijate_tagasiside_2026-10-11.md). Kõik täitsid andmed ise, 12/16 oskavad öelda vanuse, 10/16 said uue teadmise (peamiselt fondipensioni leping), 5 muudaksid plaani, 6 võib-olla.

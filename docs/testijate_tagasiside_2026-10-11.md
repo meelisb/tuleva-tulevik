@@ -1,6 +1,8 @@
 # Testijate tagasiside: Elukaar, 10.–11.10.2026
 
-**Allikas:** tagasisidevorm `/tagasiside/` tiimi teise repo lehel tulevanemina.ee (Elukaare koopia), eksport `tagasiside.csv` 11.10.2026. **16 vastust**, 11.10.2026 kell 00.48–13.29 (Eesti aeg).
+**Allikas:** tagasisidevorm https://tulevanemina.ee/tagasiside/ tiimi teise repo lehel (testiti Elukaare koopiat https://tulevanemina.ee/elukaar/), eksport `tagasiside.csv` lehelt https://tulevanemina.ee/tulemused 11.10.2026. Tulemuste leht on parooliga; parool on tiimi sisekanalis, mitte avalikus repos. **16 vastust**, 11.10.2026 kell 00.48–13.29 (Eesti aeg).
+
+**Otsus 11.10:** tagasiside põhjal prototüüpe veel ei muudeta. Allpool olevad ettepanekud on ootel.
 
 > **Hoiatused enne lugemist**
 > - Vastajaid on vähe ja nad tulid kutsega (14 kutsekirjast, 2 „tule proovima“ lingist). Vastajad ei esinda sihtrühma (55–65-aastased): kommentaaride järgi on mitu 30-ndates. Loe tulemusi hüpoteesina.

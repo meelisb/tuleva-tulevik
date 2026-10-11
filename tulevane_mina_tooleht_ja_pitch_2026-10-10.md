@@ -2,7 +2,7 @@
 
 **Tuleva häkaton, 9.–11.10.2026 · tiim „Tulevane Mina“ · koostatud 10.10.2026**
 
-Prototüübid: https://meelisb.github.io/tuleva-tulevik/ (kalkulaator, printsiibid, elukaar). Mudeli eeldused ja struktuur: [README](README.md); hilisemad otsused ja parandused: [otsuste logi](docs/otsuste_logi.md).
+Prototüübid: [kalkulaator](https://meelisb.github.io/tuleva-tulevik/kalkulaator/), [printsiibid](https://meelisb.github.io/tuleva-tulevik/printsiibid/), [elukaar](https://meelisb.github.io/tuleva-tulevik/elukaar/) (avaleht https://meelisb.github.io/tuleva-tulevik/). Testijate tagasiside: [kokkuvõte](docs/testijate_tagasiside_2026-10-11.md). Mudeli eeldused ja struktuur: [README](README.md); hilisemad otsused ja parandused: [otsuste logi](docs/otsuste_logi.md).
 
 > **Hoiatused enne lugemist**
 > - Tööversioon häkatoni jaoks. Ei ole finants-, maksu- ega õigusnõu.

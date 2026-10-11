@@ -1,12 +1,12 @@
 # CLAUDE.md: Tulevane Mina (tuleva-tulevik)
 
-Juhend AI-agendile ja tiimiliikmele, kes seda repot jätkab. Kõik projekti kontekst on repos: see fail, `README.md`, `docs/otsuste_logi.md` ja `tulevane_mina_tooleht_ja_pitch_2026-10-10.md`. Ära jäta otsuseid ega kontrollitud fakte ainult lokaalsesse mällu või vestlusesse; kirjuta need siia.
+Juhend AI-agendile ja tiimiliikmele, kes seda repot jätkab. Kõik projekti kontekst on repos: see fail, `README.md` (testilingid, eeldused), `docs/otsuste_logi.md`, `docs/testijate_tagasiside_2026-10-11.md`, `docs/kulumudel.md` ja `tulevane_mina_tooleht_ja_pitch_2026-10-10.md`. Ära jäta otsuseid ega kontrollitud fakte ainult lokaalsesse mällu või vestlusesse; kirjuta need siia.
 
 ## Mis see on
 
 - Tuleva ühistu häkaton 9.–11.10.2026 (Telliskivi), tiim **Tulevane Mina**. Küsimus: **kas su pensionisissetulek kestab elu lõpuni?** Sihtrühm: 55–65-aastane Tuleva koguja.
 - Kuus kasutaja küsimust: millal saan pensionile; millal alustada; kui palju vajan; väljamaksete graafik; kui kaua ja kas jätkub; milline viis.
-- Kolm prototüüpi (`kalkulaator/`, `printsiibid/`, `elukaar/`), avalik leht https://meelisb.github.io/tuleva-tulevik/. Struktuur ja eeldused: `README.md`.
+- Kolm prototüüpi, avalikud testilingid: https://meelisb.github.io/tuleva-tulevik/kalkulaator/, …/printsiibid/, …/elukaar/ (avaleht https://meelisb.github.io/tuleva-tulevik/). Struktuur ja eeldused: `README.md`.
 - Häkatoni intellektuaalomand: varalised õigused Tulevale, autorsus jääb tiimile.
 
 ## Kuidas töötada
@@ -25,7 +25,7 @@ Juhend AI-agendile ja tiimiliikmele, kes seda repot jätkab. Kõik projekti kont
 - **Kulureegel:** igal aastal kulutad oma vajaduse. Allikate järjekord: riiklik pension → samba plaanijärgne väljamakse → hoius → (kalkulaatoris kogumisfond →) lisaväljamakse sambast (10%). Ülejääk läheb hoiusele. Nii on stsenaariumid võrreldavad.
 - **Vara kasvab ühe korra.** Pensionieelne kasv arvestatakse kas kogumisfaasis või tsüklis, mitte mõlemas. See viga oli kahes mootoris (+10…48% vara). Testi alati ka tootlusega üle 0%, sest 0% juures viga ei paista.
 - Hoiuse reaaltootlus vaikimisi **−1%** (mõlemas prototüübis), fondi oma vaikimisi 2%.
-- Fondipensioni maksuvaba periood = Statistikaameti elada jäänud aastad soo ja vanuse järgi, ümardatud (`fundPensionTerm`). Leping algab pensionieas või kohe, kui oled vanem.
+- Fondipensioni maksuvaba periood = Statistikaameti elada jäänud aastad soo ja vanuse järgi, ümardatud (`fundPensionTerm`). Leping algab väljamaksete algusest: pensioniiga, töö lõpp (kui töötad edasi) või kohe, kui oled vanem. Ühe lepingu makse = jääk / järelejäänud aastad (Pensionikeskus: euro summa järgib osakuhinda), **mitte** tasane annuiteet. Elukaares on II ja III samba leping eraldi (III vaikimisi üks leping, 55-st alanud leping loeb perioodi 55-st) ja paindliku pensioni (C) leping valitav (vaikimisi igal aastal uuesti).
 - II samba esimene väljamakse lõpetab II samba sissemaksed, ka riigi 4% (kalkulaatoris modelleeritud).
 - Kaks mootorit: `kalkulaator/pension.js` ja `elukaar/pension.js` (viimane on esimese varasema versiooni edasiarendus). `tests/elukaar.scenarios.test.js` kontrollib, et samade sisenditega annavad mõlemad **sama tulemuse**. Kui muudad ühise loogika ühes mootoris, muuda ka teises või muuda ristkontrolli teadlikult.
 - Kulutasemed ja nimed (kokkuhoidlik, optimaalne, mugav) tulevad ainult failist `data/kulud.js`, mõlemas prototüübis samad. Ära lisa käsitsi „lisasid“ ilma allikata.
@@ -43,7 +43,7 @@ Kulutasemete piirang: IV/V kvintiili suhe on kõigi leibkondade andmetest. Pensi
 
 ## Testimine
 
-- `npm test`: kalkulaator (~9 600 kontrolli) ja elukaar (~6 800 kontrolli). Stsenaariumitestid kontrollivad käsitsi arvutatud juhtumeid, rahavoogude tasakaalu, monotoonsust (parem sisend ei anna halvemat tulemust) ja ristkontrolli.
+- `npm test`: kalkulaator (~9 600 kontrolli) ja elukaar (~8 500 kontrolli). Stsenaariumitestid kontrollivad käsitsi arvutatud juhtumeid, rahavoogude tasakaalu, monotoonsust (parem sisend ei anna halvemat tulemust) ja ristkontrolli.
 - `node tests/e2e.mjs [URL]`: Playwright (`playwright-core`, `npm install`) süsteemi Chrome'iga (`CHROME_PATH` või macOS-i vaikimisi tee). Vaikimisi URL `http://localhost:8766`; käivita enne server: `python3 -m http.server 8766`. Sama testi saab jooksutada avaliku lehe vastu.
 - Claude Code'i eelvaate liivakast ei loe kausta `~/Documents`, seepärast käivita server Bashist.
 
@@ -57,7 +57,9 @@ node scripts/demo/record.mjs /tmp/demo
 node scripts/demo/encode.mjs /tmp/demo
 ```
 
-Tulemus `elukaar_demo.mp4` (H.264, 1600×900). Video tehakse Chrome'i enda kodeerijaga, ffmpeg-i pole vaja. Lugu: Tuleva konto näidisandmed, kõik korraga välja ja kulutase „mugav“ → kulud kaetud 86. eluaastani → Elukaare soovitusel fondipension ja riiklik pension 2 a hiljem → kaetud kuni 100. Kui Elukaare sammud või valikud muutuvad, kohenda `record.mjs`-i valijaid.
+Tulemus `elukaar_demo.mp4` (H.264, 1600×900). Video tehakse Chrome'i enda kodeerijaga, ffmpeg-i pole vaja. Lugu: Tuleva konto näidisandmed, kõik korraga välja ja kulutase „mugav“ → kulud kaetud 85. eluaastani → Elukaare soovitusel fondipension ja riiklik pension 2 a hiljem → kaetud kuni 97. Kui Elukaare sammud või valikud muutuvad, kohenda `record.mjs`-i valijaid.
+
+Seis 11.10.2026 (kontrollitud kuivjooksuga): skript töötab, aga pärast tulumaksu ja lepinguvalikute lisandumist lõpeb video hoiatusega „vali pensionipõlves „Uus leping igal aastal““, sest skript lepingut ei vali. Video uuendamiseks lisa skripti lepingu valik (`contract` = `yearly`). Viimases kaadris on ka tekst „tuleb kuus 0 € riiklikku pensioni“, kui riiklik pension on edasi lükatud.
 
 ## Majutus
 
@@ -70,7 +72,8 @@ Tulemus `elukaar_demo.mp4` (H.264, 1600×900). Video tehakse Chrome'i enda kodee
 - **Tuleva API** (onboarding-client), mida sisselogitud kasutaja eeltäitmiseks kasutaks (kalkulaatoris näidisena): `/v1/me` (dateOfBirth, age, retirementAge, secondPillarPaymentRates, thirdPillarInitDate), `/v1/me/capital`, `/v1/contributions`, `/v1/me/conversion` (weightedAverageFee), `/v1/withdrawals/eligibility` (recommendedDurationYears, earlyRetirementDate, canWithdrawThirdPillarWithReducedTaxFrom), `/v1/withdrawals/fund-pension-status`, `/v1/savings-*`. Riiklik pension ja kulud Tuleval puuduvad.
 - Tuleva sisselogitud kalkulaator `pension.tuleva.ee/calculator` (strateegiad fixedPeriod, fourPercentRule, maxUtility).
 - SKA kalkulaator: I samba prognoos = „I, II ja III“ miinus „II ja III“ (vali „Vanaduspension“).
-- Tiimi teine repo [tulevane-mina](https://github.com/mirxz/tulevane-mina) (Cloudflare Worker, `npx wrangler dev`): seal on eraldi kalkulaatorid ja Elukaare koopia `/elukaar/`. Need ei sünkroniseeru selle repoga; Elukaare kehtiv versioon on siin. Sinna on avatud PR #14 (Statistikaameti elutabel ja SKA 2026 koefitsiendid).
+- Tiimi teine repo [tulevane-mina](https://github.com/mirxz/tulevane-mina) (Cloudflare Worker, `npx wrangler dev`), avalik aadress https://tulevanemina.ee/: maandumisleht, eraldi kalkulaatorid ja Elukaare ühefailine koopia `/elukaar/`. Need ei sünkroniseeru selle repoga; **Elukaare kehtiv versioon on siin**. Koopias on tasane fondipensioni makse (`annuityDue`), mis ei vasta Pensionikeskuse reeglile; seda siia ei võeta. Kui Elukaart muudetakse koopias, too muudatus siia kolmepoolse ühendamisega (alus = meie commit, millest muutja alustas; vt otsuste logi 11.10). PR #14 (Statistikaameti elutabel ja SKA 2026 koefitsiendid) on seal ühendatud 10.10.
+- Testijate tagasiside: vorm https://tulevanemina.ee/tagasiside/, tulemused https://tulevanemina.ee/tulemused (eksport `/tulemused-tagasiside.csv`). Parool on tiimi sisekanalis; **ära kirjuta seda reposse ega logi** (tulemuste lehel on ka e-posti aadresside eksport). Ära sisesta parooli ise veebilehele; kasutaja laadib ekspordi alla. Toorekspordid (CSV) reposse ei lähe, kokkuvõte isikuandmeteta: `docs/testijate_tagasiside_*.md`.
 - Indrek Seppo juhend häkatoni osalejatele: https://seppo.ai/tulevahack/
 
 ## Ajalugu ja avatud küsimused

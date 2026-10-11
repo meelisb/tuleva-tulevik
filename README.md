@@ -2,6 +2,23 @@
 
 Tiimi „Tulevane Mina“ töö Tuleva häkatonil (9.–11.10.2026). Küsimus, millele prototüübid vastavad: **kas su pensionisissetulek kestab elu lõpuni?**
 
+## Testi kohe
+
+| | Link |
+|---|---|
+| Avaleht (kõik prototüübid) | https://meelisb.github.io/tuleva-tulevik/ |
+| 1. Kalkulaator | https://meelisb.github.io/tuleva-tulevik/kalkulaator/ |
+| 2. Printsiibid | https://meelisb.github.io/tuleva-tulevik/printsiibid/ |
+| 3. Elukaar | https://meelisb.github.io/tuleva-tulevik/elukaar/ |
+
+Kui leht näib vana, laadi uuesti (Cmd+Shift+R). Avaldus toimub iga `main`-i push'iga umbes minutiga.
+
+**Testijate tagasiside** käib tiimi teise lehe kaudu:
+- Tagasisidevorm: https://tulevanemina.ee/tagasiside/
+- Tulemused: https://tulevanemina.ee/tulemused (eksport: `/tulemused-tagasiside.csv`). Leht on parooliga; **parool on tiimi sisekanalis, mitte selles avalikus repos**, sest tulemuste lehel on ka testijate e-posti aadresside eksport.
+- Testijad kasutasid Elukaare koopiat aadressil https://tulevanemina.ee/elukaar/ (tiimi teine repo). See erineb siinsest: siin on lisaks töötamine pärast pensioniiga ja Pensionikeskuse reeglile vastav fondipensioni makse.
+- Kokkuvõte: [testijate tagasiside 11.10](docs/testijate_tagasiside_2026-10-11.md). Tagasiside põhjal prototüüpe veel ei muudeta (Meelise otsus 11.10).
+
 - [Tööleht ja pitch'i taust](tulevane_mina_tooleht_ja_pitch_2026-10-10.md)
 - [Otsuste logi](docs/otsuste_logi.md): kuupäevadega otsused, kontrollitud faktid, parandatud vead
 - [Testijate tagasiside 11.10](docs/testijate_tagasiside_2026-10-11.md): Elukaare test, 16 vastust, teemad ja ettepanekud
@@ -15,11 +32,11 @@ Tiimi „Tulevane Mina“ töö Tuleva häkatonil (9.–11.10.2026). Küsimus, m
 | Prototüüp | Kaust | Sisu | Mootor |
 |---|---|---|---|
 | Avaleht | `index.html` | Lingid kolmele prototüübile | – |
-| 1. **Kalkulaator** | `kalkulaator/` | Sinu andmed, kulud, otsused (riiklik pension varem või hiljem, II ja III samba viis ja algus, töötamine), tulemus koos valmisstrateegiatega | `kalkulaator/pension.js` |
+| 1. **Kalkulaator** | `kalkulaator/` | Sinu andmed, kulud, otsused (riiklik pension varem või hiljem, II ja III samba viis ja algus, töötamine ka pärast pensioniiga), tulemus koos valmisstrateegiate, tulumaksu ja alles jääva rahaga | `kalkulaator/pension.js` |
 | 2. **Printsiibid** | `printsiibid/` | Kuus põhimõtet ja otsustuspuu, arvutusi ei tehta | – |
-| 3. **Elukaar** | `elukaar/` | Pensionilugu eluetappide kaupa: valikud 55-, 60- ja pensionieas, kulutase, tulemus ja allalaadimine | `elukaar/pension.js` |
+| 3. **Elukaar** | `elukaar/` | Pensionilugu eluetappide kaupa: valikud 55- (enne 2021 III sambaga liitunul), 60- ja pensionieas, töötamine pärast pensioniiga, II ja III samba fondipensioni leping eraldi, kulutase, tulemus ja allalaadimine (MD, PDF) | `elukaar/pension.js` |
 
-Igal arvutaval prototüübil on oma mootor. Elukaare mootor on kalkulaatori varasema mootori edasiarendus. Samade sisenditega (ilma sissemakseteta) annavad mõlemad sama tulemuse; seda kontrollib `tests/elukaar.scenarios.test.js`.
+Igal arvutaval prototüübil on oma mootor. Elukaare mootor on kalkulaatori varasema mootori edasiarendus. Samade sisenditega annavad mõlemad sama tulemuse (ilma sissemakseteta; töötamisega tootlusel 0% ja III samba sissemakseta); seda kontrollib `tests/elukaar.scenarios.test.js`.
 
 Ühised failid: `css/tuleva.css` (Tuleva disainisüsteemi tokenid ja põhistiilid, prototüübi omad stiilid on prototüübi kaustas) ja `data/` (Statistikaameti andmed).
 
@@ -64,9 +81,12 @@ Summad on kuus, tänases rahas (uuring 2020, hinnad 09/2026 kaubagrupi tarbijahi
 | `printsiibid/` | Prototüüp 2 |
 | `data/elutabel.js`, `scripts/fetch_elutabel.py` | Statistikaameti elutabel (RV045, RV046). Genereeritud: `python3 scripts/fetch_elutabel.py` |
 | `data/kulud.js`, `scripts/fetch_kulud.py` | Kulutasemed (LE205, LE211, IA002). Genereeritud: `python3 scripts/fetch_kulud.py` |
-| `tests/pension.test.js`, `tests/scenarios.test.js` | Kalkulaatori testid (~9 600 kontrolli, tabel: `node tests/scenarios.test.js --table`) |
-| `tests/elukaar.test.js`, `tests/elukaar.scenarios.test.js` | Elukaare testid (~6 800 kontrolli): kasv ühe korra, rahavoogude tasakaal, loogika, ristkontroll kalkulaatoriga |
-| `tests/e2e.mjs` | Brauseritest kõigile prototüüpidele (lauaarvuti ja mobiil): `npm install` ja `node tests/e2e.mjs http://localhost:8000` |
+| `tests/pension.test.js`, `tests/scenarios.test.js` | Kalkulaatori testid (~9 600 kontrolli, sh tulumaks ja töötamine; tabel: `node tests/scenarios.test.js --table`) |
+| `tests/elukaar.test.js`, `tests/elukaar.scenarios.test.js` | Elukaare testid (~8 500 kontrolli): kasv ühe korra, rahavoogude tasakaal, loogika, tulumaks, töötamine, lepingud, ristkontroll kalkulaatoriga |
+| `tests/e2e.mjs` | Brauseritest kõigile prototüüpidele (lauaarvuti ja mobiil, ~75 kontrolli): `npm install` ja `node tests/e2e.mjs http://localhost:8000`; avaliku lehe vastu `node tests/e2e.mjs https://meelisb.github.io/tuleva-tulevik` |
+| `scripts/kulumudel.js` | Tasuvusmudel ([docs/kulumudel.md](docs/kulumudel.md)) |
+| `scripts/demo/` | Pitch'i demo video salvestus (vt CLAUDE.md) |
+| `kadi-branch/` | Vana aadressi ümbersuunamine `/elukaar/` lehele |
 
 Kõik arvutustestid: `npm test`.
 
@@ -85,6 +105,6 @@ Summad on tänases rahas. Edasilükkamise tõusud on SKA 2026 keskmised. Kindlus
 - Maksuvaba tulu enne pensioniiga 10% väljamaksetele ei rakendata (konservatiivne).
 
 - Kalkulaator: sissemaksed jätkuvad töötamise lõpuni, hoiuse intress jääb vaikimisi inflatsioonist 1% maha, III samba tulumaksutagastus on arvestatud.
-- Elukaar: väljamaksed algavad pensionieas, hoiuse intress jääb inflatsioonist 1% maha (nagu kalkulaatoris), III samba tulumaksutagastust ei arvestata.
+- Elukaar: samba väljamaksed algavad pensionieas või töö lõppedes, kui töötad edasi; hoiuse intress jääb inflatsioonist 1% maha (nagu kalkulaatoris); III samba tulumaksutagastust ei arvestata; III sambaga liitumine on vaikimisi „enne 2021“ (siis on 55 a otsustuskoht). Fondipensioni ühe lepingu makse on jääk / järelejäänud aastad (Pensionikeskus: periood jagatakse osakute arvu järgi, euro summa järgib osakuhinda).
 
 Tööversioon. Ei ole finants-, maksu- ega õigusnõu.

@@ -30,6 +30,13 @@ async function run(label, viewport) {
   // samm 1: sünniaasta trükkimine ei riku plaani
   await page.fill('#birthYear', '1983');
   check((await page.inputValue('#workUntil')) === '65', 'sünniaasta 1983: töötan kuni 65');
+  // sünniaasta vahemik 1930–2008: hilisem jääb alles, väljaspool vahemikku asendatakse lähimaga
+  await page.fill('#birthYear', '1995'); await page.locator('#birthYear').dispatchEvent('change');
+  check((await page.inputValue('#birthYear')) === '1995' && (await page.textContent('#answer')).length > 20, 'sünniaasta 1995 jääb alles');
+  await page.fill('#birthYear', '2015'); await page.locator('#birthYear').dispatchEvent('change');
+  check((await page.inputValue('#birthYear')) === '2008' && /2008/.test(await page.textContent('#birthYearNote')), 'sünniaasta 2015 → 2008');
+  await page.fill('#birthYear', '1930'); await page.locator('#birthYear').dispatchEvent('change');
+  check((await page.$$('#s2 option')).length > 0 || !(await page.isVisible('#s2')), 'sünniaasta 1930: valikud ei ole tühjad');
   await page.fill('#birthYear', '1966');
   // eeltäitmine ja tühjendamine
   await page.click('#prefillBtn');

@@ -52,7 +52,7 @@
   options($('pensionAgeYears'), 65, 68, (a) => a + ' a');
   options($('careFrom'), 70, 95, (a) => a + '-aastaselt', 85);
 
-  const birthYearValue = () => Math.min(1990, Math.max(1950, parseInt($('birthYear').value, 10) || 1966));
+  const birthYearValue = () => Math.min(2008, Math.max(1930, parseInt($('birthYear').value, 10) || 1966)); // sama vahemik mis Elukaares
   const currentAge = () => P.CURRENT_YEAR - birthYearValue();
   function readInput() {
     const num = (id) => Math.max(0, parseFloat($(id).value) || 0);
@@ -81,8 +81,8 @@
     const pa = parseInt($('pensionAgeYears').value, 10);
     const cur = Math.max(55, currentAge());
     const prev = $('workUntil').value;
-    options($('workUntil'), Math.min(cur, pa), 75, (a) => a + '-aastaseni (' + (by + a) + ')');
-    $('workUntil').value = state.workTouched && prev && Number(prev) >= Math.min(cur, pa) ? prev : String(Math.max(pa, Math.min(cur, 75)));
+    options($('workUntil'), Math.min(cur, pa), Math.max(75, cur), (a) => a + '-aastaseni (' + (by + a) + ')');
+    $('workUntil').value = state.workTouched && prev && Number(prev) >= Math.min(cur, pa) ? prev : String(Math.max(pa, cur));
   }
   let lastBirth = null, lastPa = null;
   function syncAgesSoft() {
@@ -137,7 +137,7 @@
     const plan = state.plan, pa = input.pensionAgeYears, by = input.birthYear, cur = currentAge();
     const p3r = P.p3ReducedAge(input);
     const le = (age) => T.elada_jaanud[input.sex][Math.min(age, 100)];
-    const s3opts = []; for (let a = Math.max(55, cur); a <= 75; a++) s3opts.push(a);
+    const s3opts = []; for (let a = Math.max(55, cur); a <= Math.max(75, cur); a++) s3opts.push(a);
     const iii = '<section class="decision" aria-labelledby="d3"><h3 class="h6 mb-1" id="d3">III sammas</h3>' +
       '<p class="window">Ajaaken: soodsa maksuga alates ' + p3r + '. eluaastast (' + (by + p3r) + '), ülemist piiri ei ole. Enne seda on tulumaks 22%.</p>' +
       methodRadios('m3', plan.p3.method) +
@@ -145,7 +145,7 @@
       s3opts.map((a) => '<option value="' + a + '"' + (a === plan.p3.start ? ' selected' : '') + '>' + a + '-aastaselt (' + (by + a) + ')' + (a < p3r ? ' · 22% maks' : '') + '</option>').join('') + '</select>' +
       '<p class="small text-secondary mt-2 mb-0">Kui võtad raha korraga või lühikese aja jooksul, maksad 10% tulumaksu. Kui lased maksta igakuiselt vähemalt nii mitme aasta jooksul, kui sul statistiliselt elada on jäänud (' + plan.p3.start + '-aastaselt umbes ' + Math.round(le(plan.p3.start)) + ' aastat), on väljamakse tulumaksuta.' +
       (input.workUntil > Math.max(cur, 55) ? ' Kuni töötad, jätka III samba sissemakseid: saad 22% tulumaksu tagasi.' : '') + '</p></section>';
-    const s2opts = []; for (let a = Math.max(60, cur); a <= 75; a++) s2opts.push(a);
+    const s2opts = []; for (let a = Math.max(60, cur); a <= Math.max(75, cur); a++) s2opts.push(a);
     const losing = plan.p2.method !== 'keep' && input.p2Rate > 0 && plan.p2.start < input.workUntil;
     const ii = '<section class="decision" aria-labelledby="d2"><h3 class="h6 mb-1" id="d2">II sammas</h3>' +
       '<p class="window">Ajaaken: alates 60. eluaastast (' + (by + 60) + '), ülemist piiri ei ole. Vali, kuidas raha võtad.</p>' +
@@ -189,8 +189,8 @@
   function clampPlan(input) {
     if (!state.plan) state.plan = defaultPlan(input);
     const cur = currentAge();
-    state.plan.p2.start = Math.min(75, Math.max(state.plan.p2.start, 60, cur));
-    state.plan.p3.start = Math.min(75, Math.max(state.plan.p3.start, 55, cur));
+    state.plan.p2.start = Math.min(Math.max(75, cur), Math.max(state.plan.p2.start, 60, cur));
+    state.plan.p3.start = Math.min(Math.max(75, cur), Math.max(state.plan.p3.start, 55, cur));
     state.plan.stateOffset = Math.max(-5, Math.min(5, state.plan.stateOffset));
     if (state.plan.stateOffset !== 0 && input.pensionAgeYears + state.plan.stateOffset < cur) state.plan.stateOffset = 0;
   }
@@ -381,6 +381,17 @@
   $('careOn').addEventListener('change', () => { $('careFields').classList.toggle('d-none', !$('careOn').checked); update(); });
   document.querySelectorAll('.step[data-step="1"] input, .step[data-step="1"] select, .step[data-step="2"] input, .step[data-step="2"] select, #needMonthly, #careFrom, #careMonthly').forEach((el) => {
     el.addEventListener('input', () => { if (el.closest('.step[data-step="1"], .step[data-step="2"]')) el.classList.remove('is-prefilled'); update(); });
+  });
+
+  // Sünniaasta väljaspool vahemikku (1930–2008) asendatakse pärast sisestuse lõppu lähima lubatud aastaga; ekraanilugejale teade.
+  $('birthYear').addEventListener('input', () => { $('birthYearNote').textContent = ''; });
+  $('birthYear').addEventListener('change', () => {
+    const el = $('birthYear'), min = parseInt(el.min, 10), max = parseInt(el.max, 10), v = parseInt(el.value, 10);
+    if (v >= min && v <= max) return;
+    const fixed = isNaN(v) ? 1966 : Math.min(max, Math.max(min, v));
+    el.value = String(fixed);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    $('birthYearNote').textContent = 'Muudetud aastaks ' + fixed + '.';
   });
 
   $('lifeYear').textContent = T.aasta;

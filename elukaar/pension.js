@@ -174,6 +174,8 @@
         if (scenario.id === 'D' || (scenario.id === 'C' && !onceC)) {
           sched = fund / fundPensionTerm(table, input.sex, age); // uus leping igal aastal lühima maksuvaba perioodiga
         } else if (contractStart !== null && age >= contractStart) {
+          // KoPS § 52³ lg 8, § 60¹ lg 5: osakute arv jagatakse iga kord veel tegemata väljamaksete arvuga; euro makse = osakud × hind,
+          // seega makse järgib fondi väärtust (makse_k = pott / n × (1 + r)^k), mitte tasane annuiteet.
           const left = contractTerm - (age - contractStart);
           sched = left > 0 ? fund / left : 0;
         }

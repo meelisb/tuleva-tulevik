@@ -306,7 +306,7 @@ Küsimuste õige järjekord: **sisendid ennem, otsused pärast.**
 - [x] Pensionäri maksuvaba tulu 2026. aastal: 776 € kuus (9 312 € aastas), enne pensioniiga 700 € (EMTA, kontrollitud 11.10.2026). Arvestatud mõlemas prototüübis.
 - [ ] Kas III samba piir „alates 60“ on 2021+ liitujate jaoks seotud pensioniea muutumisega (pensioniiga −5)?
 - [ ] Mitu kindlustusseltsi pakub praegu II samba pensionilepingut? Pensionikeskuse leht nimetab ainult Compensat.
-- [ ] Kas maksuvaba fondipensioni periood arvutatakse vanuse **ja soo** järgi (Pensionikeskuse leht) või sootult (Tuleva kalkulaator)? Sisselogitud kasutajale tuleb väärtus API-st `/v1/withdrawals/eligibility` → `recommendedDurationYears`.
+- [x] Kas fondipensioni periood arvutatakse vanuse **ja soo** järgi või sootult? **Sootult:** kogumispensionide seadus § 52³ lg 3 (II sammas) ja § 60¹ lg 2 (III sammas): vaiketähtaeg on Statistikaameti üle-eelmise kalendriaasta **meeste ja naiste keskmine** elada jäänud aastate arv, täisaastateks ümardatud (kontrollitud Riigi Teatajast 15.10.2026). Prototüübid kasutavad praegu soopõhist elada jäänud aastate arvu (naisel pikem, mehel lühem periood); vt otsuste logi 15.10.
 - [ ] Kas fondipensioni lõpetamise ja uue lepingu vahele jääb kuu ilma väljamakseta?
 
 ---

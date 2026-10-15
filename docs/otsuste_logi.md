@@ -2,6 +2,16 @@
 
 Kuupäevadega otsused, kontrollid ja parandatud vead. Uuemad üleval. Lisa siia iga sisuline otsus, et see ei jääks ainult vestlusesse.
 
+## 15.10.2026: tiimi teise repo muudatused meie repos, seaduse kontroll
+
+- Tiimi teise repo `main`-i ühendatud alates 11.10: PR #19 (Elukaare autor, 12.10) ja PR #20 (12.10). Mõlemad õiged, tõstetud Elukaarde:
+  - **Sünniaasta 1930–2008** (oli 1950–1990, testijate tagasiside viga): väljaspool vahemikku sisestatud aasta asendatakse lähimaga, ekraanilugejale teade.
+  - **Fondipensioni makse seaduse järgi** (PR #20 võttis teises repos tasase `annuityDue` tagasi; meil oli juba jääk / järelejäänud aastad). Juurde: III samba sissemaksed lähevad 55-st alanud fondipensioni lepingupotti (enne läksid ühisesse potti ja makse hüppas 65-aastaselt), ühe lepingu perioodi kaitse ja graafiku selgitusse lause „Fondipensioni makse muutub koos fondi väärtusega“.
+  - Ei võetud: harud, mis pole `main`-i ühendatud (`riin-eripension`); teise repo testid ja golden master (meil on oma testid).
+- **Kontrollitud Riigi Teatajast** (kogumispensionide seadus, kehtiv redaktsioon 103122024016): § 52³ lg 8 ja § 60¹ lg 5 (osakud / veel tegemata väljamaksed → makse järgib osakuhinda) `[verified]`; § 60¹ lg 8 (hiljem omandatud osakud arvestatakse järgmisel väljamaksel) `[verified]`.
+- **Uus leid:** § 52³ lg 3 ja § 60¹ lg 2: fondipensioni vaiketähtaeg on Statistikaameti üle-eelmise kalendriaasta **meeste ja naiste keskmine** elada jäänud aastate arv `[verified]`. Mõlemad mootorid kasutavad soopõhist (2025. aasta tabel): naisel on periood pikem ja mehel lühem kui seaduses. Mõju: mehe ühe lepingu periood (16 a 65-aastaselt) on lühem kui seaduse vaiketähtaeg ja oleks päriselt tõenäoliselt 10% maksuga. Parandamata, otsus ootel.
+- Kalkulaatoris on sünniaasta piir endiselt 1950–1990 (teises repos kalkulaatorit pole).
+
 ## 11.10.2026 (õhtu): dokumentatsioon ajakohaseks
 
 - Tagasiside põhjal prototüüpe ei muudeta (Meelise otsus); ettepanekud on tagasiside kokkuvõttes ootel.

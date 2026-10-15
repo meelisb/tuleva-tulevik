@@ -104,8 +104,9 @@ Summad on tänases rahas. Edasilükkamise tõusud on SKA 2026 keskmised. Kindlus
 - Palk ja riiklik pension reaalselt ei kasva: mõlemad on kogu aeg tänases rahas sama suured (ka maksuvaba tulu 776 € ja aastahinne).
 - Keskmine palk on 2025. aasta oma; tegelik kindlustusosak arvutatakse sama aasta keskmise sotsiaalmaksu järgi.
 - Maksuvaba tulu enne pensioniiga 10% väljamaksetele ei rakendata (konservatiivne).
+- **Teadaolev erinevus seadusest:** fondipensioni (maksuvaba) periood on prototüüpides soopõhine elada jäänud aastate arv. KoPS § 52³ lg 3 ja § 60¹ lg 2 järgi on vaiketähtaeg meeste ja naiste keskmine (üle-eelmise aasta andmed). Vt otsuste logi 15.10.
 
 - Kalkulaator: sissemaksed jätkuvad töötamise lõpuni, hoiuse intress jääb vaikimisi inflatsioonist 1% maha, III samba tulumaksutagastus on arvestatud.
-- Elukaar: samba väljamaksed algavad pensionieas või töö lõppedes, kui töötad edasi; hoiuse intress jääb inflatsioonist 1% maha (nagu kalkulaatoris); III samba tulumaksutagastust ei arvestata; III sambaga liitumine on vaikimisi „enne 2021“ (siis on 55 a otsustuskoht). Fondipensioni ühe lepingu makse on jääk / järelejäänud aastad (Pensionikeskus: periood jagatakse osakute arvu järgi, euro summa järgib osakuhinda).
+- Elukaar: samba väljamaksed algavad pensionieas või töö lõppedes, kui töötad edasi; hoiuse intress jääb inflatsioonist 1% maha (nagu kalkulaatoris); III samba tulumaksutagastust ei arvestata; III sambaga liitumine on vaikimisi „enne 2021“ (siis on 55 a otsustuskoht). Fondipensioni ühe lepingu makse on jääk / järelejäänud aastad: kogumispensionide seadus (KoPS) § 52³ lg 8 ja § 60¹ lg 5, osakute arv jagatakse iga kord veel tegemata väljamaksete arvuga ja euro makse järgib osakuhinda. 55-st alanud III samba fondipensioni lepingusse lähevad ka hilisemad III samba sissemaksed (KoPS § 60¹ lg 8). Sünniaasta vahemik 1930–2008; väljaspool vahemikku sisestatud aasta asendatakse lähimaga.
 
 Tööversioon. Ei ole finants-, maksu- ega õigusnõu.

@@ -6,6 +6,7 @@ Tiimi „Tulevane Mina“ töö Tuleva häkatonil (9.–11.10.2026). Küsimus, m
 
 | | Link |
 |---|---|
+| Esitletud prototüüp | https://tulevanemina.ee |
 | Avaleht (kõik prototüübid) | https://meelisb.github.io/tuleva-tulevik/ |
 | 1. Kalkulaator | https://meelisb.github.io/tuleva-tulevik/kalkulaator/ |
 | 2. Printsiibid | https://meelisb.github.io/tuleva-tulevik/printsiibid/ |
